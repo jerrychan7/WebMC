@@ -108,7 +108,7 @@ class Render {
                     let attDataType = gl.FLOAT, size;
                     switch (att.type) {
                         case gl.FLOAT:
-                            szie = 1;
+                            size = 1;
                             break;
                         case gl.FLOAT_VEC2:
                         case gl.FLOAT_MAT2:
