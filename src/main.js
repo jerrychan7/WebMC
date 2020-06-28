@@ -1,10 +1,12 @@
 import {mat4} from "./gmath.js";
 import * as glsl from "./glsl.js";
 import Render from "./Render.js";
+import {asyncLoadResByUrl} from "./loadResources.js";
 
-window.onload = function() {
+window.onload = async function() {
 
     let render = new Render(document.getElementById("canvas"));
+    window.render = render;
     render.fitScreen();
     render.gl.clearColor(0.1137, 0.1216, 0.1294, 1.0);
     render.gl.clearDepth(1.0);
@@ -17,6 +19,7 @@ window.onload = function() {
     render.gl.enable(render.gl.CULL_FACE);
     render.gl.frontFace(render.gl.CCW);
 
+    render.createTexture(await asyncLoadResByUrl("/texture/all.png"));
     let vertexPosition = [
             //前
             -1.0, 1.0, 1.0, 1.0, 1.0, 1.0, -1.0, -1.0, 1.0, 1.0, -1.0, 1.0,
@@ -58,6 +61,7 @@ window.onload = function() {
             0.0, 0.5, 1.0, 0.5, 0.0, 0.75, 1.0, 0.75,
             0.0, 0.5, 1.0, 0.5, 0.0, 0.75, 1.0, 0.75
         ],
+        ibo = render.createIbo(index),
         mM   = mat4.identity(),
         vM   = mat4.lookAt([0.0, 0.0, 3.0], [0, 0, 0], [0, 1, 0]),
         pM   = mat4.perspective(90, render.aspectRatio, 0.1, 100),
@@ -68,16 +72,8 @@ window.onload = function() {
             .setAtt("position", render.createVbo(vertexPosition))
             .setAtt("color", render.createVbo(vertexColor))
             .setAtt("textureCoord", render.createVbo(textureCoord))
-            .setUni("mvpMatrix", mvpM),
-        ibo = render.createIbo(index),
-        img = new Image();
-    img.onload = _ => {
-        render.gl.activeTexture(render.gl.TEXTURE0);
-        render.gl.bindTexture(render.gl.TEXTURE_2D, render.createTexture(img));
-        prg.setUni("texture", 0);
-        render.play();
-    };
-    img.src = "texture/all.png";
+            .setUni("mvpMatrix", mvpM)
+            .bindTex("texture", render.getTexture("/texture/all.png"));
     render.gl.bindBuffer(render.gl.ELEMENT_ARRAY_BUFFER, ibo);
 
     render.onRender = function(timestamp) {
@@ -96,4 +92,5 @@ window.onload = function() {
         gl.drawElements(gl.TRIANGLES, index.length, gl.UNSIGNED_SHORT, 0);
         gl.flush();
     };
+    render.play();
 };
