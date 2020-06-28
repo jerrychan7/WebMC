@@ -1,4 +1,5 @@
 import {mat4} from "./gmath.js";
+import * as glsl from "./glsl.js";
 
 class Render {
     constructor(canvas) {
@@ -6,6 +7,8 @@ class Render {
         this.gl = this.ctx = canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
         if (!this.gl) return null;
     };
+
+    get aspectRatio() { return this.canvas.width / this.canvas.height; };
 
     createShader(type, src) {
         const gl = this.gl,
@@ -223,12 +226,11 @@ window.onload = function() {
     render.gl.depthFunc(render.gl.LEQUAL);
 
     render.gl.enable(render.gl.CULL_FACE);
-//    gl.disable(gl.CULL_FACE);
     render.gl.frontFace(render.gl.CCW);
 
     let prg = render.createProgram(
-        render.createShader(render.gl.VERTEX_SHADER, document.getElementById("vs").text),
-        render.createShader(render.gl.FRAGMENT_SHADER, document.getElementById("fs").text)
+        render.createShader(render.gl.VERTEX_SHADER, glsl.showBlock.vert),
+        render.createShader(render.gl.FRAGMENT_SHADER, glsl.showBlock.frag)
     );
     render.useProgram(prg);
 
@@ -236,6 +238,7 @@ window.onload = function() {
     let img = new Image();
     img.onload = _ => {
         render.gl.bindTexture(render.gl.TEXTURE_2D, render.createTexture(img));
+        onRender();
     };
     img.src = "texture/all.png";
     let vertexPosition = [
@@ -252,42 +255,11 @@ window.onload = function() {
             //下
             -1.0, -1.0, 1.0, 1.0, -1.0, 1.0, -1.0, -1.0, -1.0, 1.0, -1.0, -1.0
         ],
-        vertexColor    = [
-            1.0, 1.0, 1.0, 1.0,
-            1.0, 1.0, 1.0, 1.0,
-            1.0, 1.0, 1.0, 1.0,
-            1.0, 1.0, 1.0, 1.0,
-
-            1.0, 1.0, 1.0, 1.0,
-            1.0, 1.0, 1.0, 1.0,
-            1.0, 1.0, 1.0, 1.0,
-            1.0, 1.0, 1.0, 1.0,
-
-            1.0, 1.0, 1.0, 1.0,
-            1.0, 1.0, 1.0, 1.0,
-            1.0, 1.0, 1.0, 1.0,
-            1.0, 1.0, 1.0, 1.0,
-
-            1.0, 1.0, 1.0, 1.0,
-            1.0, 1.0, 1.0, 1.0,
-            1.0, 1.0, 1.0, 1.0,
-            1.0, 1.0, 1.0, 1.0,
-
-            1.0, 1.0, 1.0, 1.0,
-            1.0, 1.0, 1.0, 1.0,
-            1.0, 1.0, 1.0, 1.0,
-            1.0, 1.0, 1.0, 1.0,
-
-            1.0, 1.0, 1.0, 1.0,
-            1.0, 1.0, 1.0, 1.0,
-            1.0, 1.0, 1.0, 1.0,
-            1.0, 1.0, 1.0, 1.0,
-
-            1.0, 1.0, 1.0, 1.0,
-            1.0, 1.0, 1.0, 1.0,
-            1.0, 1.0, 1.0, 1.0,
-            1.0, 1.0, 1.0, 1.0
-        ],
+        vertexColor    = (() => {
+            let len = vertexPosition.length / 3, ans = [];
+            while (len--) ans.push(1.0, 1.0, 1.0, 1.0);
+            return ans;
+        })(),
         index          = [
             //前
             2, 1, 0, 1, 2, 3,
@@ -331,7 +303,7 @@ window.onload = function() {
     render.gl.flush();
 
     var count = 0;
-    (function() {
+    function onRender() {
         let gl = render.gl;
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
@@ -349,7 +321,6 @@ window.onload = function() {
         gl.drawElements(gl.TRIANGLES, index.length, gl.UNSIGNED_SHORT, 0);
         gl.flush();
 
-        window.requestAnimationFrame(arguments.callee);
-        // setTimeout(arguments.callee, 1000 / 60);
-    })();
+        window.requestAnimationFrame(onRender);
+    };
 };
