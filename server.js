@@ -7,8 +7,10 @@ let server = http.createServer(function(request, response) {
     if (pathObj.pathname === "/" || pathObj === "/index")
         pathObj.pathname = "/index.html";
     let filePath = path.join(path.resolve(), pathObj.pathname);
-    // if (!fs.existsSync(filePath))
-    // filePath = path.join(path.resolve("code/"), pathObj.pathname);
+    let mine = ((ext = path.extname(filePath)) => {
+        let t = {[".png"]: "image/png", [".js"]: "application/javascript"};
+        return t[ext] || "text/html";
+    })();
     fs.readFile(filePath, "binary", function(err, fileContent) {
         if (err) {
             console.log("404 " + filePath);
@@ -16,6 +18,7 @@ let server = http.createServer(function(request, response) {
             response.end("<h1>404 Not Found</h1>");
         } else {
             console.log("ok " + filePath);
+            response.setHeader("Content-Type", mine);
             response.write(fileContent, "binary");
             response.end();
         }
