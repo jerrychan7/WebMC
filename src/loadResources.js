@@ -140,7 +140,7 @@ function ajaxByUrlAndType(url, type) {
 function getImg(url) {
     return new Promise((s, f) => {
         const img = new Image();
-        img.onload = function() { s(this); };
+        img.onload = function() { this.uri = url; s(this); };
         img.onerror = f;
         img.src = url;
     });

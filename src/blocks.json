@@ -1,0 +1,58 @@
+{
+"block_renderType_index":{
+    "normal":0,
+    "flower":1,
+    "torch":2,
+    "fluid":3,
+    "crop":4,
+    "door":5,
+    "steps":6,
+    "stairs":7,
+    "fence":8,
+    "cactus":9,
+    "bed":10,
+    "glass_panes":11,
+    "stem":12,
+    "fence_gate":13
+},
+"block_renderType_vertex":{
+    "normal":[
+        [0, 1, 0], [0, 1, 1], [1, 1, 1], [1, 1, 0],
+        [0, 0, 1], [0, 0, 0], [1, 0, 0], [1, 0, 1]
+    ],
+    "flower":[
+        [0, 1, 0], [0, 1, 1], [1, 1, 1], [1, 1, 0],
+        [0, 0, 1], [0, 0, 0], [1, 0, 0], [1, 0, 1]
+    ]
+},
+"blocks":{
+    "air":{"id":0,"opacity":0},
+    "stone":            {"id":1,"blastResistance":30,"texture":[[1,20]]},
+    "granite":          {"id":1,"bd":1,"blastResistance":30,"texture":[[1,21]]},
+    "polished_granite": {"id":1,"bd":2,"blastResistance":30,"texture":[[1,22]]},
+    "diorite":          {"id":1,"bd":3,"blastResistance":30,"texture":[[1,23]]},
+    "polished_diorite": {"id":1,"bd":4,"blastResistance":30,"texture":[[1,24]]},
+    "andesite":         {"id":1,"bd":5,"blastResistance":30,"texture":[[1,25]]},
+    "polished_andesite":{"id":1,"bd":6,"blastResistance":30,"texture":[[1,26]]},
+    "grass":       {"id":2,"blastResistance":3,"texture":[[1,3],[2,12],[1,4]]},
+    "dirt":        {"id":3,"blastResistance":2.5,"texture":[[2,12]]},
+    "cobblestone": {"id":4,"blastResistance":30,"texture":[[1,27]]},
+    "oak_wood_planks":      {"id":5,"blastResistance":15,"texture":[[2,15]]},
+    "spruce_wood_planks":   {"id":5,"bd":1,"blastResistance":15,"texture":[[2,16]]},
+    "birch_wood_planks":    {"id":5,"bd":2,"blastResistance":15,"texture":[[2,17]]},
+    "jungle_wood_planks":   {"id":5,"bd":3,"blastResistance":15,"texture":[[2,18]]},
+    "acacia_wood_planks":   {"id":5,"bd":4,"blastResistance":15,"texture":[[2,19]]},
+    "dark_oak_wood_planks": {"id":5,"bd":5,"blastResistance":15,"texture":[[2,20]]},
+    "oak_sapling":      {"id":6,"renderType":1,"opacity":0,"blastResistance":0,"texture":[[3,23]]},
+    "spruce_sapling":   {"id":6,"bd":1,"renderType":1,"opacity":0,"blastResistance":0,"texture":[[3,24]]},
+    "birch_sapling":    {"id":6,"bd":2,"renderType":1,"opacity":0,"blastResistance":0,"texture":[[3,25]]},
+    "jungle_sapling":   {"id":6,"bd":3,"renderType":1,"opacity":0,"blastResistance":0,"texture":[[3,26]]},
+    "acacia_sapling":   {"id":6,"bd":4,"renderType":1,"opacity":0,"blastResistance":0,"texture":[[3,27]]},
+    "dark_oak_sapling": {"id":6,"bd":5,"renderType":1,"opacity":0,"blastResistance":0,"texture":[[3,28]]},
+    "bedrock":      {"id":7,"blastResistance":18000000,"texture":[[2,1]]},
+    "water":        {"id":8,"renderType":3,"opacity":1,"blastResistance":500,"stackable":null,"texture":[[12,1]]},
+    "flowing_water":{"id":9,"renderType":3,"opacity":1,"blastResistance":500,"stackable":null,"texture":[[12,1]]},
+    "lava":         {"id":10,"renderType":3,"luminance":15,"blastResistance":500,"stackable":null,"texture":[[12,3]]},
+    "flowing_lava": {"id":11,"renderType":3,"luminance":15,"blastResistance":500,"stackable":null,"texture":[[12,3]]}
+}
+}
