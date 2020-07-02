@@ -57,14 +57,16 @@ const mat4 = {
     },
     //原始矩阵 从原点开始移动一定距离的向量 结果矩阵
     translate(mat, vec, dest = new Mat4Type(16)) {
+        let [x, y, z] = vec,
+            [a, b, c, d, e, f, g, h, i, j, k, l] = mat;
         dest.set([
-            mat[0], mat[1], mat[2], mat[3],
-            mat[4], mat[5], mat[6], mat[7],
-            mat[8], mat[9], mat[10], mat[11],
-            mat[0] * vec[0] + mat[4] * vec[1] + mat[8]  * vec[2] + mat[12],
-            mat[1] * vec[0] + mat[5] * vec[1] + mat[9]  * vec[2] + mat[13],
-            mat[2] * vec[0] + mat[6] * vec[1] + mat[10] * vec[2] + mat[14],
-            mat[3] * vec[0] + mat[7] * vec[1] + mat[11] * vec[2] + mat[15]
+            a, b, c, d,
+            e, f, g, h,
+            i, j, k, l,
+            mat[12] + a * x + e * y + i * z,
+            mat[13] + b * x + f * y + j * z,
+            mat[14] + c * x + g * y + k * z,
+            mat[15] + d * x + h * y + l * z
         ]);
         return dest;
     },
@@ -105,33 +107,67 @@ const mat4 = {
     //视图变换矩阵
     //镜头位置向量 镜头参考点向量 镜头方向向量 结果矩阵
     //将镜头理解为人头 镜头方向就是头顶的朝向
-    lookAt(eye, center, up, dest = new Mat4Type(16)) {
+    // https://www.3dgep.com/understanding-the-view-matrix/
+    lookAt(eye, target, up, dest = new Mat4Type(16)) {
         let [eyeX, eyeY, eyeZ] = eye,
             [upX, upY, upZ] = up,
-            [centerX, centerY, centerZ] = center;
-        if (eyeX == centerX && eyeY == centerY && eyeZ == centerZ) return mat4.identity(dest);
+            [targetX, targetY, targetZ] = target;
+        if (eyeX == targetX && eyeY == targetY && eyeZ == targetZ) return mat4.identity(dest);
+        // z = normal(eye - target)
+        // x = normal(cross(up, z))
+        // y = cross(z, x)
         let x0, x1, x2, y0, y1, y2,
-            z0 = eyeX - centerX,
-            z1= eyeY - centerY,
-            z2 = eyeZ - centerZ,
-            l = 1 / Math.sqrt(z0 * z0 + z1 * z1 + z2 * z2);
+            z0 = eyeX - targetX,
+            z1 = eyeY - targetY,
+            z2 = eyeZ - targetZ,
+            l = 1 / Math.sqrt(z0 ** 2 + z1 ** 2 + z2 ** 2);
         z0 *= l; z1 *= l; z2 *= l;
         x0 = upY * z2 - upZ * z1;
         x1 = upZ * z0 - upX * z2;
         x2 = upX * z1 - upY * z0;
-        l = Math.sqrt(x0 * x0 + x1 * x1 + x2 * x2);
-        if (!l) x0 = x1 = x2 = 0;
-        else {
+        l = Math.sqrt(x0 ** 2 + x1 ** 2 + x2 ** 2);
+        if (l) {
             l = 1 / l;
             x0 *= l; x1 *= l; x2 *= l;
         }
+        else x0 = x1 = x2 = 0;
         y0 = z1 * x2 - z2 * x1; y1 = z2 * x0 - z0 * x2; y2 = z0 * x1 - z1 * x0;
-        l = Math.sqrt(y0 * y0 + y1 * y1 + y2 * y2);
-        if (!l) y0 = y1 = y2 = 0;
-        else {
+        l = Math.sqrt(y0 ** 2 + y1 ** 2 + y2 ** 2);
+        if (l) {
             l = 1 / l;
             y0 *= l; y1 *= l; y2 *= l;
         }
+        else y0 = y1 = y2 = 0;
+        // x0, y0, z0, 0,
+        // x1, y1, z1, 0,
+        // x2, y2, z2, 0,
+        // -dot(x, eye), -dot(y, eye), -dot(z, eye), 1
+        dest.set([
+            x0, y0, z0, 0,
+            x1, y1, z1, 0,
+            x2, y2, z2, 0,
+            -(x0 * eyeX + x1 * eyeY + x2 * eyeZ),
+            -(y0 * eyeX + y1 * eyeY + y2 * eyeZ),
+            -(z0 * eyeX + z1 * eyeY + z2 * eyeZ),
+            1
+        ]);
+        return dest;
+    },
+    fpsView(eye, pitch, yaw, rollZ = 0, dest = new Mat4Type(16)) {
+        let [eyeX, eyeY, eyeZ] = eye,
+            cosPitch = Math.cos(pitch),
+            sinPitch = Math.sin(pitch),
+            cosYaw = Math.cos(yaw),
+            sinYaw = Math.sin(yaw),
+            cosZ = Math.cos(-rollZ),
+            sinZ = Math.sin(-rollZ),
+            x0 = cosYaw * cosZ, x1 = cosYaw * sinZ, x2 = -sinYaw,
+            y0 = sinPitch * sinYaw * cosZ - cosPitch * sinZ,
+            y1 = sinPitch * sinYaw * sinZ + cosPitch * cosZ,
+            y2 = sinPitch * cosYaw,
+            z0 = cosPitch * sinYaw * cosZ + sinPitch * sinZ,
+            z1 = cosPitch * sinYaw * sinZ - sinPitch * cosZ,
+            z2 = cosPitch * cosYaw;
         dest.set([
             x0, y0, z0, 0,
             x1, y1, z1, 0,
@@ -144,17 +180,18 @@ const mat4 = {
         return dest;
     },
     //投影变换矩阵
-    //视角 屏幕高宽比 近截面位置>0 远截面位置 结果矩阵
-    //视角不是镜头方向 理解为视野范围
+    //视角(degrees) 屏幕高宽比 近截面位置>0 远截面位置 结果矩阵
+    // 当想要转换左右手坐标系时，用
+    // 将视图矩阵最后一行的前三个取反 乘 将下面的投影矩阵2fn*d和1取反
+    // 当转换左右手坐标系时 三角形的旋转方向就反过来了 需要注意
     perspective(fovy, aspect, near, far, dest = new Mat4Type(16)) {
-        let t = near * Math.tan(fovy * Math.PI / 360),
-            r = t * aspect,
-            a = r * 2, b = t * 2, c = far - near;
+        let t = 1 / Math.tan(fovy * Math.PI / 360),
+            d = 1 / (far - near);
         dest.set([
-            near * 2 / a, 0, 0, 0,
-            0, near * 2 / b, 0, 0,
-            0, 0, -(far + near) / c, -1,
-            0, 0, -(far * near * 2) / c, 0
+            t / aspect, 0, 0, 0,
+            0, t, 0, 0,
+            0, 0, -(far + near) * d, -1,
+            0, 0, -2 * far * near * d, 0
         ]);
         return dest;
     },
@@ -222,6 +259,17 @@ const vec3 = {
         return dest;
     },
     get mul() { return vec3.multiply; },
+    cross(v1, v2, dest = new Vec3Type(3)) {
+        dest.set([
+            v1[1] * v2[2] - v1[2] * v2[1],
+            v1[2] * v2[0] - v1[0] * v2[2],
+            v1[0] * v2[1] - v1[1] * v2[0]
+        ]);
+        return dest;
+    },
+    dot(v1, v2) {
+        return v1[0] * v2[0] + v1[1] * v2[1] + v1[2] * v2[2];
+    },
     scale(v, s, dest = new Vec3Type(3)) {
         dest.set([v[0] * s, v[1] * s, v[2] * s]);
         return dest;
