@@ -7,11 +7,16 @@ class Render {
         if (!ctx) throw "Cannot get the WebGL context";
         this.prgCache = {};
         this.texCache = {};
+        this.camera = [];
         this.frame = this.frame.bind(this);
         this.timer = null;
     };
     get aspectRatio() {
         return this.ctx.canvas.width / this.ctx.canvas.height;
+    };
+    addCamera(camera) {
+        this.camera.push(camera);
+        return this;
     };
     createProgram(name, vectSrc, fragSrc) {
         return this.prgCache[name] = new Program(this.ctx, vectSrc, fragSrc);
@@ -34,6 +39,7 @@ class Render {
         const c = this.ctx.canvas;
         c.width = w; c.height = h;
         this.ctx.viewport(0, 0, w, h);
+        this.camera.forEach(camera => camera.setAspectRatio(w / h));
         return {w, h};
     };
 
