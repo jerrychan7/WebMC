@@ -43,8 +43,7 @@ asyncLoadResByUrl("src/blocks.json").then(obj => {
 
 export default class Block {
     constructor(blockName, {
-        transparency = false,
-        attenuation = transparency? 0: 15,
+        opacity = 15,
         luminance = 0,
         renderType = Block.renderType.NORMAL,
         stackable = 64,
@@ -63,7 +62,7 @@ export default class Block {
         })(vs.length/12)})).reduce((ac, o) => ({...ac, ...o}), {});
         this.texture = { img: textureImg, uv: {} };
         this.changeTexUV(textureCoord);
-        this.attenuation = attenuation;
+        this.opacity = opacity;
         this.luminance = luminance;
         this.stackable = stackable;
         BLOCKS[blockName] = this;
