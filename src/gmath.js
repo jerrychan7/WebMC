@@ -3,6 +3,7 @@ let Mat4Type = Float32Array,
     Vec3Type = Float32Array;
 
 const mat4 = {
+    setArrType(arrType) { return Mat4Type = arrType; },
     identity(src = new Mat4Type(16)) {
         src.set([
             1, 0, 0, 0,
@@ -238,8 +239,12 @@ const mat4 = {
 };
 
 const vec3 = {
-    create(x = 0, y = 0, z = 0, ArrayType = Vec3Type) {
-        return new ArrayType([x, y, z]);
+    setArrType(arrType) { return Vec3Type = arrType; },
+    create(x = 0, y = 0, z = 0, dest = new Vec3Type(3)) {
+        dest[0] = x;
+        dest[1] = y;
+        dest[2] = z;
+        return dest;
     },
     length(src) {
         return Math.sqrt(src[0] ** 2 + src[1] ** 2 + src[2] ** 2);
@@ -274,6 +279,10 @@ const vec3 = {
         dest.set([v[0] * s, v[1] * s, v[2] * s]);
         return dest;
     },
+    scaleAndAdd(src, s, v, dest = new Vec3Type(3)) {
+        dest.set([src[0] + v[0] * s, src[1] + v[1] * s, src[2] + v[2] * s]);
+        return dest;
+    },
     divide(v1, v2, dest = new Vec3Type(3)) {
         dest.set([v1[0] / v2[0], v1[1] / v2[1], v1[2] / v2[2]]);
         return dest;
@@ -287,6 +296,33 @@ const vec3 = {
     },
     negate(v, dest = new Vec3Type(3)) {
         dest.set([-v[0], -v[1], -v[2]]);
+        return dest;
+    },
+    rotateX(v, a, dest = new Vec3Type(3)) {
+        let s = Math.sin(a), c = Math.cos(a);
+        dest.set([
+            v[0],
+            v[1] * c - v[2] * s,
+            v[1] * s + v[2] * c
+        ]);
+        return dest;
+    },
+    rotateY(v, a, dest = new Vec3Type(3)) {
+        let s = Math.sin(a), c = Math.cos(a);
+        dest.set([
+            v[2] * s + v[0] * c,
+            v[1],
+            v[2] * c - v[0] * s
+        ]);
+        return dest;
+    },
+    rotateZ(v, a, dest = new Vec3Type(3)) {
+        let s = Math.sin(a), c = Math.cos(a);
+        dest.set([
+            v[0] * c - v[1] * s,
+            v[0] * s + v[1] * c,
+            v[2]
+        ]);
         return dest;
     },
     inverse(v, dest = new Vec3Type(3)) {

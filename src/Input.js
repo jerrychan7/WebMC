@@ -15,8 +15,7 @@ class Input {
         this.autoLock = false;
         this.locked = false;
         this.doc.addEventListener("pointerlockchange", (e) => {
-            if (document.pointerLockElement === this.canvas)
-                this.locked = !this.locked;
+            this.locked = document.pointerLockElement === this.canvas;
         });
         this.doc.addEventListener("keydown", this[Symbol.for("onKeyDown")].bind(this), false);
         this.doc.addEventListener("keyup", this[Symbol.for("onKeyUp")].bind(this), false);

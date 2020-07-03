@@ -10,6 +10,7 @@ class Render {
         this.camera = [];
         this.frame = this.frame.bind(this);
         this.timer = null;
+        this.lastFrameTime = window.performance.now();
     };
     get aspectRatio() {
         return this.ctx.canvas.width / this.ctx.canvas.height;
@@ -23,9 +24,10 @@ class Render {
     };
     getProgram(name) { return this.prgCache[name]; };
 
-    frame(timestamp) {
-        if (this.onRender) this.onRender(timestamp);
+    frame(timestamp = this.lastFrameTime) {
         this.timer = window.requestAnimationFrame(this.frame);
+        if (this.onRender) this.onRender(timestamp, timestamp - this.lastFrameTime);
+        this.lastFrameTime = timestamp;
     };
     play() {
         if (this.timer === null) this.frame();

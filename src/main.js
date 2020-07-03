@@ -1,10 +1,9 @@
-import {mat4, vec3} from "./gmath.js";
 import * as glsl from "./glsl.js";
 import Render from "./Render.js";
 import {preloaded} from "./loadResources.js";
 import Block from "./Block.js";
 import Camera from "./Camera.js";
-import World from "./World.js";;
+import World from "./World.js";
 
 window.onload = async function() {
 
@@ -31,15 +30,12 @@ window.onload = async function() {
         prg = render.createProgram("showBlock", glsl.showBlock.vert, glsl.showBlock.frag)
             .use().bindTex("texture", render.getTexture(Block.getBlockByBlockName("stone").texture.img.uri));
     render.addCamera(camera);
-    render.onRender = function(timestamp) {
+    camera.bindEntity(world.mainPlayer);
+    render.onRender = function(timestamp, dt) {
         const gl = this.gl;
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-        let radians = (deg) => deg * Math.PI / 180,
-            d = timestamp / 10, rd = radians(d),
-            xrad = radians(0.4 * d),
-            yrad = radians(0.7 * d);
-        camera.setPos([32 * Math.cos(yrad) + 8.5, camera.position[1], 32 * Math.sin(xrad) + 8.5]);
         prg.setUni("mvpMatrix", camera.projview);
+        world.updata(dt);
         world.draw();
         gl.flush();
     };

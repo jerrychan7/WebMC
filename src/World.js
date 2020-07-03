@@ -1,5 +1,7 @@
 import Chunk from "./Chunk.js";
-import Block from "./Block.js";;
+import Block from "./Block.js";
+import Player from "./Player.js";
+import PlayerLocalController from "./PlayerLocalController.js";
 
 class World {
     constructor({
@@ -10,8 +12,8 @@ class World {
         this.name = worldName;
         this.type = worldType;
         this.chunkMap = {};
-        this.mainPlayer = null;
-        this.entitys = [];
+        this.mainPlayer = new Player(this);
+        this.entitys = [this.mainPlayer];
         this.renderer = renderer;
         this.generator = this.generator.bind(this);
         for (let dx of [-1,0,1])
@@ -40,6 +42,7 @@ class World {
         for (let ck in this.chunkMap) {
             this.chunkMap[ck].setRenderer(renderer);
         }
+        this.mainPlayer.setController(new PlayerLocalController(this.mainPlayer, renderer.ctx.canvas));
     };
     loadChunk(chunkX, chunkZ) {
         let ck = Chunk.chunkKey(chunkX, chunkZ),
@@ -63,15 +66,17 @@ class World {
         if (c) return c.setTile(blockX % Chunk.X_WIDTH, blockY, blockZ % Chunk.Z_WIDTH, blockName);
         return null;
     };
-    updata() {
-        for (let ck in this.chunkMap) {
-            this.chunkMap[ck].updata();
-        }
+    updata(dt) {
+        // for (let ck in this.chunkMap) {
+        //     this.chunkMap[ck].updata();
+        // }
+        this.entitys.forEach(e => e.updata(dt));
     };
     draw() {
         for (let ck in this.chunkMap) {
             this.chunkMap[ck].draw();
         }
+        this.entitys.forEach(e => e.draw());
     };
 };
 

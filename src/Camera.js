@@ -14,6 +14,7 @@ class Camera {
         this.pM = mat4.perspective(this.fovy, this.aspectRatio, this.near, this.far);
         this.pvM = mat4.multiply(this.pM, this.vM);
         this.pChange = this.vChange = false;
+        this.entity = null;
     };
     setPos(pos) { this.position = vec3.create(...pos); this.vChange = true; return this; };
     setPitch(pitch) {  this.pitch = pitch; this.vChange = true; return this; };
@@ -31,6 +32,14 @@ class Camera {
         return this.pM;
     };
     get view() {
+        if (this.entity) {
+            let e = this.entity;
+            if (this.pitch == e.pitch && this.yaw == e.yaw && vec3.exactEquals(this.position, e.position))
+                return this.vM;
+            vec3.create(...e.position, this.position);
+            this.pitch = e.pitch; this.yaw = e.yaw;
+            return mat4.fpsView(this.position, this.pitch, this.yaw, this.rollZ, this.vM);
+        }
         if (this.vChange) {
             this.vChange = false;
             return mat4.fpsView(this.position, this.pitch, this.yaw, this.rollZ, this.vM);
@@ -38,9 +47,14 @@ class Camera {
         return this.vM;
     };
     get projview() {
-        if (this.pChange || this.vChange)
+        if (this.entity || this.pChange || this.vChange)
             return mat4.multiply(this.projection, this.view, this.pvM);
         return this.pvM;
+    };
+    bindEntity(entity) {
+        if (this.entity) this.entity.setCamera(null);
+        this.entity = entity;
+        entity.setCamera(this);
     };
 }
 
