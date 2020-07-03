@@ -4,6 +4,7 @@ import Render from "./Render.js";
 import {preloaded} from "./loadResources.js";
 import Block from "./Block.js";
 import Camera from "./Camera.js";
+import World from "./World.js";;
 
 window.onload = async function() {
 
@@ -23,51 +24,23 @@ window.onload = async function() {
     render.gl.enable(render.gl.CULL_FACE);
     render.gl.frontFace(render.gl.CCW);
 
-    let block = Block.getBlockByBlockName("grass");
-    render.createTexture(block.texture.img);
-    let faces = Object.keys(block.vertexs),
-        flatObj = (obj, add = 0) => faces.map(f => obj[f]).reduce((ans, i, j) => {ans.push(...i.map(v => v + j * add)); return ans;}, []),
-        vertexPosition = flatObj(block.vertexs),
-        index          = flatObj(block.elements, block.vertexs[faces[0]].length / 3),
-        textureCoord   = flatObj(block.texture.uv),
-        vertexColor    = (() => {
-            let len = vertexPosition.length / 3, ans = [];
-            while (len--) ans.push(1.0, 1.0, 1.0, 1.0);
-            return ans;
-        })(),
-        ibo = render.createIbo(index),
-        camera = new Camera(render.aspectRatio),
-        mM   = mat4.identity(),
+    let world = new World();
+    world.setRenderer(render);
+    render.createTexture(Block.getBlockByBlockName("stone").texture.img);
+    let camera = new Camera(render.aspectRatio, {pitch: -90 * Math.PI / 180, position: [0, 20, 0]}),
         prg = render.createProgram("showBlock", glsl.showBlock.vert, glsl.showBlock.frag)
-            .use()
-            .setAtt("position", render.createVbo(vertexPosition))
-            .setAtt("color", render.createVbo(vertexColor))
-            .setAtt("textureCoord", render.createVbo(textureCoord))
-            .setUni("mvpMatrix", camera.projview)
-            .bindTex("texture", render.getTexture(block.texture.img.uri));
-    render.gl.bindBuffer(render.gl.ELEMENT_ARRAY_BUFFER, ibo);
+            .use().bindTex("texture", render.getTexture(Block.getBlockByBlockName("stone").texture.img.uri));
     render.addCamera(camera);
-    window.addEventListener("resize", (e) => render.fitScreen());
-
     render.onRender = function(timestamp) {
         const gl = this.gl;
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
         let radians = (deg) => deg * Math.PI / 180,
             d = timestamp / 10, rd = radians(d),
             xrad = radians(0.4 * d),
             yrad = radians(0.7 * d);
-        mat4.identity(mM);
-        mat4.rotate(mM, xrad, [1, 0, 0], mM);
-        mat4.rotate(mM, yrad, [0, 1, 0], mM);
-        mat4.translate(mM, [-0.5, -0.5, -0.5], mM);
-        camera.setPos([Math.cos(rd), Math.sin(rd), camera.position[2]]);
-        camera.setPitch(Math.cos(rd) * Math.sin(rd));
-        mat4.multiply(camera.projview, mM, mM);
-        prg.setUni("mvpMatrix", mM);
-
-//        gl.drawElements(gl.LINES,index.length, gl.UNSIGNED_SHORT, 0);
-        gl.drawElements(gl.TRIANGLES, ibo.length, gl.UNSIGNED_SHORT, 0);
+        camera.setPos([32 * Math.cos(yrad) + 8.5, camera.position[1], 32 * Math.sin(xrad) + 8.5]);
+        prg.setUni("mvpMatrix", camera.projview);
+        world.draw();
         gl.flush();
     };
     render.play();
