@@ -2,6 +2,7 @@ import Chunk from "./Chunk.js";
 import Block from "./Block.js";
 import Player from "./Player.js";
 import PlayerLocalController from "./PlayerLocalController.js";
+import { vec3 } from "./gmath.js";
 
 class World {
     constructor({
@@ -78,6 +79,35 @@ class World {
             this.chunkMap[ck].draw();
         }
         this.entitys.forEach(e => e.draw());
+    };
+    // return null->uncollision    else { axis->"x+-y+-z+-": collision face, "": in block, blockPos}
+    rayTraceBlock(start, end, chunkFn) {
+        if (start.some(Number.isNaN) || end.some(Number.isNaN) || vec3.equals(start, end))
+            return null;
+        if (chunkFn(...start.map(Math.floor))) return {
+            axis: "", blockPos: start.map(Math.floor)
+        };
+        let vec = vec3.subtract(end, start),
+            len = vec3.length(vec),
+            delta = vec.map(n => len / Math.abs(n)),
+            axisStepDir = vec.map(n => n < 0? -1: 1),
+            // 当等于整数时 向上取整-1和向下取整不一样
+            blockPos = vec.map((n, i) => n > 0? Math.ceil(start[i]) - 1: Math.floor(start[i])),
+            nextWay = vec3.mul(delta, vec.map((n, i) => n > 0? Math.ceil(start[i]) - start[i]: start[i] - Math.floor(start[i])));
+        for (let way = 0, axis; way <= len;) {
+            axis = nextWay[0] < nextWay[1] && nextWay[0] < nextWay[2]
+                ? 0 : nextWay[1] < nextWay[2]? 1: 2;
+            way = nextWay[axis];
+            if (way > len) break;
+            blockPos[axis] += axisStepDir[axis];
+            if (chunkFn(...blockPos))
+                return {
+                    axis: "xyz"[axis] + (axisStepDir[axis] > 0? '-': '+'),
+                    blockPos
+                };
+            nextWay[axis] += delta[axis];
+        }
+        return null;
     };
 };
 
