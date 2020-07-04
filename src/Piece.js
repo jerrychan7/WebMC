@@ -38,6 +38,7 @@ class Piece {
     };
     setTile(blockX, blockY, blockZ, blockName) {
         this.tileMap[blockX][blockY][blockZ] = Block.getBlockByBlockName(blockName);
+        this.updata();
     };
     updata() {
         let vec = [], element = [], tex = [], totalVec = 0;
@@ -68,12 +69,32 @@ class Piece {
                     break;}
                 }
             }
-        this.vec = vec; this.element = element; this.tex = tex;
-        this.col = (() => {
+        this.vec = new Float32Array(vec);
+        this.tex = new Float32Array(tex);
+        this.col = new Float32Array((() => {
             let len = totalVec, ans = [];
             while (len--) ans.push(1.0, 1.0, 1.0, 1.0);
             return ans;
-        })();
+        })());
+        this.element = new Int16Array(element);
+        if (!this.renderer) return;
+        if (this.pos) {
+            this.renderer.ctx.bindBuffer(this.pos.type, this.pos);
+            this.renderer.ctx.bufferData(this.pos.type, this.vec, this.renderer.ctx.STATIC_DRAW);
+            this.renderer.ctx.bindBuffer(this.color.type, this.color);
+            this.renderer.ctx.bufferData(this.color.type, this.col, this.renderer.ctx.STATIC_DRAW);
+            this.renderer.ctx.bindBuffer(this.texture.type, this.texture);
+            this.renderer.ctx.bufferData(this.texture.type, this.tex, this.renderer.ctx.STATIC_DRAW);
+            this.renderer.ctx.bindBuffer(this.ibo.type, this.ibo);
+            this.renderer.ctx.bufferData(this.ibo.type, this.element, this.renderer.ctx.STATIC_DRAW);
+            this.ibo.length = this.element.length;
+        }
+        else {
+            this.pos = this.renderer.createVbo(this.vec);
+            this.color = this.renderer.createVbo(this.col);
+            this.texture = this.renderer.createVbo(this.tex);
+            this.ibo = this.renderer.createIbo(this.element);
+        }
     };
     draw() {
         if (!this.renderer) return;
