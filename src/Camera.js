@@ -1,4 +1,3 @@
-
 import {vec3, mat4} from "./gmath.js";
 
 class Camera {
@@ -56,9 +55,9 @@ class Camera {
         this.entity = entity;
         entity.setCamera(this);
     };
-}
+};
 
 export {
     Camera,
     Camera as default
-}
+};

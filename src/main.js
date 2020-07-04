@@ -12,6 +12,7 @@ window.onload = async function() {
     let render = new Render(document.getElementById("canvas"));
     window.render = render;
     render.fitScreen();
+    window.addEventListener("resize", render.fitScreen.bind(render, 1, 1));
     render.gl.clearColor(0.1137, 0.1216, 0.1294, 1.0);
     render.gl.clearDepth(1.0);
     render.gl.clear(render.gl.COLOR_BUFFER_BIT | render.gl.DEPTH_BUFFER_BIT);

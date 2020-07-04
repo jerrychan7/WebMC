@@ -33,6 +33,7 @@ class Render {
         if (this.timer === null) this.frame();
     };
     stop() {
+        if (this.timer === null) return;
         window.cancelAnimationFrame(this.timer);
         this.timer = null;
     };
