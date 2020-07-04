@@ -19,8 +19,8 @@ class Entity {
         vec3.rotateY(this.forward, this.yaw, this.forward);
         return this.forward;
     };
-    getDirection() {
-        vec3.create(0, 0, -1, this.direction);
+    getDirection(scale = 1) {
+        vec3.create(0, 0, -scale, this.direction);
         vec3.rotateX(this.direction, this.pitch, this.direction);
         vec3.rotateY(this.direction, this.yaw, this.direction);
         return this.direction;

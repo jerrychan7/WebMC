@@ -79,6 +79,110 @@ class World {
             this.chunkMap[ck].draw();
         }
         this.entitys.forEach(e => e.draw());
+        
+        let mainPlayer = this.mainPlayer;
+        // Need to decouple
+        if (mainPlayer.camera === null) return;
+        // highlight selected block
+        let start = mainPlayer.position,
+            end = mainPlayer.getDirection(20);
+        vec3.add(start, end, end);
+        let hit = this.rayTraceBlock(start, end, (x, y, z) => {
+            let b = this.getTile(x, y, z);
+            return b && b.name !== "air";
+        });
+        if (hit === null) return;
+
+        let block = this.getTile(...hit.blockPos),
+            [bx, by, bz] = hit.blockPos,
+            selector = this.renderer.getProgram("selector").use().setUni("mvp", mainPlayer.camera.projview),
+            ctx = this.renderer.ctx,
+            linever = [], linecol = [], lineEle = [];
+        let {lineverVbo, linecolVbo, lineIbo} = selector;
+        switch (block.renderType) {
+        case Block.renderType.NORMAL: {
+            for (let f in block.vertexs)
+                linever.push(...block.vertexs[f].map((v, ind) => ind%3===0? v+bx: ind%3===1? v+by: v+bz));
+            linecol = (_ => {
+                let len = linever.length, ans = [];
+                while (len--) ans.push(1.0, 1.0, 1.0, 0.5);
+                return ans;
+            })();
+            lineEle = (len => {
+                if (!len) return [];
+                let base = [0,1, 1,2, 2,3, 3,0], out = [];
+                for(let i = 0, j = 0; i < len; j = ++i*4)
+                    out.push(...base.map(x => x + j));
+                return out;
+            })(linever.length / 12);
+            break;}
+        }
+        linever = new Float32Array(linever);
+        linecol = new Float32Array(linecol);
+        lineEle = new Int16Array(lineEle);
+        if (lineIbo) {
+            ctx.bindBuffer(lineverVbo.type, lineverVbo);
+            ctx.bufferData(lineverVbo.type, linever, ctx.DYNAMIC_DRAW);
+            ctx.bindBuffer(linecolVbo.type, linecolVbo);
+            ctx.bufferData(linecolVbo.type, linecolVbo, ctx.DYNAMIC_DRAW);
+            ctx.bindBuffer(lineIbo.type, lineIbo);
+            ctx.bufferData(lineIbo.type, lineEle, ctx.DYNAMIC_DRAW);
+            lineIbo.length = lineEle.length;
+        }
+        else {
+            lineverVbo = selector.lineverVbo = this.renderer.createVbo(linever);
+            linecolVbo = selector.linecolVbo = this.renderer.createVbo(linecol);
+            lineIbo = selector.lineIbo = this.renderer.createIbo(lineEle);
+        }
+        ctx.enable(ctx.BLEND);
+        ctx.blendFunc(ctx.SRC_ALPHA,ctx.ONE_MINUS_SRC_ALPHA);
+        // draw line
+        ctx.bindBuffer(lineIbo.type, lineIbo);
+        selector.setAtt("pos", lineverVbo).setAtt("col", linecolVbo);
+        // ctx.drawArrays(ctx.LINE_STRIP, 0, linever.length / 3);
+        ctx.drawElements(ctx.LINES, lineIbo.length, ctx.UNSIGNED_SHORT, 0);
+        ctx.disable(ctx.BLEND);
+        
+        if (!hit.axis) return;
+        let ver = [], col = [], ele = [], {verVbo, colVbo, ibo} = selector;
+        switch (block.renderType) {
+        case Block.renderType.NORMAL: {
+            ver.push(...block.vertexs[hit.axis].map((v, ind) => ind%3===0? v+bx: ind%3===1? v+by: v+bz));
+            ele.push(...block.elements[hit.axis]);
+            col = (_ => {
+                let len = ver.length / 3, ans = [];
+                while (len--) ans.push(1.0, 1.0, 1.0, 0.15);
+                return ans;
+            })();
+            break;}
+        }
+        ver = new Float32Array(ver);
+        col = new Float32Array(col);
+        ele = new Int16Array(ele);
+        if (ibo) {
+            ctx.bindBuffer(verVbo.type, verVbo);
+            ctx.bufferData(verVbo.type, ver, ctx.DYNAMIC_DRAW);
+            ctx.bindBuffer(colVbo.type, colVbo);
+            ctx.bufferData(colVbo.type, col, ctx.DYNAMIC_DRAW);
+            ctx.bindBuffer(ibo.type, ibo);
+            ctx.bufferData(ibo.type, ele, ctx.DYNAMIC_DRAW);
+            ibo.length = ele.length;
+        }
+        else {
+            verVbo = selector.verVbo = this.renderer.createVbo(ver),
+            colVbo = selector.colVbo = this.renderer.createVbo(col),
+            ibo = selector.ibo = this.renderer.createIbo(ele);
+        }
+        selector.setUni("mvp", mainPlayer.camera.projview);
+        ctx.enable(ctx.BLEND);
+        ctx.blendFunc(ctx.SRC_ALPHA,ctx.ONE_MINUS_SRC_ALPHA);
+        // draw surface
+        ctx.bindBuffer(ibo.type, ibo);
+        ctx.depthMask(false);
+        selector.setAtt("pos", verVbo).setAtt("col", colVbo);
+        ctx.drawElements(ctx.TRIANGLES, ibo.length, ctx.UNSIGNED_SHORT, 0);
+        ctx.depthMask(true);
+        ctx.disable(ctx.BLEND);
     };
     // return null->uncollision    else { axis->"x+-y+-z+-": collision face, "": in block, blockPos}
     rayTraceBlock(start, end, chunkFn) {

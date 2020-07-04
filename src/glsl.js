@@ -30,3 +30,21 @@ export let showBlock = {
             gl_FragColor  = vColor * smpColor;
         }`
 };
+
+export let selector = {
+    vert: `
+        attribute vec3 pos;
+        attribute vec4 col;
+        uniform   mat4 mvp;
+        varying   vec4 vCol;
+        void main(void) {
+            vCol = col;
+            gl_Position = mvp * vec4(pos, 1.0);
+        }`,
+    frag: `
+        precision mediump float;
+        varying vec4 vCol;
+        void main(void) {
+            gl_FragColor = vCol;
+        }`
+};
