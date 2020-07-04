@@ -56,14 +56,15 @@ class World {
     getTile(blockX, blockY, blockZ) {
         let locPos = Chunk.getChunkPos(blockX, blockY, blockZ),
             c = this.getChunk(locPos[0], locPos[2]);
-        //console.log("get", blockX, blockY, blockZ, c);
-        if (c) return c.getTile(blockX % Chunk.X_WIDTH, blockY, blockZ % Chunk.Z_WIDTH);
+        const mod = (n, m) => (m + (n % m)) % m;
+        if (c) return c.getTile(mod(blockX, Chunk.X_WIDTH), blockY, mod(blockZ, Chunk.Z_WIDTH));
         return null;
     };
     setTile(blockX, blockY, blockZ, blockName) {
         let locPos = Chunk.getChunkPos(blockX, blockY, blockZ),
             c = this.getChunk(locPos[0], locPos[2]);
-        if (c) return c.setTile(blockX % Chunk.X_WIDTH, blockY, blockZ % Chunk.Z_WIDTH, blockName);
+        const mod = (n, m) => (m + (n % m)) % m;
+        if (c) return c.setTile(mod(blockX, Chunk.X_WIDTH), blockY, mod(blockZ, Chunk.Z_WIDTH), blockName);
         return null;
     };
     updata(dt) {

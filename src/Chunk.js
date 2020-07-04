@@ -41,13 +41,15 @@ class Chunk {
     getTile(blockX, blockY, blockZ) {
         let locPos = Piece.getPiecePos(blockX, blockY, blockZ),
             p = this.getPiece(locPos[1]);
-        if (p) return p.getTile(blockX, blockY % Piece.Y_HEIGHT, blockZ);
+        const mod = (n, m) => (m + (n % m)) % m;
+        if (p) return p.getTile(blockX, mod(blockY, Piece.Y_HEIGHT), blockZ);
         return null;
     };
     setTile(blockX, blockY, blockZ, blockName) {
         let locPos = Piece.getPiecePos(blockX, blockY, blockZ),
             c = this.getPiece(locPos[1]);
-        if (c) return c.setTile(blockX, blockY % Piece.Y_HEIGHT, blockZ, blockName);
+        const mod = (n, m) => (m + (n % m)) % m;
+        if (c) return c.setTile(blockX, mod(blockY, Piece.Y_HEIGHT), blockZ, blockName);
         return null;
     };
     updata() {
