@@ -36,8 +36,8 @@ window.onload = async function() {
     render.onRender = function(timestamp, dt) {
         const gl = this.gl;
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-        prg.use().setUni("mvpMatrix", camera.projview);
         world.updata(dt);
+        prg.use().setUni("mvpMatrix", camera.projview);
         world.draw();
         gl.flush();
     };

@@ -84,7 +84,8 @@ class World {
         // Need to decouple
         if (mainPlayer.camera === null) return;
         // highlight selected block
-        let start = mainPlayer.position,
+        //let start = mainPlayer.position,
+        let start = mainPlayer.getEyePosition(),
             end = mainPlayer.getDirection(20);
         vec3.add(start, end, end);
         let hit = this.rayTraceBlock(start, end, (x, y, z) => {
@@ -193,11 +194,18 @@ class World {
         };
         let vec = vec3.subtract(end, start),
             len = vec3.length(vec),
-            delta = vec.map(n => len / Math.abs(n)),
-            axisStepDir = vec.map(n => n < 0? -1: 1),
-            // 当等于整数时 向上取整-1和向下取整不一样
-            blockPos = vec.map((n, i) => n > 0? Math.ceil(start[i]) - 1: Math.floor(start[i])),
-            nextWay = vec3.mul(delta, vec.map((n, i) => n > 0? Math.ceil(start[i]) - start[i]: start[i] - Math.floor(start[i])));
+            delta = vec3.create(),
+            axisStepDir = vec3.create(),
+            blockPos = vec3.create(),
+            nextWay = vec3.create();
+        vec.forEach((dir, axis) => {
+            let d = delta[axis] = len / Math.abs(dir);
+            axisStepDir[axis] = dir < 0? -1: 1;
+            blockPos[axis] = dir > 0? Math.ceil(start[axis]) - 1: Math.floor(start[axis]);
+            nextWay[axis] = d === Infinity? Infinity :d * (dir > 0
+                ? Math.ceil(start[axis]) - start[axis]
+                : start[axis] - Math.floor(start[axis]));
+        });
         for (let way = 0, axis; way <= len;) {
             axis = nextWay[0] < nextWay[1] && nextWay[0] < nextWay[2]
                 ? 0 : nextWay[1] < nextWay[2]? 1: 2;
@@ -210,6 +218,63 @@ class World {
                     blockPos
                 };
             nextWay[axis] += delta[axis];
+        }
+        return null;
+    };
+    // 向大佬低头
+    // from: https://github.com/guckstift/BlockWeb/blob/master/src/boxcast.js
+    hitboxesCollision(box, vec, chunkFn) {
+        let len      = vec3.length(vec);
+        if(len === 0) return null;
+        let boxmin   = box.min, boxmax = box.max,
+            lead     = vec3.create(),
+            leadvox  = vec3.create(),
+            trailvox = vec3.create(),
+            step     = vec.map(n => n > 0? 1: -1),
+            waydelta = vec.map(n => len / Math.abs(n)),
+            waynext  = vec3.create();
+        for(let k = 0, distnext, trail; k < 3; k ++) {
+            if(vec[k] > 0) {
+                lead[k]     = boxmax[k];
+                trail       = boxmin[k];
+                trailvox[k] = Math.floor(trail);
+                leadvox[k]  = Math.ceil(lead[k]) - 1;
+                distnext    = Math.ceil(lead[k]) - lead[k];
+            }
+            else {
+                lead[k]     = boxmin[k];
+                trail       = boxmax[k];
+                trailvox[k] = Math.ceil(trail) - 1;
+                leadvox[k]  = Math.floor(lead[k]);
+                distnext    = lead[k] - Math.floor(lead[k]);
+            }
+            waynext[k] = waydelta[k] === Infinity? Infinity: waydelta[k] * distnext;
+        }
+        for (let way = 0, axis; way <= len; ) {
+            axis = waynext[1] < waynext[0] && waynext[1] < waynext[2]
+                ? 1: waynext[0] < waynext[2]? 0: 2;
+            // axis = waynext[0] < waynext[1] && waynext[0] < waynext[2]
+            //     ? 0: waynext[1] < waynext[2]? 1: 2;
+            way = waynext[axis];
+            if (way > len) break;
+            waynext[axis]  += waydelta[axis];
+            leadvox[axis]  += step[axis];
+            trailvox[axis] += step[axis];
+            let [stepx, stepy, stepz] = step,
+                xs = axis === 0? leadvox[0]: trailvox[0],
+                ys = axis === 1? leadvox[1]: trailvox[1],
+                zs = axis === 2? leadvox[2]: trailvox[2],
+                [xe, ye, ze] = vec3.add(leadvox, step),
+                x, y, z;
+            for(x = xs; x !== xe; x += stepx)
+              for(y = ys; y !== ye; y += stepy)
+                for(z = zs; z !== ze; z += stepz)
+                    if(chunkFn(x, y, z))
+                        return {
+                            axis: axis,
+                            step: step[axis],
+                            pos:  lead[axis] + way * (vec[axis] / len),
+                        };
         }
         return null;
     };

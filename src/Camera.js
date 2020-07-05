@@ -32,10 +32,11 @@ class Camera {
     };
     get view() {
         if (this.entity) {
-            let e = this.entity;
-            if (this.pitch == e.pitch && this.yaw == e.yaw && vec3.exactEquals(this.position, e.position))
+            let e = this.entity,
+                pos = e.getEyePosition();
+            if (this.pitch == e.pitch && this.yaw == e.yaw && vec3.exactEquals(pos, e.position))
                 return this.vM;
-            vec3.create(...e.position, this.position);
+            vec3.create(...pos, this.position);
             this.pitch = e.pitch; this.yaw = e.yaw;
             return mat4.fpsView(this.position, this.pitch, this.yaw, this.rollZ, this.vM);
         }

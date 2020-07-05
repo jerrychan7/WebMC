@@ -32,7 +32,8 @@ class PlayerLocalController extends EntityController {
         if (e.button !== 0 && e.button !== 2) return;
         let entity = this.entity,
             world = entity.world,
-            start = entity.position,
+            //start = entity.position,
+            start = entity.getEyePosition(),
             end = entity.getDirection(20);
         vec3.add(start, end, end);
         // 当实体有碰撞箱时 这里需要按碰撞箱检测
@@ -43,13 +44,13 @@ class PlayerLocalController extends EntityController {
         if (hit === null || hit.axis === "") return;
         let pos = hit.blockPos;
         // left button
-        if (e.button === 0) {
+        if (e.button === 2) {
             pos["xyz".indexOf(hit.axis[0])] += hit.axis[1] === '-'? -1: 1;
             if (vec3.exactEquals(pos, start.map(Math.floor))) return;
             world.setTile(...pos, "grass");
         }
         // right button
-        else if (e.button === 2) {
+        else if (e.button === 0) {
             world.setTile(...pos, "air");
         }
     };
