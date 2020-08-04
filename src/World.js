@@ -19,7 +19,7 @@ class World {
         this.generator = this.generator.bind(this);
         for (let x = -1; x <= 1; ++x)
           for (let z = -1; z <= 1; ++z)
-            for (let y = -1; y <= 1; ++y)
+            for (let y = 1; y >= -1; --y)
                 this.loadChunk(x, y, z);
         this.setRenderer(renderer);
     };
@@ -42,6 +42,9 @@ class World {
         }
         this.mainPlayer.setController(new PlayerLocalController(this.mainPlayer, renderer.ctx.canvas));
     };
+    getChunk(chunkX, chunkY, chunkZ) {
+        return this.chunkMap[Chunk.chunkKeyByChunkXYZ(chunkX, chunkY, chunkZ)] || null;
+    };
     loadChunk(chunkX, chunkY, chunkZ) {
         let ck = Chunk.chunkKeyByChunkXYZ(chunkX, chunkY, chunkZ),
             chunk = this.chunkMap[ck];
@@ -63,6 +66,21 @@ class World {
     setTile(blockX, blockY, blockZ, blockName) {
         let c = this.chunkMap[Chunk.chunkKeyByBlockXYZ(blockX, blockY, blockZ)];
         if (c) return c.setTile(...Chunk.getRelativeBlockXYZ(blockX, blockY, blockZ), blockName);
+        return null;
+    };
+    getLight(blockX, blockY, blockZ) {
+        let c = this.chunkMap[Chunk.chunkKeyByBlockXYZ(blockX, blockY, blockZ)];
+        if (c) return c.getLight(...Chunk.getRelativeBlockXYZ(blockX, blockY, blockZ));
+        return null;
+    };
+    getSkylight(blockX, blockY, blockZ) {
+        let c = this.chunkMap[Chunk.chunkKeyByBlockXYZ(blockX, blockY, blockZ)];
+        if (c) return c.getSkylight(...Chunk.getRelativeBlockXYZ(blockX, blockY, blockZ));
+        return null;
+    };
+    getTorchlight(blockX, blockY, blockZ) {
+        let c = this.chunkMap[Chunk.chunkKeyByBlockXYZ(blockX, blockY, blockZ)];
+        if (c) return c.getTorchlight(...Chunk.getRelativeBlockXYZ(blockX, blockY, blockZ));
         return null;
     };
     updata(dt) {
