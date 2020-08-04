@@ -46,7 +46,14 @@ class World {
         let ck = Chunk.chunkKeyByChunkXYZ(chunkX, chunkY, chunkZ),
             chunk = this.chunkMap[ck];
         if (chunk) return chunk;
-        return this.chunkMap[ck] = new Chunk(this, chunkX, chunkY, chunkZ);
+        chunk = this.chunkMap[ck] = new Chunk(this, chunkX, chunkY, chunkZ);
+        this.chunkMap[Chunk.chunkKeyByChunkXYZ(chunkX + 1, chunkY, chunkZ)]?.onAroundChunkLoad();
+        this.chunkMap[Chunk.chunkKeyByChunkXYZ(chunkX - 1, chunkY, chunkZ)]?.onAroundChunkLoad();
+        this.chunkMap[Chunk.chunkKeyByChunkXYZ(chunkX, chunkY + 1, chunkZ)]?.onAroundChunkLoad();
+        this.chunkMap[Chunk.chunkKeyByChunkXYZ(chunkX, chunkY - 1, chunkZ)]?.onAroundChunkLoad();
+        this.chunkMap[Chunk.chunkKeyByChunkXYZ(chunkX, chunkY, chunkZ + 1)]?.onAroundChunkLoad();
+        this.chunkMap[Chunk.chunkKeyByChunkXYZ(chunkX, chunkY, chunkZ - 1)]?.onAroundChunkLoad();
+        return chunk;
     };
     getTile(blockX, blockY, blockZ) {
         let c = this.chunkMap[Chunk.chunkKeyByBlockXYZ(blockX, blockY, blockZ)];

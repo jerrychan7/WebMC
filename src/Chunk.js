@@ -48,6 +48,9 @@ class Chunk {
         this.tileMap[Chunk.getLinearBlockIndex(blockRX, blockRY, blockRZ)] = Block.getBlockByBlockName(blockName);
         this.updataAllTile();
     };
+    onAroundChunkLoad() {
+        this.updataAllTile();
+    };
     updataMesh({
         vec = this.mesh.vec,
         col = this.mesh.col,
