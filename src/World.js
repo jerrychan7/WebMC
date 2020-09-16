@@ -45,6 +45,9 @@ class World {
     getChunk(chunkX, chunkY, chunkZ) {
         return this.chunkMap[Chunk.chunkKeyByChunkXYZ(chunkX, chunkY, chunkZ)] || null;
     };
+    getChunkByBlockXYZ(blockX, blockY, blockZ) {
+        return this.chunkMap[Chunk.chunkKeyByBlockXYZ(blockX, blockY, blockZ)] || null;
+    };
     loadChunk(chunkX, chunkY, chunkZ) {
         let ck = Chunk.chunkKeyByChunkXYZ(chunkX, chunkY, chunkZ),
             chunk = this.chunkMap[ck];
@@ -84,9 +87,9 @@ class World {
         return null;
     };
     updata(dt) {
-        // for (let ck in this.chunkMap) {
-        //     this.chunkMap[ck].updata();
-        // }
+        for (let ck in this.chunkMap) {
+            this.chunkMap[ck].updata();
+        }
         this.entitys.forEach(e => e.updata(dt));
     };
     draw() {
