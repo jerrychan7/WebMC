@@ -61,11 +61,11 @@ class Chunk {
              * }
              */
             blockFace: undefined,
-            vec: new Float32Array(),
+            ver: new Float32Array(),
             col: new Float32Array(),
             tex: new Float32Array(),
             element: new Int16Array(),
-            bo: { vec: null, col: null, tex: null, ele: null, },
+            bo: { ver: null, col: null, tex: null, ele: null, },
         };
         this.needRebuild = false;
         this.needRebuildBlockLight = new Set();
@@ -97,22 +97,22 @@ class Chunk {
         this.updataAllTile();
     };
     updataMesh({
-        vec = this.mesh.vec,
+        ver = this.mesh.ver,
         col = this.mesh.col,
         tex = this.mesh.tex,
         element = this.mesh.element
     } = this.mesh) {
         const {mesh, renderer} = this;
-        mesh.vec     = vec;
+        mesh.ver     = ver;
         mesh.col     = col;
         mesh.tex     = tex;
         mesh.element = element;
         if (!renderer) return;
         const bufferObj = mesh.bo;
-        if (bufferObj.vec) {
+        if (bufferObj.ver) {
             const {ctx} = renderer;
-            ctx.bindBuffer(bufferObj.vec.type, bufferObj.vec);
-            ctx.bufferData(bufferObj.vec.type, vec, ctx.STATIC_DRAW);
+            ctx.bindBuffer(bufferObj.ver.type, bufferObj.ver);
+            ctx.bufferData(bufferObj.ver.type, ver, ctx.STATIC_DRAW);
             ctx.bindBuffer(bufferObj.col.type, bufferObj.col);
             ctx.bufferData(bufferObj.col.type, col, ctx.STATIC_DRAW);
             ctx.bindBuffer(bufferObj.tex.type, bufferObj.tex);
@@ -122,7 +122,7 @@ class Chunk {
             bufferObj.ele.length = element.length;
         }
         else {
-            bufferObj.vec = renderer.createVbo(vec);
+            bufferObj.ver = renderer.createVbo(ver);
             bufferObj.col = renderer.createVbo(col);
             bufferObj.tex = renderer.createVbo(tex);
             bufferObj.ele = renderer.createIbo(element);
@@ -199,7 +199,7 @@ class Chunk {
         }
 
         // build vertex
-        let vec = [], color = [], element = [], tex = [], totalVec = 0;
+        let ver = [], color = [], element = [], tex = [], totalVer = 0;
         for (let j = 0; j < Y_SIZE; ++j)
           for (let k = 0; k < Z_SIZE; ++k)
             for (let i = 0; i < X_SIZE; ++i) {
@@ -222,9 +222,9 @@ class Chunk {
                         bff.ver = cblock.vertexs[face].map((v, ind) => ind%3===0? v+wx: ind%3===1? v+wy: v+wz);
                         bff.ele = cblock.elements[face];
                         bff.tex = cblock.texture.uv[face];
-                        vec.push(...bff.ver);
+                        ver.push(...bff.ver);
                         tex.push(...bff.tex);
-                        element.push(...bff.ele.map(v => v + totalVec));
+                        element.push(...bff.ele.map(v => v + totalVer));
                         let bl = (rx < 0 || rx >= X_SIZE || rz < 0 || rz >= Z_SIZE || ry < 0 || ry >= Y_SIZE)
                             ? this.world.getLight(wx + dx, wy + dy, wz + dz)
                             : this.getLight(rx, ry, rz);
@@ -239,13 +239,13 @@ class Chunk {
                         })();
                         color.push(...bff.col);
                         bf[face] = bff;
-                        totalVec += verNum;
+                        totalVer += verNum;
                     });
                     break;}
                 }
             }
         this.updataMesh({
-            vec: new Float32Array(vec),
+            ver: new Float32Array(ver),
             tex: new Float32Array(tex),
             col: new Float32Array(color),
             element: new Int16Array(element),
@@ -488,7 +488,7 @@ class Chunk {
             this.needRebuildBlockLight = new Set();
         }
         if (!this.needRebuild) return;
-        let ver = [], color = [], element = [], tex = [], totalVec = 0;
+        let ver = [], color = [], element = [], tex = [], totalVer = 0;
         this.mesh.blockFace.forEach(bfx => {
             bfx.forEach(bfxy => {
                 bfxy.forEach(bfxyz => {
@@ -498,14 +498,14 @@ class Chunk {
                         ver.push(...bff.ver);
                         tex.push(...bff.tex);
                         color.push(...bff.col);
-                        element.push(...bff.ele.map(v => v + totalVec));
-                        totalVec += verNum;
+                        element.push(...bff.ele.map(v => v + totalVer));
+                        totalVer += verNum;
                     }
                 });
             });
         });
         this.updataMesh({
-            vec: new Float32Array(ver),
+            ver: new Float32Array(ver),
             tex: new Float32Array(tex),
             col: new Float32Array(color),
             element: new Int16Array(element),
@@ -517,7 +517,7 @@ class Chunk {
         const ctx = this.renderer.ctx, bufferObj = this.mesh.bo;
         this.renderer.getProgram("showBlock")
             .use()
-            .setAtt("position", bufferObj.vec)
+            .setAtt("position", bufferObj.ver)
             .setAtt("color", bufferObj.col)
             .setAtt("textureCoord", bufferObj.tex);
         ctx.bindBuffer(ctx.ELEMENT_ARRAY_BUFFER, bufferObj.ele);
