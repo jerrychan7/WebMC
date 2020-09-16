@@ -68,6 +68,8 @@ export default class Block {
         BLOCKS[blockName] = this;
     };
 
+    get isOpaque() { return this.opacity === 15; };
+
     changeTexUV(texCoord) {
         for (let texture of texCoord) {
             let [x, y] = texture;

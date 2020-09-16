@@ -149,7 +149,7 @@ class Chunk {
                         ? [this.world.getTile(wx + dx, wy + dy, wz + dz),
                             this.world.getTorchlight(wx + dx, wy + dy, wz + dz)]
                         : [this.getTile(rx, ry, rz), lightMap.getTorchlight(rx, ry, rz)];
-                if (b === null || b.opacity === 15) return;
+                if (b === null || b.isOpaque) return;
                 if (bl + 2 <= l) {
                     // TODO: If the block is in another chunk, it needs to be notified to update.
                     lightMap.setTorchlight(rx, ry, rz, l - b.opacity - 1);
@@ -160,7 +160,7 @@ class Chunk {
         // build sky light
         for (let z = 0, y = Y_SIZE - 1; z < Z_SIZE; ++z)
           for (let x = 0; x < X_SIZE; ++x) {
-            if (this.getTile(x, y, z).opacity === 15) continue;
+            if (this.getTile(x, y, z).isOpaque) continue;
             lightMap.setSkylight(x, y, z, 15);
             queue.push([x, y, z]);
           }
@@ -174,7 +174,7 @@ class Chunk {
                         ? [this.world.getTile(wx + dx, wy + dy, wz + dz),
                             this.world.getSkylight(wx + dx, wy + dy, wz + dz)]
                         : [this.getTile(rx, ry, rz), lightMap.getSkylight(rx, ry, rz)];
-                if (b === null || b.opacity === 15) return;
+                if (b === null || b.isOpaque) return;
                 if (l === 15 && dy === -1) {
                     lightMap.setSkylight(rx, ry, rz, 15);
                     queue.push([rx, ry, rz]);
@@ -216,7 +216,7 @@ class Chunk {
                             b = (rx < 0 || rx >= X_SIZE || rz < 0 || rz >= Z_SIZE || ry < 0 || ry >= Y_SIZE)
                                 ? this.world.getTile(wx + dx, wy + dy, wz + dz)
                                 : this.getTile(rx, ry, rz);
-                        if (b?.opacity === 15) return delete bf[face];
+                        if (b?.isOpaque) return delete bf[face];
                         let verNum = cblock.vertexs[face].length / 3;
                         let bff = bf[face] || {};
                         bff.ver = cblock.vertexs[face].map((v, ind) => ind%3===0? v+wx: ind%3===1? v+wy: v+wz);
@@ -318,7 +318,7 @@ class Chunk {
                 let x = wx + dx, y = wy + dy, z = wz + dz,
                     b = this.world.getTile(x, y, z),
                     bl = this.world.getSkylight(x, y, z);
-                if (b === null || b.opacity === 15) return;
+                if (b === null || b.isOpaque) return;
                 if (l === 15 && dy === -1) {
                     setSkylight(x, y, z, 15);
                     queue.push([x, y, z]);
@@ -380,7 +380,7 @@ class Chunk {
                     b = this.world.getTile(x, y, z),
                     bl = this.world.getTorchlight(x, y, z);
                 if (b === null) return;
-                if (b.opacity === 15) return;
+                if (b.isOpaque) return;
                 if (bl + 2 <= cbl) {
                     setTorchlight(x, y, z, cbl - b.opacity - 1);
                     queue.push([x, y, z, cbl - b.opacity - 1]);
@@ -399,7 +399,7 @@ class Chunk {
                         b = (rx < 0 || rx >= X_SIZE || rz < 0 || rz >= Z_SIZE || ry < 0 || ry >= Y_SIZE)
                             ? this.world.getTile(blockX + dx, blockY + dy, blockZ + dz)
                             : this.getTile(rx, ry, rz);
-                    if (b?.opacity === 15) return;
+                    if (b?.isOpaque) return;
                     let bl = (rx < 0 || rx >= X_SIZE || rz < 0 || rz >= Z_SIZE || ry < 0 || ry >= Y_SIZE)
                         ? this.world.getLight(blockX + dx, blockY + dy, blockZ + dz)
                         : this.getLight(rx, ry, rz),
@@ -440,11 +440,11 @@ class Chunk {
             switch (ablock.renderType) {
             case Block.renderType.NORMAL: {
                 let hasFace = inverseFace in abf;
-                if (cblock.opacity === 15 && hasFace){
+                if (cblock.isOpaque && hasFace){
                     delete abf[inverseFace];
                     break;
                 }
-                else if (cblock.opacity !== 15 && !hasFace) {
+                else if ((!cblock.isOpaque) && (!hasFace)) {
                     let verNum = ablock.vertexs[inverseFace].length / 3;
                     abf[inverseFace] = {
                         ver: ablock.vertexs[inverseFace].map((v, ind) => ind%3===0? v+awx: ind%3===1? v+awy: v+awz),
