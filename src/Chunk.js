@@ -41,7 +41,7 @@ class Chunk {
         return [mod(blockX, X_SIZE), mod(blockY, Y_SIZE), mod(blockZ, Z_SIZE)];
     };
     // YZX
-    static getLinearBlockIndex(blockRX, blockRY, blockRZ) { return (blockRY * Y_SIZE + blockRZ) * Z_SIZE + blockRX; };
+    static getLinearBlockIndex(blockRX, blockRY, blockRZ) { return (((blockRY << SHIFT_Y) + blockRZ) << SHIFT_Z) + blockRX; };
 
     constructor(world, chunkX, chunkY, chunkZ, renderer = world.renderer, generator = world.generator) {
         this.world = world;
@@ -49,6 +49,8 @@ class Chunk {
         // Y_SIZE * Z_SIZE * X_SIZE    array
         this.tileMap = new Array(Y_SIZE * Z_SIZE * X_SIZE);
         this.lightMap = new LightMap();
+        // [chunk key] = Set("block relateive x, y, z"), callbackID
+        this.unloadChunkData = {};
         this.generator = generator;
         generator(chunkX, chunkY, chunkZ, this.tileMap);
         this.mesh = {
@@ -93,8 +95,107 @@ class Chunk {
     getTorchlight(blockRX, blockRY, blockRZ) {
         return this.lightMap.getTorchlight(blockRX, blockRY, blockRZ);
     };
-    onAroundChunkLoad() {
-        this.updataAllTile();
+    onAroundChunkLoad(chunkKey) {
+        let skyQueue = [], torchQueue = [];
+        this.unloadChunkData[chunkKey].forEach(blockRXYZ => {
+            const [blockRX, blockRY, blockRZ] = blockRXYZ.split(",").map(Number),
+                  blockX = blockRX + this.x * X_SIZE,
+                  blockY = blockRY + this.y * Y_SIZE,
+                  blockZ = blockRZ + this.z * Z_SIZE,
+                  cblock = this.getTile(blockRX, blockRY, blockRZ),
+                  csl = this.lightMap.getSkylight(blockRX, blockRY, blockRZ),
+                  ctl = this.lightMap.getTorchlight(blockRX, blockRY, blockRZ);
+            // spread sky and torch light
+            [[1,0,0], [-1,0,0], [0,1,0], [0,-1,0], [0,0,1], [0,0,-1]]
+            .forEach(([dx, dy, dz]) => {
+                let rx = blockRX + dx, ry = blockRY + dy, rz = blockRZ + dz,
+                    wx = blockX + dx, wy = blockY + dy, wz = blockZ + dz,
+                    [sl, tl] = (rx < 0 || rx >= X_SIZE || rz < 0 || rz >= Z_SIZE || ry < 0 || ry >= Y_SIZE)
+                        ? [this.world.getSkylight(wx, wy, wz), this.world.getTorchlight(wx, wy, wz),]
+                        : [this.lightMap.getSkylight(rx, ry, rz), this.lightMap.getTorchlight(rx, ry, rz),];
+                if (sl === null) return;
+                if (sl >= csl + 2) skyQueue.push([wx, wy, wz, sl]);
+                if (tl >= ctl + 2) torchQueue.push([wx, wy, wz, tl]);
+            });
+            // updata block face
+            if (cblock.name === "air") return;
+            let bf = {};
+            switch (cblock.renderType) {
+            case Block.renderType.NORMAL: {
+                [[1,0,0,"x+"], [-1,0,0,"x-"], [0,1,0,"y+"], [0,-1,0,"y-"], [0,0,1,"z+"], [0,0,-1,"z-"]]
+                .forEach(([dx, dy, dz, face]) => {
+                    let rx = blockRX + dx, ry = blockRY + dy, rz = blockRZ + dz,
+                        wx = blockX + dx, wy = blockY + dy, wz = blockZ + dz,
+                        b = (rx < 0 || rx >= X_SIZE || rz < 0 || rz >= Z_SIZE || ry < 0 || ry >= Y_SIZE)
+                            ? this.world.getTile(wx, wy, wz)
+                            : this.getTile(rx, ry, rz);
+                    if (b?.isOpaque) return;
+                    let bl = (rx < 0 || rx >= X_SIZE || rz < 0 || rz >= Z_SIZE || ry < 0 || ry >= Y_SIZE)
+                        ? this.world.getLight(wx, wy, wz)
+                        : this.getLight(rx, ry, rz),
+                        verNum = cblock.vertexs[face].length / 3;
+                    if (bl === null) bl = 15;
+                    bf[face] = {
+                        ver: cblock.vertexs[face].map((v, ind) => ind%3===0? v+blockX: ind%3===1? v+blockY: v+blockZ),
+                        ele: cblock.elements[face],
+                        tex: cblock.texture.uv[face],
+                        col: [...Array(verNum * 4)].map((_, ind) => ind % 4 === 3? 1.0: Math.pow(0.9, 15 - bl)),
+                    };
+                });
+                break;}
+            }
+            this.mesh.blockFace[blockRX][blockRY][blockRZ] = bf;
+            this.needRebuild = true;
+        });
+        delete this.unloadChunkData[chunkKey];
+        const setSkylight = (x, y, z, l) => {
+            let c = this.world.getChunkByBlockXYZ(x, y, z);
+            c.needRebuildBlockLight.add([x, y, z].join());
+            return c.lightMap.setSkylight(...Chunk.getRelativeBlockXYZ(x, y, z), l);
+        };
+        const setTorchlight = (x, y, z, l) => {
+            let c = this.world.getChunkByBlockXYZ(x, y, z);
+            c.needRebuildBlockLight.add([x, y, z].join());
+            return c.lightMap.setTorchlight(...Chunk.getRelativeBlockXYZ(x, y, z), l);
+        };
+        while (skyQueue.length) {
+            let [wx, wy, wz, cbl] = skyQueue.shift();
+            [[1,0,0], [-1,0,0], [0,1,0], [0,-1,0], [0,0,1], [0,0,-1]]
+            .forEach(([dx, dy, dz]) => {
+                let x = wx + dx, y = wy + dy, z = wz + dz,
+                    b = this.world.getTile(x, y, z),
+                    bl = this.world.getSkylight(x, y, z);
+                if (b === null || b.isOpaque) return;
+                if (cbl === 15 && dy === -1) {
+                    setSkylight(x, y, z, 15);
+                    skyQueue.push([x, y, z, 15]);
+                }
+                else if (bl + 2 <= cbl) {
+                    setSkylight(x, y, z, cbl - b.opacity - 1);
+                    skyQueue.push([x, y, z, cbl - b.opacity - 1]);
+                }
+                else if (bl > cbl) {
+                    skyQueue.push([x, y, z, bl]);
+                }
+            });
+        }
+        while (torchQueue.length) {
+            let [wx, wy, wz, cbl] = torchQueue.shift();
+            [[1,0,0], [-1,0,0], [0,1,0], [0,-1,0], [0,0,1], [0,0,-1]]
+            .forEach(([dx, dy, dz]) => {
+                let x = wx + dx, y = wy + dy, z = wz + dz,
+                    b = this.world.getTile(x, y, z),
+                    bl = this.world.getTorchlight(x, y, z);
+                if (b === null || b.isOpaque) return;
+                if (bl + 2 <= cbl) {
+                    setTorchlight(x, y, z, cbl - b.opacity - 1);
+                    torchQueue.push([x, y, z, cbl - b.opacity - 1]);
+                }
+                else if (bl > cbl + 1) {
+                    torchQueue.push([x, y, z, bl]);
+                }
+            });
+        }
     };
     updataMesh({
         ver = this.mesh.ver,
@@ -200,6 +301,7 @@ class Chunk {
 
         // build vertex
         let ver = [], color = [], element = [], tex = [], totalVer = 0;
+        let {unloadChunkData} = this;
         for (let j = 0; j < Y_SIZE; ++j)
           for (let k = 0; k < Z_SIZE; ++k)
             for (let i = 0; i < X_SIZE; ++i) {
@@ -216,7 +318,13 @@ class Chunk {
                             b = (rx < 0 || rx >= X_SIZE || rz < 0 || rz >= Z_SIZE || ry < 0 || ry >= Y_SIZE)
                                 ? this.world.getTile(wx + dx, wy + dy, wz + dz)
                                 : this.getTile(rx, ry, rz);
-                        if (b?.isOpaque) return delete bf[face];
+                        if (b === null) {
+                            let ck = Chunk.chunkKeyByBlockXYZ(wx + dx, wy + dy, wz + dz),
+                                d = unloadChunkData[ck];
+                            if (!d) d = unloadChunkData[ck] = new Set();
+                            d.add([i, j, k].join());
+                        }
+                        else if (b.isOpaque) return delete bf[face];
                         let verNum = cblock.vertexs[face].length / 3;
                         let bff = bf[face] || {};
                         bff.ver = cblock.vertexs[face].map((v, ind) => ind%3===0? v+wx: ind%3===1? v+wy: v+wz);
@@ -244,6 +352,11 @@ class Chunk {
                     break;}
                 }
             }
+        for (let ck in unloadChunkData) {
+            unloadChunkData[ck].callbackID = this.world.addLoadChunkListener(ck, () => {
+                this.onAroundChunkLoad(ck);
+            }, true);
+        }
         this.updataMesh({
             ver: new Float32Array(ver),
             tex: new Float32Array(tex),
@@ -389,7 +502,7 @@ class Chunk {
         }
 
         // handle center block
-        let  bf = {};
+        let bf = {};
         if (cblock.name !== "air") {
             switch (cblock.renderType) {
             case Block.renderType.NORMAL: {

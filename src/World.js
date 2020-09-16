@@ -13,6 +13,7 @@ class World {
         this.name = worldName;
         this.type = worldType;
         this.chunkMap = {};
+        this.callbacks = {};
         this.mainPlayer = new Player(this);
         this.entitys = [this.mainPlayer];
         this.renderer = renderer;
@@ -53,13 +54,28 @@ class World {
             chunk = this.chunkMap[ck];
         if (chunk) return chunk;
         chunk = this.chunkMap[ck] = new Chunk(this, chunkX, chunkY, chunkZ);
-        this.chunkMap[Chunk.chunkKeyByChunkXYZ(chunkX + 1, chunkY, chunkZ)]?.onAroundChunkLoad();
-        this.chunkMap[Chunk.chunkKeyByChunkXYZ(chunkX - 1, chunkY, chunkZ)]?.onAroundChunkLoad();
-        this.chunkMap[Chunk.chunkKeyByChunkXYZ(chunkX, chunkY + 1, chunkZ)]?.onAroundChunkLoad();
-        this.chunkMap[Chunk.chunkKeyByChunkXYZ(chunkX, chunkY - 1, chunkZ)]?.onAroundChunkLoad();
-        this.chunkMap[Chunk.chunkKeyByChunkXYZ(chunkX, chunkY, chunkZ + 1)]?.onAroundChunkLoad();
-        this.chunkMap[Chunk.chunkKeyByChunkXYZ(chunkX, chunkY, chunkZ - 1)]?.onAroundChunkLoad();
+        this.callbacks[ck]?.forEach(async cb => await cb());
+        this.callbacks[ck]?.filter(cb => cb._once).forEach(cb => this.removeLoadChunkListener(ck, cb._handle));
         return chunk;
+    };
+    addLoadChunkListener(chunkKey, callback, once = false) {
+        let cbs = this.callbacks[chunkKey];
+        if (!cbs) cbs = this.callbacks[chunkKey] = [];
+        let handle = Math.random();
+        cbs[handle] = {callback, once};
+        callback._handle = handle;
+        callback._once = once;
+        cbs.push(callback);
+        return handle;
+    };
+    removeLoadChunkListener(chunkKey, handle) {
+        let cbs = this.callbacks[chunkKey];
+        if (!cbs || !cbs[handle]) return false;
+        let i = cbs.indexOf(cbs[handle].callback);
+        if (i == -1) return false;
+        cbs.splice(i, 1);
+        delete cbs[handle];
+        return true;
     };
     getTile(blockX, blockY, blockZ) {
         let c = this.chunkMap[Chunk.chunkKeyByBlockXYZ(blockX, blockY, blockZ)];
