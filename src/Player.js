@@ -1,3 +1,4 @@
+import Chunk from "./Chunk.js";
 import Entity from "./Entity.js";
 import { vec3 } from "./gmath.js";
 
@@ -43,6 +44,11 @@ class Player extends Entity {
             }
         }
         vec3.add(this.position, dv, this.position);
+        let [cx, cy, cz] = Chunk.getChunkXYZByBlockXYZ(...this.position);
+        for (let dx = -1; dx <= 1; ++dx)
+          for (let dy = -1; dy <= 1; ++dy)
+            for (let dz = -1; dz <= 1; ++dz)
+                this.world.loadChunk(cx + dx, cy + dy, cz + dz);
     };
     updata(dt) {
         if (!this.controller)
