@@ -1,7 +1,11 @@
 import {asyncLoadResByUrl} from "./loadResources.js";
+import {textureMipmapByTile} from "./processingPictures.js";
 
 let defaultBlockTextureImg = null;
-asyncLoadResByUrl("texture/terrain-atlas.png").then(img => defaultBlockTextureImg = img);
+asyncLoadResByUrl("texture/terrain-atlas.png").then(img => {
+    defaultBlockTextureImg = img;
+    textureMipmapByTile(img);
+});
 
 const BlockRenderType = {
     NORMAL: Symbol("block render type: normal"),
@@ -61,7 +65,7 @@ export default class Block {
             return out;
         })(vs.length/12)})).reduce((ac, o) => ({...ac, ...o}), {});
         this.texture = { img: textureImg, uv: {} };
-        this.changeTexUV(textureCoord);
+        this.initTexUV(textureCoord);
         this.opacity = opacity;
         this.luminance = luminance;
         this.stackable = stackable;
@@ -70,21 +74,15 @@ export default class Block {
 
     get isOpaque() { return this.opacity === 15; };
 
-    changeTexUV(texCoord) {
+    initTexUV(texCoord) {
         for (let texture of texCoord) {
             let [x, y] = texture;
             texture[0] = y-1; texture[1] = x-1;
         }
         this.texture.coordinate = texCoord;
-        let {texture: {img: texImg, uv, coordinate}} = this,
-            textureSize = [16*texImg.height/256, texImg.width, texImg.height],
-            xsize = 1/(textureSize[1]/textureSize[0]),
-            ysize = 1/(textureSize[2]/textureSize[0]),
-            calculateOffset = (i, j = 1) => {
-                for (; ~~i != i; i *= 10) j /= 10;
-                return j;
-            },
-            //x和y的偏移坐标 防止出现边缘黑条或白线 小数最后一位+1
+        let {texture: {img: texImg, uv, coordinate}} = this;
+        let xsize = 1 / 32, ysize = 1 / 16,
+            calculateOffset = i => texImg.mipmap? i / 4: 0,
             dx = calculateOffset(xsize),
             dy = calculateOffset(ysize),
             cr2uv = ([x, y]) => [
@@ -135,4 +133,7 @@ export default class Block {
             this.enrollBlock(new this(blockName, cfg));
         });
     };
+    static get defaultBlockTextureImg() {
+        return defaultBlockTextureImg;
+    }
 }

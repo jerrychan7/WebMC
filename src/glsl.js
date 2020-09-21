@@ -21,7 +21,11 @@ export let showBlock = {
     // fs中的vColor是vs中传进来的
     // precision指定精确度 此为精密度中的float
     frag: `
+        #ifdef GL_FRAGMENT_PRECISION_HIGH
+        precision highp float;
+        #else
         precision mediump float;
+        #endif
         uniform sampler2D texture;
         varying vec4      vColor;
         varying vec2      vTextureCoord;

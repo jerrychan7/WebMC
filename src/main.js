@@ -26,10 +26,10 @@ window.onload = async function() {
 
     let world = new World();
     world.setRenderer(render);
-    render.createTexture(Block.getBlockByBlockName("stone").texture.img);
+    render.createTexture(Block.defaultBlockTextureImg);
     let camera = new Camera(render.aspectRatio, {fovy: 75, pitch: -90 * Math.PI / 180, position: [0, 20, 0]}),
         prg = render.createProgram("showBlock", glsl.showBlock.vert, glsl.showBlock.frag)
-            .use().bindTex("texture", render.getTexture(Block.getBlockByBlockName("stone").texture.img.uri));
+            .use().bindTex("texture", render.getTexture(Block.defaultBlockTextureImg.uri));
     render.addCamera(camera);
     camera.bindEntity(world.mainPlayer);
     render.createProgram("selector", glsl.selector.vert, glsl.selector.frag);
