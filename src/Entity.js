@@ -10,7 +10,7 @@ class Entity {
         world = null) {
         this.world = world;
         this.moveSpeed = 0;
-        this.gravity = 0;
+        this.gravityAcceleration = 0;
         this.position = [0, 0, 0];
         this.pitch = 0; // 垂直角 y+为正方向 始于xz平面
         this.yaw = 0;   // 水平角 z-为正方向

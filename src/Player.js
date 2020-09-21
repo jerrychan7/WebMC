@@ -12,24 +12,21 @@ class Player extends Entity {
         }, [0, 1.65, 0], world);
         super.position = vec3.create(...position);
         this.moveSpeed = 4.317;     // block / s
-        super.gravity = 9.8;        // block / s ^ 2
         this.jumpSpeed = 4.95;      // h = v^2 / 2g = 1.25 -> v = √2gh = √24.5 ≈ 4.95
+        super.gravityAcceleration = 9.8; // block / s ^ 2
         this.velocity = vec3.create();
         this.rest = vec3.create();
-        this.acceleration = vec3.create(0, -this.gravity, 0);
+        this.acceleration = vec3.create(0, -this.gravityAcceleration, 0);
     };
     setController(controller) {
         this.controller = controller;
     };
     move(dt) {
-        if (this.rest[1] === -1) this.acceleration[1] = 0;
-        else this.acceleration[1] = -this.gravity;
         vec3.scaleAndAdd(this.velocity, dt, this.acceleration, this.velocity);
         let dv = vec3.scale(this.velocity, dt);
-        if (vec3.len(dv) === 0) return;
         let chunkFn = (x, y, z) => {
             let b = this.world.getTile(x, y, z);
-            return b && b.name !== "air";
+            return b?.name !== "air";
         };
         vec3.create(0, 0, 0, this.rest);
         for (let i = 0, dvel = vec3.create(); i < 3; dvel[i++] = 0) {
@@ -51,9 +48,9 @@ class Player extends Entity {
                 this.world.loadChunk(cx + dx, cy + dy, cz + dz);
     };
     updata(dt) {
+        dt /= 1000;
         if (!this.controller)
             return this.move(dt);
-        dt /= 1000;
         const {keys} = this.controller;
         let dirvec = this.getForward(this.moveSpeed);
         if (keys[" "] && this.rest[1] === -1)
