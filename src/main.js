@@ -13,7 +13,7 @@ window.onload = async function() {
     window.render = render;
     render.fitScreen();
     window.addEventListener("resize", render.fitScreen.bind(render, 1, 1));
-    render.gl.clearColor(0.1137, 0.1216, 0.1294, 1.0);
+    render.gl.clearColor(0.62, 0.81, 1.0, 1.0);
     render.gl.clearDepth(1.0);
     render.gl.clear(render.gl.COLOR_BUFFER_BIT | render.gl.DEPTH_BUFFER_BIT);
     //将深度测试设置为有效

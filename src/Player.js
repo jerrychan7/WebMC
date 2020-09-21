@@ -8,8 +8,8 @@ class Player extends Entity {
     } = {}) {
         super({
             min: [-0.25, 0, -0.25],
-            max: [0.25, 1.7, 0.25]
-        }, [0, 1.5, 0], world);
+            max: [0.25, 1.8, 0.25]
+        }, [0, 1.65, 0], world);
         super.position = vec3.create(...position);
         this.moveSpeed = 4.317;     // block / s
         super.gravity = 9.8;        // block / s ^ 2
