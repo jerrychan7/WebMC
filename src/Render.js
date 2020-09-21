@@ -89,6 +89,12 @@ class Render {
         ctx.texParameteri(ctx.TEXTURE_2D, ctx.TEXTURE_WRAP_T, ctx.CLAMP_TO_EDGE);
         ctx.texImage2D(ctx.TEXTURE_2D, 0, ctx.RGBA, ctx.RGBA, ctx.UNSIGNED_BYTE,
             img.mipmap && img.mipmap[0]? img.mipmap[0]: img);
+        if (img.mipmap) {
+            ctx.generateMipmap(ctx.TEXTURE_2D);
+            ctx.texParameteri(ctx.TEXTURE_2D, ctx.TEXTURE_MIN_FILTER, ctx.NEAREST_MIPMAP_LINEAR);
+            for (let i = 1; i < img.mipmap.length; ++i)
+                ctx.texImage2D(ctx.TEXTURE_2D, i, ctx.RGBA, ctx.RGBA, ctx.UNSIGNED_BYTE, img.mipmap[i]);
+        }
         ctx.bindTexture(ctx.TEXTURE_2D, null);
         if (doYFlip) ctx.pixelStorei(ctx.UNPACK_FLIP_Y_WEBGL, false);
         this.texCache[name] = tex;
