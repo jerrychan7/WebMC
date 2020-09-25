@@ -11,10 +11,10 @@ const BlockRenderType = {
     NORMAL: Symbol("block render type: normal"),
     FLOWER: Symbol("block render type: flower"),
 };
-const BLOCKS = {};
+// BLOCKS: block name -> block      blockIDs: block id -> [db] -> block
+const BLOCKS = {}, blockIDs = new Map();
 
 let blocksCfg = null;
-// asyncLoadResByUrl("src/blocks.json").then(cfg => blocksCfg = cfg);
 asyncLoadResByUrl("src/blocks.json").then(obj => {
     blocksCfg = obj;
     // index_renderType = [index -> BlockRenderType[render type]]
@@ -52,7 +52,10 @@ export default class Block {
         renderType = Block.renderType.NORMAL,
         stackable = 64,
         textureImg = defaultBlockTextureImg,
-        texture: textureCoord = [[16, 32]]
+        texture: textureCoord = [[16, 32]],
+        friction = 1,
+        id = blockIDs.size,
+        bd = 0,
     } = {}) {
         this.name = blockName;
         this.renderType = renderType;
@@ -69,6 +72,14 @@ export default class Block {
         this.opacity = opacity;
         this.luminance = luminance;
         this.stackable = stackable;
+        this.friction = friction;
+        this.id = id;
+        this.bd = bd;
+        if (blockIDs.has(id)) blockIDs.get(id)[bd] = this;
+        else {
+            let t = []; t[bd] = this;
+            blockIDs.set(id, t);
+        }
         BLOCKS[blockName] = this;
     };
 
@@ -127,6 +138,9 @@ export default class Block {
     };
     static getBlockByBlockName(blockName) {
         return BLOCKS[blockName];
+    };
+    static getBlockByBlockIDandData(id, bd = 0) {
+        return blockIDs.has(id)? blockIDs.get(id)[bd]: undefined;
     };
     static initBlocksByDefault() {
         Object.entries(blocksCfg.blocks).forEach(([blockName, cfg]) => {
