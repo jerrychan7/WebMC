@@ -17,10 +17,12 @@ class Player extends Entity {
         this.velocity = vec3.create();
         this.rest = vec3.create();
         this.acceleration = vec3.create(0, -this.gravityAcceleration, 0);
+        this.lastChunk = Chunk.getChunkXYZByBlockXYZ(this.position);
     };
     setController(controller) {
         this.controller = controller;
     };
+    get onGround() { return this.rest[1] === -1; };
     move(dt) {
         vec3.scaleAndAdd(this.velocity, dt, this.acceleration, this.velocity);
         let dv = vec3.scale(this.velocity, dt);
@@ -41,11 +43,14 @@ class Player extends Entity {
             }
         }
         vec3.add(this.position, dv, this.position);
-        let [cx, cy, cz] = Chunk.getChunkXYZByBlockXYZ(...this.position);
-        for (let dx = -1; dx <= 1; ++dx)
-          for (let dy = -1; dy <= 1; ++dy)
+        let cxyz = Chunk.getChunkXYZByBlockXYZ(...this.position),
+            [cx, cy, cz] = cxyz;
+        if (vec3.exactEquals(cxyz, this.lastChunk))
+            for (let dx = -1; dx <= 1; ++dx)
+            for (let dy = -1; dy <= 1; ++dy)
             for (let dz = -1; dz <= 1; ++dz)
                 this.world.loadChunk(cx + dx, cy + dy, cz + dz);
+        this.lastChunk = cxyz;
     };
     updata(dt) {
         dt /= 1000;
@@ -53,17 +58,17 @@ class Player extends Entity {
             return this.move(dt);
         const {keys} = this.controller;
         let dirvec = this.getForward(this.moveSpeed);
-        if (keys[" "] && this.rest[1] === -1)
+        if (keys[" "] && this.onGround)
             this.velocity[1] += this.jumpSpeed;
-        if ((keys[16] || keys.X) && this.rest[1] !== -1)
+        if ((keys[16] || keys.X) && !this.onGround)
             this.velocity[1] -= this.jumpSpeed;
         let up = keys.W || keys[38],
             down = keys.S || keys[40],
             left = keys.A || keys[37],
             right = keys.D || keys[39];
+        if (up && down) up = down = false;
+        if (left && right) left = right = false;
         if (up || down || left || right) {
-            if (up && down) up = down = false;
-            if (left && right) left = right = false;
             if ((up || down) && (left || right))
                 vec3.rotateY(dirvec, ((left? 1: -1) * (up? 45: 135)) * Math.PI / 180, dirvec);
             else if (left)
@@ -72,9 +77,50 @@ class Player extends Entity {
                 vec3.rotateY(dirvec, -Math.PI / 2, dirvec);
             else if (down)
                 vec3.rotateY(dirvec, Math.PI, dirvec);
+
+            let block = this.world.getTile(...this.position),
+                blockFriction = block?.friction || 1,
+                fp = vec3.create(), // motive power
+                ff = vec3.create(), // friction (resistance)
+                nowXZspeed = Math.sqrt(this.velocity[0] ** 2 + this.velocity[2] ** 2);
+            fp = vec3.scale(vec3.normalize(dirvec, fp), blockFriction * 20, fp);
+            if (nowXZspeed <= 0.000001)
+                ff = vec3.scale(vec3.normalize(dirvec, ff), -blockFriction, ff);
+            else if (nowXZspeed >= this.moveSpeed - 0.000001) {
+                let nv = vec3.normalize([this.velocity[0], 0, this.velocity[2]], ff),
+                    t = vec3.scale(nv, this.moveSpeed);
+                this.velocity[0] = t[0]; this.velocity[2] = t[2];
+                ff = vec3.scale(nv, -blockFriction * 20, ff);
+            }
+            else
+                ff = vec3.scale(vec3.normalize([this.velocity[0], 0, this.velocity[2]], ff), -blockFriction, ff);
+            let resultantForce = vec3.add(ff, fp);
+            this.acceleration[0] = resultantForce[0];
+            this.acceleration[2] = resultantForce[2];
         }
-        else dirvec[0] = dirvec[2] = 0;
-        vec3.create(dirvec[0], this.velocity[1], dirvec[2], this.velocity);
+        else {
+            let nowXZspeed = Math.sqrt(this.velocity[0] ** 2 + this.velocity[2] ** 2);
+            if (nowXZspeed > 0.000001) {
+                let block = this.world.getTile(...this.position),
+                    blockFriction = block?.friction || 1,
+                    ff = vec3.create(); // friction (resistance)
+                ff = vec3.scale(vec3.normalize([this.velocity[0], 0, this.velocity[2]], ff), -blockFriction * 20, ff);
+                let nextv = vec3.scaleAndAdd([this.velocity[0], 0, this.velocity[2]], dt, [this.acceleration[0], 0, this.acceleration[2]]);
+                // If next frame direction of velocity is opposite to direction of friction
+                if (vec3.dot(ff, nextv) < 0) {
+                    this.acceleration[0] = ff[0];
+                    this.acceleration[2] = ff[2];
+                }
+                else {
+                    this.acceleration[0] = this.acceleration[2] = 0;
+                    this.velocity[0] = this.velocity[2] = 0;
+                }
+            }
+            else {
+                this.acceleration[0] = this.acceleration[2] = 0;
+                this.velocity[0] = this.velocity[2] = 0;
+            }
+        }
         this.move(dt);
     };
 };
