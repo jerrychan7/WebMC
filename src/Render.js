@@ -54,28 +54,34 @@ class Render {
     };
 
     createIbo(data, drawType = this.ctx.STATIC_DRAW) {
-        if (!(data.buffer instanceof ArrayBuffer))
-            data = new Int16Array(data);
-        const {ctx} = this,
-              ibo  = ctx.createBuffer();
-        ctx.bindBuffer(ctx.ELEMENT_ARRAY_BUFFER, ibo);
-        ctx.bufferData(ctx.ELEMENT_ARRAY_BUFFER, data, drawType);
-        ctx.bindBuffer(ctx.ELEMENT_ARRAY_BUFFER, null);
-        ibo.type = ctx.ELEMENT_ARRAY_BUFFER;
-        ibo.length = data.length;
-        return ibo;
+        return this.createBo(data, this.ctx.ELEMENT_ARRAY_BUFFER, drawType);
     };
 
     createVbo(data, drawType = this.ctx.STATIC_DRAW) {
-        if (!(data.buffer instanceof ArrayBuffer))
-            data = new Float32Array(data);
-        const {ctx} = this,
-              vbo  = ctx.createBuffer();
-        ctx.bindBuffer(ctx.ARRAY_BUFFER, vbo);
-        ctx.bufferData(ctx.ARRAY_BUFFER, data, drawType);
-        ctx.bindBuffer(ctx.ARRAY_BUFFER, null);
-        vbo.type = ctx.ARRAY_BUFFER;
-        return vbo;
+        return this.createBo(data, this.ctx.ARRAY_BUFFER, drawType);
+    };
+
+    createBo(data, boType, drawType = this.ctx.STATIC_DRAW) {
+        return this.bindBoData(this.ctx.createBuffer(), data, {boType, drawType});
+    }
+
+    bindBoData(bufferObj, data, {
+        boType = bufferObj.type,
+        drawType = this.ctx.STATIC_DRAW,
+    } = {}) {
+        const ctx = this.ctx;
+        if (!(data.buffer instanceof ArrayBuffer)) {
+            if (boType === ctx.ELEMENT_ARRAY_BUFFER)
+                data = new Int16Array(data);
+            else if (boType === ctx.ARRAY_BUFFER)
+                data = new Float32Array(data);
+        }
+        bufferObj.length = data.length;
+        bufferObj.type = boType;
+        ctx.bindBuffer(boType, bufferObj);
+        ctx.bufferData(boType, data, drawType);
+        ctx.bindBuffer(boType, null);
+        return bufferObj;
     };
 
     createTexture(img, name = img.outerHTML.match(/src="([^"]*)"/)[1], doYFlip = false) {

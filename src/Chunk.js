@@ -67,7 +67,15 @@ class Chunk {
             col: new Float32Array(),
             tex: new Float32Array(),
             element: new Int16Array(),
-            bo: { ver: null, col: null, tex: null, ele: null, },
+            disableCullFace: {
+                ver: new Float32Array(),
+                col: new Float32Array(),
+                tex: new Float32Array(),
+                element: new Int16Array(),
+            },
+            bo: { ver: null, col: null, tex: null, ele: null,
+                disableCullFace: { ver: null, col: null, tex: null, ele: null, },
+            },
         };
         this.needRebuild = false;
         this.needRebuildBlockLight = new Set();
@@ -76,6 +84,12 @@ class Chunk {
     };
     setRenderer(renderer = null) {
         if (!renderer) return;
+        if (this.renderer !== renderer) {
+            for (let k of ["ver", "col", "tex", "ele"]) {
+                this.mesh.bo[k] = null;
+                this.mesh.bo.disableCullFace[k] = null;
+            }
+        }
         this.renderer = renderer;
         this.updataMesh();
     };
@@ -201,32 +215,51 @@ class Chunk {
         ver = this.mesh.ver,
         col = this.mesh.col,
         tex = this.mesh.tex,
-        element = this.mesh.element
+        element = this.mesh.element,
+        disableCullFace: {
+            ver: disableCullFaceVer = this.mesh.disableCullFace.ver,
+            col: disableCullFaceCol = this.mesh.disableCullFace.col,
+            tex: disableCullFaceTex = this.mesh.disableCullFace.tex,
+            element: disableCullFaceElement = this.mesh.disableCullFace.element,
+        } = {}
     } = this.mesh) {
         const {mesh, renderer} = this;
         mesh.ver     = ver;
         mesh.col     = col;
         mesh.tex     = tex;
         mesh.element = element;
-        if (!renderer) return;
+        mesh.disableCullFace.ver = disableCullFaceVer;
+        mesh.disableCullFace.col = disableCullFaceCol;
+        mesh.disableCullFace.tex = disableCullFaceTex;
+        mesh.disableCullFace.element = disableCullFaceElement;
         const bufferObj = mesh.bo;
+        if (!renderer) {
+            if (bufferObj.ver)
+                for (let k of ["ver", "col", "tex", "ele"]) {
+                    bufferObj[k] = null;
+                    bufferObj.disableCullFace[k] = null;
+                }
+            return;
+        }
         if (bufferObj.ver) {
-            const {ctx} = renderer;
-            ctx.bindBuffer(bufferObj.ver.type, bufferObj.ver);
-            ctx.bufferData(bufferObj.ver.type, ver, ctx.STATIC_DRAW);
-            ctx.bindBuffer(bufferObj.col.type, bufferObj.col);
-            ctx.bufferData(bufferObj.col.type, col, ctx.STATIC_DRAW);
-            ctx.bindBuffer(bufferObj.tex.type, bufferObj.tex);
-            ctx.bufferData(bufferObj.tex.type, tex, ctx.STATIC_DRAW);
-            ctx.bindBuffer(bufferObj.ele.type, bufferObj.ele);
-            ctx.bufferData(bufferObj.ele.type, element, ctx.STATIC_DRAW);
-            bufferObj.ele.length = element.length;
+            renderer.bindBoData(bufferObj.ver, ver);
+            renderer.bindBoData(bufferObj.col, col);
+            renderer.bindBoData(bufferObj.tex, tex);
+            renderer.bindBoData(bufferObj.ele, element);
+            renderer.bindBoData(bufferObj.disableCullFace.ver, disableCullFaceVer);
+            renderer.bindBoData(bufferObj.disableCullFace.col, disableCullFaceCol);
+            renderer.bindBoData(bufferObj.disableCullFace.tex, disableCullFaceTex);
+            renderer.bindBoData(bufferObj.disableCullFace.ele, disableCullFaceElement);
         }
         else {
             bufferObj.ver = renderer.createVbo(ver);
             bufferObj.col = renderer.createVbo(col);
             bufferObj.tex = renderer.createVbo(tex);
             bufferObj.ele = renderer.createIbo(element);
+            bufferObj.disableCullFace.ver = renderer.createVbo(disableCullFaceVer);
+            bufferObj.disableCullFace.col = renderer.createVbo(disableCullFaceCol);
+            bufferObj.disableCullFace.tex = renderer.createVbo(disableCullFaceTex);
+            bufferObj.disableCullFace.ele = renderer.createIbo(disableCullFaceElement);
         }
     };
     updataAllTile() {
@@ -301,6 +334,7 @@ class Chunk {
 
         // build vertex
         let ver = [], color = [], element = [], tex = [], totalVer = 0;
+        let dcfVer = [], dcfCol = [], dcfEle = [], dcfTex = [], dcfTotalver = 0;
         let {unloadChunkData} = this;
         for (let j = 0; j < Y_SIZE; ++j)
           for (let k = 0; k < Z_SIZE; ++k)
@@ -350,6 +384,41 @@ class Chunk {
                         totalVer += verNum;
                     });
                     break;}
+                case Block.renderType.FLOWER: {
+                    let aroundOpaque = 0;
+                    for (let [dx, dy, dz] of [[1,0,0], [-1,0,0], [0,1,0], [0,-1,0], [0,0,1], [0,0,-1]]) {
+                        let rx = i + dx, ry = j + dy, rz = k + dz,
+                            b = (rx < 0 || rx >= X_SIZE || rz < 0 || rz >= Z_SIZE || ry < 0 || ry >= Y_SIZE)
+                                ? this.world.getTile(wx + dx, wy + dy, wz + dz)
+                                : this.getTile(rx, ry, rz);
+                        if (b?.isOpaque) ++aroundOpaque;
+                    }
+                    if (aroundOpaque === 6) {
+                        delete bf.face;
+                        break;
+                    }
+                    let bl = this.getLight(i, j, k),
+                        verNum = cblock.vertexs.face.length / 3;
+                    bf.face = {
+                        disableCullFace: true,
+                        ver: cblock.vertexs.face.map((v, ind) => ind%3===0? v+wx: ind%3===1? v+wy: v+wz),
+                        ele: cblock.elements.face,
+                        tex: cblock.texture.uv.face,
+                        col: (() => {
+                            let ans = new Array(verNum * 4);
+                            for (let i = 0; i < verNum * 4; i += 4) {
+                                ans[i] = ans[i + 1] = ans[i + 2] = Math.pow(0.9, 15 - bl);
+                                ans[i + 3] = 1;
+                            }
+                            return ans;
+                        })(),
+                    };
+                    dcfVer.push(...bf.face.ver);
+                    dcfTex.push(...bf.face.tex);
+                    dcfCol.push(...bf.face.col);
+                    dcfEle.push(...bf.face.ele.map(v => v + dcfTotalver));
+                    dcfTotalver += verNum;
+                    break;}
                 }
             }
         for (let ck in unloadChunkData) {
@@ -362,6 +431,12 @@ class Chunk {
             tex: new Float32Array(tex),
             col: new Float32Array(color),
             element: new Int16Array(element),
+            disableCullFace: {
+                ver: new Float32Array(dcfVer),
+                tex: new Float32Array(dcfTex),
+                col: new Float32Array(dcfCol),
+                element: new Int16Array(dcfEle),
+            },
         });
     };
     updataTile(blockRX, blockRY, blockRZ) {
@@ -526,6 +601,29 @@ class Chunk {
                     };
                 });
                 break;}
+            case Block.renderType.FLOWER: {
+                let aroundOpaque = 0;
+                for (let [dx, dy, dz] of [[1,0,0], [-1,0,0], [0,1,0], [0,-1,0], [0,0,1], [0,0,-1]]) {
+                    let rx = blockRX + dx, ry = blockRY + dy, rz = blockRZ + dz,
+                        b = (rx < 0 || rx >= X_SIZE || rz < 0 || rz >= Z_SIZE || ry < 0 || ry >= Y_SIZE)
+                            ? this.world.getTile(blockX + dx, blockY + dy, blockZ + dz)
+                            : this.getTile(rx, ry, rz);
+                    if (b?.isOpaque) ++aroundOpaque;
+                }
+                if (aroundOpaque === 6) {
+                    delete bf.face;
+                    break;
+                }
+                let bl = this.getLight(blockRX, blockRY, blockRZ),
+                    verNum = cblock.vertexs.face.length / 3;
+                bf.face = {
+                    disableCullFace: true,
+                    ver: cblock.vertexs.face.map((v, ind) => ind%3===0? v+blockX: ind%3===1? v+blockY: v+blockZ),
+                    ele: cblock.elements.face,
+                    tex: cblock.texture.uv.face,
+                    col: [...Array(verNum * 4)].map((_, ind) => ind % 4 === 3? 1.0: Math.pow(0.9, 15 - bl)),
+                };
+                break;}
             }
         }
         this.mesh.blockFace[blockRX][blockRY][blockRZ] = bf;
@@ -567,6 +665,7 @@ class Chunk {
                     };
                 }
                 break;}
+            case Block.renderType.FLOWER: break;
             }
             chunk.needRebuild = true;
         });
@@ -602,12 +701,21 @@ class Chunk {
         }
         if (!this.needRebuild) return;
         let ver = [], color = [], element = [], tex = [], totalVer = 0;
+        let dcfVer = [], dcfCol = [], dcfEle = [], dcfTex = [], dcfTotalver = 0;
         this.mesh.blockFace.forEach(bfx => {
             bfx.forEach(bfxy => {
                 bfxy.forEach(bfxyz => {
                     for (let face in bfxyz) {
                         let bff = bfxyz[face],
                             verNum = bff.ver.length / 3;
+                        if (bff.disableCullFace) {
+                            dcfVer.push(...bff.ver);
+                            dcfTex.push(...bff.tex);
+                            dcfCol.push(...bff.col);
+                            dcfEle.push(...bff.ele.map(v => v + dcfTotalver));
+                            dcfTotalver += verNum;
+                            continue;
+                        }
                         ver.push(...bff.ver);
                         tex.push(...bff.tex);
                         color.push(...bff.col);
@@ -622,20 +730,35 @@ class Chunk {
             tex: new Float32Array(tex),
             col: new Float32Array(color),
             element: new Int16Array(element),
+            disableCullFace: {
+                ver: new Float32Array(dcfVer),
+                tex: new Float32Array(dcfTex),
+                col: new Float32Array(dcfCol),
+                element: new Int16Array(dcfEle),
+            },
         });
         this.needRebuild = false;
     };
     draw() {
         if (!this.renderer) return;
-        const ctx = this.renderer.ctx, bufferObj = this.mesh.bo;
-        this.renderer.getProgram("showBlock")
-            .use()
-            .setAtt("position", bufferObj.ver)
-            .setAtt("color", bufferObj.col)
-            .setAtt("textureCoord", bufferObj.tex);
-        ctx.bindBuffer(ctx.ELEMENT_ARRAY_BUFFER, bufferObj.ele);
-        // ctx.drawElements(ctx.LINES, bufferObj.ele.length, ctx.UNSIGNED_SHORT, 0);
-        ctx.drawElements(ctx.TRIANGLES, bufferObj.ele.length, ctx.UNSIGNED_SHORT, 0);
+        const ctx = this.renderer.ctx, bufferObj = this.mesh.bo,
+              prg = this.renderer.getProgram("showBlock").use();
+        if (bufferObj.ele.length) {
+            prg.setAtt("position", bufferObj.ver)
+                .setAtt("color", bufferObj.col)
+                .setAtt("textureCoord", bufferObj.tex);
+            ctx.bindBuffer(ctx.ELEMENT_ARRAY_BUFFER, bufferObj.ele);
+            // ctx.drawElements(ctx.LINES, bufferObj.ele.length, ctx.UNSIGNED_SHORT, 0);
+            ctx.drawElements(ctx.TRIANGLES, bufferObj.ele.length, ctx.UNSIGNED_SHORT, 0);
+        }
+        if (bufferObj.disableCullFace.ele.length) {
+            prg.setAtt("position", bufferObj.disableCullFace.ver)
+                .setAtt("color", bufferObj.disableCullFace.col)
+                .setAtt("textureCoord", bufferObj.disableCullFace.tex);
+            ctx.disable(ctx.CULL_FACE);
+            ctx.drawElements(ctx.TRIANGLES, bufferObj.disableCullFace.ele.length, ctx.UNSIGNED_SHORT, 0);
+            ctx.enable(ctx.CULL_FACE);
+        }
     };
 };
 

@@ -53,6 +53,17 @@
     "water":        {"id":8,"renderType":3,"opacity":1,"blastResistance":500,"stackable":null,"texture":[[12,1]]},
     "flowing_water":{"id":9,"renderType":3,"opacity":1,"blastResistance":500,"stackable":null,"texture":[[12,1]]},
     "lava":         {"id":10,"renderType":3,"luminance":15,"blastResistance":500,"stackable":null,"texture":[[12,3]]},
-    "flowing_lava": {"id":11,"renderType":3,"luminance":15,"blastResistance":500,"stackable":null,"texture":[[12,3]]}
+    "flowing_lava": {"id":11,"renderType":3,"luminance":15,"blastResistance":500,"stackable":null,"texture":[[12,3]]},
+    "dandelion":   {"id":37,"renderType":1,"opacity":0,"texture":[[2, 29]]},
+    "poppy":       {"id":38,"renderType":1,"opacity":0,"texture":[[2, 30]]},
+    "blue_orchid": {"id":38,"bd":1,"renderType":1,"opacity":0,"texture":[[2, 31]]},
+    "allium":      {"id":38,"bd":2,"renderType":1,"opacity":0,"texture":[[2, 32]]},
+    "azure_bluet": {"id":38,"bd":3,"renderType":1,"opacity":0,"texture":[[3, 1]]},
+    "red_tulip":   {"id":38,"bd":4,"renderType":1,"opacity":0,"texture":[[3, 2]]},
+    "orange_tulip":{"id":38,"bd":5,"renderType":1,"opacity":0,"texture":[[3, 3]]},
+    "white_tulip": {"id":38,"bd":6,"renderType":1,"opacity":0,"texture":[[3, 4]]},
+    "pink_tulip":  {"id":38,"bd":7,"renderType":1,"opacity":0,"texture":[[3, 5]]},
+    "oxeye_daisy": {"id":38,"bd":8,"renderType":1,"opacity":0,"texture":[[3, 6]]},
+    "glowstone": {"id":89,"luminance":15,"blastResistance":0.3,"texture":[[7,18]]}
 }
 }
