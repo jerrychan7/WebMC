@@ -3,12 +3,14 @@ import Block from "./Block.js";
 import Player from "./Player.js";
 import PlayerLocalController from "./PlayerLocalController.js";
 import { vec3 } from "./gmath.js";
+import { PerlinNoise } from "./noise.js";
 
 class World {
     constructor({
         worldName = "My World",
-        worldType = "flat",
-        renderer = null
+        worldType = "pre-classic",
+        renderer = null,
+        seed = Date.now(),
     } = {}) {
         this.name = worldName;
         this.type = worldType;
@@ -17,6 +19,8 @@ class World {
         this.mainPlayer = new Player(this);
         this.entitys = [this.mainPlayer];
         this.renderer = renderer;
+        this.seed = seed;
+        this.noise = new PerlinNoise(seed);
         this.generator = this.generator.bind(this);
         for (let x = -1; x <= 1; ++x)
           for (let z = -1; z <= 1; ++z)
@@ -32,7 +36,39 @@ class World {
                 : chunkZ%2? "stone": "grass");
             for (let i = 0; i < tileMap.length; ++i)
                 tileMap[i] = block;
-        break;
+            break;
+        case "pre-classic": {
+            const {X_SIZE, Y_SIZE, Z_SIZE} = Chunk;
+            const noise = this.noise, fn = noise.gen2d.bind(noise);
+            let air = Block.getBlockByBlockName("air"),
+                stone = Block.getBlockByBlockName(
+                    chunkY%2
+                    ? chunkX%2
+                        ? chunkZ%2? "grass": "stone"
+                        : chunkZ%2? "stone": "grass"
+                    : chunkX%2
+                        ? chunkZ%2? "stone": "grass"
+                        : chunkZ%2? "grass": "stone"
+                );
+            let fn3 = noise.gen3d.bind(noise);
+            for (let x = 0; x < X_SIZE; ++x)
+            for (let z = 0; z < Z_SIZE; ++z) {
+                let i = chunkX * X_SIZE + x, k = chunkZ * Z_SIZE + z;
+                let n2 = (fn(i/200,k/200)+fn(i/50,k/50)/2+fn(i/10,k/10)/64)/2;
+                n2 = Math.floor(n2 * 128);
+                for (let y = 0; y < Y_SIZE; ++y) {
+                    let j = chunkY * Y_SIZE + y;
+                    if (j < n2) {
+                        let n3 = (fn3(i / 16, j / 16, k / 16));
+                        let n33 = (fn3(i/256,j/256,k/256) +fn3(i/128,j/128,k/128)/2 + fn3(i/64, j/64, k/64) / 4+fn3(i/25,j/25,k/25)/8);
+                        let mineral = (fn3(i / 5, j / 5, k / 5) + 1) / 2;
+                        tileMap[Chunk.getLinearBlockIndex(x, y, z)] =
+                            mineral < 0.18? air: n33 > 0 && n3 < -0.1? air: stone;
+                    }
+                    else tileMap[Chunk.getLinearBlockIndex(x, y, z)] = air;
+                }
+            }
+            break;}
         }
     };
     setRenderer(renderer = null) {

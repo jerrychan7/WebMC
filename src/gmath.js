@@ -352,4 +352,101 @@ const vec3 = {
     },
 };
 
-export { mat4, vec3 };
+let Vec2Type = Float32Array;
+const vec2 = {
+    setArrType(arrType) { return Vec2Type = arrType; },
+    create(x = 0, y = 0, dest = new Vec2Type(2)) {
+        dest[0] = x;
+        dest[1] = y;
+        return dest;
+    },
+    length(src) {
+        return Math.sqrt(src[0] ** 2 + src[1] ** 2);
+    },
+    get len() { return vec2.length; },
+    add(v1, v2, dest = new Vec2Type(2)) {
+        dest.set([v1[0] + v2[0], v1[1] + v2[1]]);
+        return dest;
+    },
+    subtract(v1, v2, dest = new Vec2Type(2)) {
+        dest.set([v1[0] - v2[0], v1[1] - v2[1]]);
+        return dest;
+    },
+    get sub() { return vec2.subtract; },
+    multiply(v1, v2, dest = new Vec2Type(2)) {
+        dest.set([v1[0] * v2[0], v1[1] * v2[1]]);
+        return dest;
+    },
+    get mul() { return vec2.multiply; },
+    cross(v1, v2) {
+        return v1[0] * v2[1] - v1[1] * v2[0];
+    },
+    dot(v1, v2) {
+        return v1[0] * v2[0] + v1[1] * v2[1];
+    },
+    scale(v, s, dest = new Vec2Type(2)) {
+        dest.set([v[0] * s, v[1] * s]);
+        return dest;
+    },
+    scaleAndAdd(src, s, v, dest = new Vec2Type(2)) {
+        dest.set([src[0] + v[0] * s, src[1] + v[1] * s]);
+        return dest;
+    },
+    divide(v1, v2, dest = new Vec2Type(2)) {
+        dest.set([v1[0] / v2[0], v1[1] / v2[1]]);
+        return dest;
+    },
+    get div() { return vec2.divide; },
+    normalize(v, dest = new Vec2Type(2)) {
+        // return vec2.scale(v, 1 / vec2.length(v), dest);
+        let len = Math.sqrt(v[0] ** 2 + v[1] ** 2);
+        dest.set([v[0] / len, v[1] / len]);
+        return dest;
+    },
+    negate(v, dest = new Vec2Type(2)) {
+        dest.set([-v[0], -v[1]]);
+        return dest;
+    },
+    rotateOrigin(v, a, dest = new Vec2Type(2)) {
+        let s = Math.sin(a), c = Math.cos(a);
+        dest.set([
+            v[0] * c - v[1] * s,
+            v[0] * s + v[1] * c
+        ]);
+        return dest;
+    },
+    roatePoint(v1, v2, a, dest = new Vec2Type(2)) {
+        let s = Math.sin(a), c = Math.cos(a),
+            p0 = v1[0] - v2[0], p1 = v1[1] - v2[1];
+        dest.set([
+            p0 * c - p1 * s + v2[0],
+            p0 * s + p1 * c + v2[1]
+        ]);
+        return dest;
+    },
+    angle(a, b) {
+        let [x1, y1] = a, [x2, y2] = b,
+            // mag is the product of the magnitudes of a and b
+            mag = Math.sqrt(x1 * x1 + y1 * y1) * Math.sqrt(x2 * x2 + y2 * y2),
+            // mag &&.. short circuits if mag == 0
+            cosine = mag && (x1 * x2 + y1 * y2) / mag;
+        // Math.min(Math.max(cosine, -1), 1) clamps the cosine between -1 and 1
+        return Math.acos(Math.min(Math.max(cosine, -1), 1));
+    },
+    inverse(v, dest = new Vec2Type(2)) {
+        dest.set([1 / v[0], 1 / v[1]]);
+        return dest;
+    },
+    exactEquals(v1, v2) {
+        return v1[0] === v2[0] && v1[1] === v2[1];
+    },
+    equals(v1, v2) {
+        let [x, y] = v1, [u, v] = v2,
+            abs = Math.abs, max = Math.max,
+            EPSILON = 0.000001;
+        return (abs(x - u) <= EPSILON*max(1.0, abs(x), abs(u)) &&
+                abs(y - v) <= EPSILON*max(1.0, abs(y), abs(v)));
+    },
+};
+
+export { mat4, vec3, vec2, };
