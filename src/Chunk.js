@@ -109,13 +109,20 @@ class Chunk {
     getTorchlight(blockRX, blockRY, blockRZ) {
         return this.lightMap.getTorchlight(blockRX, blockRY, blockRZ);
     };
+    static inOtherChunk(blockRX, blockRY, blockRZ) {
+        return blockRX < 0 || blockRX >= X_SIZE || blockRZ < 0 || blockRZ >= Z_SIZE || blockRY < 0 || blockRY >= Y_SIZE;
+    };
+    inOtherChunk(blockRX, blockRY, blockRZ) {
+        return blockRX < 0 || blockRX >= X_SIZE || blockRZ < 0 || blockRZ >= Z_SIZE || blockRY < 0 || blockRY >= Y_SIZE;
+    };
+    blockRXYZ2BlockXYZ(blockRX, blockRY, blockRZ) {
+        return [blockRX + this.x * X_SIZE, blockRY + this.y * Y_SIZE, blockRZ + this.z * Z_SIZE];
+    };
     onAroundChunkLoad(chunkKey) {
         let skyQueue = [], torchQueue = [];
         this.unloadChunkData[chunkKey].forEach(blockRXYZ => {
             const [blockRX, blockRY, blockRZ] = blockRXYZ.split(",").map(Number),
-                  blockX = blockRX + this.x * X_SIZE,
-                  blockY = blockRY + this.y * Y_SIZE,
-                  blockZ = blockRZ + this.z * Z_SIZE,
+                  [blockX, blockY, blockZ] = this.blockRXYZ2BlockXYZ(blockRX, blockRY, blockRZ),
                   cblock = this.getTile(blockRX, blockRY, blockRZ),
                   csl = this.lightMap.getSkylight(blockRX, blockRY, blockRZ),
                   ctl = this.lightMap.getTorchlight(blockRX, blockRY, blockRZ);
@@ -124,11 +131,11 @@ class Chunk {
             .forEach(([dx, dy, dz]) => {
                 let rx = blockRX + dx, ry = blockRY + dy, rz = blockRZ + dz,
                     wx = blockX + dx, wy = blockY + dy, wz = blockZ + dz,
-                    [sl, tl] = (rx < 0 || rx >= X_SIZE || rz < 0 || rz >= Z_SIZE || ry < 0 || ry >= Y_SIZE)
+                    [sl, tl] = this.inOtherChunk(rx, ry, rz)
                         ? [this.world.getSkylight(wx, wy, wz), this.world.getTorchlight(wx, wy, wz),]
                         : [this.lightMap.getSkylight(rx, ry, rz), this.lightMap.getTorchlight(rx, ry, rz),];
                 if (sl === null) return;
-                if (sl >= csl + 2) skyQueue.push([wx, wy, wz, sl]);
+                if (sl - 1 < csl) skyQueue.push([blockRX, blockRY, blockRZ, csl]);
                 if (tl >= ctl + 2) torchQueue.push([wx, wy, wz, tl]);
             });
             // updata block face
@@ -140,11 +147,12 @@ class Chunk {
                 .forEach(([dx, dy, dz, face]) => {
                     let rx = blockRX + dx, ry = blockRY + dy, rz = blockRZ + dz,
                         wx = blockX + dx, wy = blockY + dy, wz = blockZ + dz,
-                        b = (rx < 0 || rx >= X_SIZE || rz < 0 || rz >= Z_SIZE || ry < 0 || ry >= Y_SIZE)
+                        inOtherChunk = this.inOtherChunk(rx, ry, rz),
+                        b = inOtherChunk
                             ? this.world.getTile(wx, wy, wz)
                             : this.getTile(rx, ry, rz);
                     if (b?.isOpaque) return;
-                    let bl = (rx < 0 || rx >= X_SIZE || rz < 0 || rz >= Z_SIZE || ry < 0 || ry >= Y_SIZE)
+                    let bl = inOtherChunk
                         ? this.world.getLight(wx, wy, wz)
                         : this.getLight(rx, ry, rz),
                         verNum = cblock.vertexs[face].length / 3;
@@ -173,23 +181,29 @@ class Chunk {
             return c.lightMap.setTorchlight(...Chunk.getRelativeBlockXYZ(x, y, z), l);
         };
         while (skyQueue.length) {
-            let [wx, wy, wz, cbl] = skyQueue.shift();
+            let [rx, ry, rz, cbl] = skyQueue.shift();
             [[1,0,0], [-1,0,0], [0,1,0], [0,-1,0], [0,0,1], [0,0,-1]]
             .forEach(([dx, dy, dz]) => {
-                let x = wx + dx, y = wy + dy, z = wz + dz,
-                    b = this.world.getTile(x, y, z),
-                    bl = this.world.getSkylight(x, y, z);
+                let x = rx + dx, y = ry + dy, z = rz + dz,
+                    inOtherChunk = this.inOtherChunk(x, y, z),
+                    [b, bl] = inOtherChunk
+                        ? [this.world.getTile(...this.blockRXYZ2BlockXYZ(x, y, z)),
+                            this.world.getSkylight(...this.blockRXYZ2BlockXYZ(x, y, z))]
+                        : [this.getTile(x, y, z), this.lightMap.getSkylight(x, y, z)];
                 if (b === null || b.isOpaque) return;
                 if (cbl === 15 && dy === -1) {
-                    setSkylight(x, y, z, 15);
-                    skyQueue.push([x, y, z, 15]);
+                    this.lightMap.setSkylight(x, y, z, 15);
+                    if (!inOtherChunk)
+                        skyQueue.push([x, y, z, 15]);
                 }
                 else if (bl + 2 <= cbl) {
-                    setSkylight(x, y, z, cbl - b.opacity - 1);
-                    skyQueue.push([x, y, z, cbl - b.opacity - 1]);
+                    this.lightMap.setSkylight(x, y, z, cbl - b.opacity - 1);
+                    if (!inOtherChunk)
+                        skyQueue.push([x, y, z, cbl - b.opacity - 1]);
                 }
-                else if (bl > cbl) {
-                    skyQueue.push([x, y, z, bl]);
+                else if (bl - 1 > cbl) {
+                    if (!inOtherChunk)
+                        skyQueue.push([x, y, z, bl]);
                 }
             });
         }
@@ -275,11 +289,11 @@ class Chunk {
             }
         while (queue.length) {
             let [i, j, k] = queue.shift(), l = lightMap.getTorchlight(i, j, k),
-                wx = i + this.x * X_SIZE, wy = j + this.y * Y_SIZE, wz = k + this.z * Z_SIZE;
+                [wx, wy, wz] = this.blockRXYZ2BlockXYZ(i, j, k);
             [[1,0,0], [-1,0,0], [0,1,0], [0,-1,0], [0,0,1], [0,0,-1]]
             .forEach(([dx, dy, dz]) => {
                 let rx = i + dx, ry = j + dy, rz = k + dz;
-                let [b, bl] = (rx < 0 || rx >= X_SIZE || rz < 0 || rz >= Z_SIZE || ry < 0 || ry >= Y_SIZE)
+                let [b, bl] = this.inOtherChunk(rx, ry, rz)
                         ? [this.world.getTile(wx + dx, wy + dy, wz + dz),
                             this.world.getTorchlight(wx + dx, wy + dy, wz + dz)]
                         : [this.getTile(rx, ry, rz), lightMap.getTorchlight(rx, ry, rz)];
@@ -293,18 +307,24 @@ class Chunk {
         }
         // build sky light
         for (let z = 0, y = Y_SIZE - 1; z < Z_SIZE; ++z)
-          for (let x = 0; x < X_SIZE; ++x) {
-            if (this.getTile(x, y, z).isOpaque) continue;
-            lightMap.setSkylight(x, y, z, 15);
-            queue.push([x, y, z]);
-          }
+        for (let x = 0; x < X_SIZE; ++x) {
+            let b = this.getTile(x, y, z);
+            if (b.isOpaque) continue;
+            let bl = this.world.getSkylight(...this.blockRXYZ2BlockXYZ(x, y + 1, z));
+            let l = bl === null || bl === 15? 15: bl - b.opacity - 1;
+            if (l > 0) {
+                lightMap.setSkylight(x, y, z, l);
+                queue.push([x, y, z]);
+            }
+        }
         while (queue.length) {
             let [i, j, k] = queue.shift(), l = lightMap.getSkylight(i, j, k),
-                wx = i + this.x * X_SIZE, wy = j + this.y * Y_SIZE, wz = k + this.z * Z_SIZE;
+                [wx, wy, wz] = this.blockRXYZ2BlockXYZ(i, j, k);
             [[1,0,0], [-1,0,0], [0,1,0], [0,-1,0], [0,0,1], [0,0,-1]]
             .forEach(([dx, dy, dz]) => {
                 let rx = i + dx, ry = j + dy, rz = k + dz;
-                let [b, bl] = (rx < 0 || rx >= X_SIZE || rz < 0 || rz >= Z_SIZE || ry < 0 || ry >= Y_SIZE)
+                let inOtherChunk = this.inOtherChunk(rx, ry, rz);
+                let [b, bl] = inOtherChunk
                         ? [this.world.getTile(wx + dx, wy + dy, wz + dz),
                             this.world.getSkylight(wx + dx, wy + dy, wz + dz)]
                         : [this.getTile(rx, ry, rz), lightMap.getSkylight(rx, ry, rz)];
@@ -314,9 +334,11 @@ class Chunk {
                     queue.push([rx, ry, rz]);
                 }
                 else if (bl + 2 <= l) {
+                    if (!inOtherChunk) {
+                        lightMap.setSkylight(rx, ry, rz, l - b.opacity - 1);
+                        queue.push([rx, ry, rz]);
+                    }
                     // TODO: If the block is in another chunk, it needs to be notified to update.
-                    lightMap.setSkylight(rx, ry, rz, l - b.opacity - 1);
-                    queue.push([rx, ry, rz]);
                 }
             });
         }
@@ -341,7 +363,7 @@ class Chunk {
             for (let i = 0; i < X_SIZE; ++i) {
                 let cblock = this.getTile(i, j, k);
                 if (cblock.name === "air") continue;
-                let wx = i + this.x * X_SIZE, wy = j + this.y * Y_SIZE, wz = k + this.z * Z_SIZE;
+                let [wx, wy, wz] = this.blockRXYZ2BlockXYZ(i, j, k);
                 // 如果周围方块透明 绘制
                 switch(cblock.renderType) {
                 case Block.renderType.NORMAL: {
@@ -349,7 +371,8 @@ class Chunk {
                     [[1,0,0,"x+"], [-1,0,0,"x-"], [0,1,0,"y+"], [0,-1,0,"y-"], [0,0,1,"z+"], [0,0,-1,"z-"]]
                     .forEach(([dx, dy, dz, face]) => {
                         let rx = i + dx, ry = j + dy, rz = k + dz,
-                            b = (rx < 0 || rx >= X_SIZE || rz < 0 || rz >= Z_SIZE || ry < 0 || ry >= Y_SIZE)
+                            inOtherChunk = this.inOtherChunk(rx, ry, rz),
+                            b = inOtherChunk
                                 ? this.world.getTile(wx + dx, wy + dy, wz + dz)
                                 : this.getTile(rx, ry, rz);
                         if (b === null) {
@@ -367,7 +390,7 @@ class Chunk {
                         ver.push(...bff.ver);
                         tex.push(...bff.tex);
                         element.push(...bff.ele.map(v => v + totalVer));
-                        let bl = (rx < 0 || rx >= X_SIZE || rz < 0 || rz >= Z_SIZE || ry < 0 || ry >= Y_SIZE)
+                        let bl = inOtherChunk
                             ? this.world.getLight(wx + dx, wy + dy, wz + dz)
                             : this.getLight(rx, ry, rz);
                         if (bl === null) bl = 15;
@@ -388,7 +411,7 @@ class Chunk {
                     let aroundOpaque = 0;
                     for (let [dx, dy, dz] of [[1,0,0], [-1,0,0], [0,1,0], [0,-1,0], [0,0,1], [0,0,-1]]) {
                         let rx = i + dx, ry = j + dy, rz = k + dz,
-                            b = (rx < 0 || rx >= X_SIZE || rz < 0 || rz >= Z_SIZE || ry < 0 || ry >= Y_SIZE)
+                            b = this.inOtherChunk(rx, ry, rz)
                                 ? this.world.getTile(wx + dx, wy + dy, wz + dz)
                                 : this.getTile(rx, ry, rz);
                         if (b?.isOpaque) ++aroundOpaque;
@@ -440,8 +463,7 @@ class Chunk {
         });
     };
     updataTile(blockRX, blockRY, blockRZ) {
-        if (blockRX < 0 || blockRX >= X_SIZE || blockRY < 0 || blockRY >= Y_SIZE || blockRZ < 0 || blockRZ >= Z_SIZE)
-            return;
+        if (this.inOtherChunk(blockRX, blockRY, blockRZ)) return;
 
         const setSkylight = (x, y, z, l) => {
             let c = this.world.getChunkByBlockXYZ(x, y, z);
@@ -453,9 +475,7 @@ class Chunk {
             c.needRebuildBlockLight.add([x, y, z].join());
             return c.lightMap.setTorchlight(...Chunk.getRelativeBlockXYZ(x, y, z), l);
         };
-        let blockX = blockRX + this.x * X_SIZE,
-            blockY = blockRY + this.y * Y_SIZE,
-            blockZ = blockRZ + this.z * Z_SIZE,
+        let [blockX, blockY, blockZ] = this.blockRXYZ2BlockXYZ(blockRX, blockRY, blockRZ),
             cblock = this.getTile(blockRX, blockRY, blockRZ);
         // calculate sky light
         let obstructed = blockY, oblock = null, queue = [];
@@ -584,11 +604,12 @@ class Chunk {
                 [[1,0,0,"x+"], [-1,0,0,"x-"], [0,1,0,"y+"], [0,-1,0,"y-"], [0,0,1,"z+"], [0,0,-1,"z-"]]
                 .forEach(([dx, dy, dz, face]) => {
                     let rx = blockRX + dx, ry = blockRY + dy, rz = blockRZ + dz,
-                        b = (rx < 0 || rx >= X_SIZE || rz < 0 || rz >= Z_SIZE || ry < 0 || ry >= Y_SIZE)
+                        inOtherChunk = this.inOtherChunk(rx, ry, rz),
+                        b = inOtherChunk
                             ? this.world.getTile(blockX + dx, blockY + dy, blockZ + dz)
                             : this.getTile(rx, ry, rz);
                     if (b?.isOpaque) return;
-                    let bl = (rx < 0 || rx >= X_SIZE || rz < 0 || rz >= Z_SIZE || ry < 0 || ry >= Y_SIZE)
+                    let bl = inOtherChunk
                         ? this.world.getLight(blockX + dx, blockY + dy, blockZ + dz)
                         : this.getLight(rx, ry, rz),
                         verNum = cblock.vertexs[face].length / 3;
@@ -605,7 +626,7 @@ class Chunk {
                 let aroundOpaque = 0;
                 for (let [dx, dy, dz] of [[1,0,0], [-1,0,0], [0,1,0], [0,-1,0], [0,0,1], [0,0,-1]]) {
                     let rx = blockRX + dx, ry = blockRY + dy, rz = blockRZ + dz,
-                        b = (rx < 0 || rx >= X_SIZE || rz < 0 || rz >= Z_SIZE || ry < 0 || ry >= Y_SIZE)
+                        b = this.inOtherChunk(rx, ry, rz)
                             ? this.world.getTile(blockX + dx, blockY + dy, blockZ + dz)
                             : this.getTile(rx, ry, rz);
                     if (b?.isOpaque) ++aroundOpaque;
@@ -633,10 +654,8 @@ class Chunk {
         [[1,0,0], [-1,0,0], [0,1,0], [0,-1,0], [0,0,1], [0,0,-1]]
         .forEach(([dx, dy, dz]) => {
             let rx = blockRX + dx, ry = blockRY + dy, rz = blockRZ + dz,
-                awx = rx + this.x * X_SIZE,
-                awy = ry + this.y * Y_SIZE,
-                awz = rz + this.z * Z_SIZE,
-                chunk = (rx < 0 || rx >= X_SIZE || rz < 0 || rz >= Z_SIZE || ry < 0 || ry >= Y_SIZE)
+                [awx, awy, awz] = this.blockRXYZ2BlockXYZ(rx, ry, rz),
+                chunk = this.inOtherChunk(rx, ry, rz)
                     ? this.world.getChunkByBlockXYZ(awx, awy, awz)
                     : this;
             if (!chunk) return;
