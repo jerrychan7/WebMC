@@ -4,6 +4,7 @@ import Player from "./Player.js";
 import PlayerLocalController from "./PlayerLocalController.js";
 import { vec3 } from "./gmath.js";
 import { PerlinNoise } from "./noise.js";
+import { ChunksLightCalculation } from "./WorldLight.js";
 
 class World {
     constructor({
@@ -23,10 +24,11 @@ class World {
         this.noise = new PerlinNoise(seed);
         this.generator = this.generator.bind(this);
         for (let x = -1; x <= 1; ++x)
-          for (let z = -1; z <= 1; ++z)
-            for (let y = 1; y >= -1; --y)
-                this.loadChunk(x, y, z);
+        for (let z = -1; z <= 1; ++z)
+        for (let y = 1; y >= -1; --y)
+            this.loadChunk(x, y, z);
         this.setRenderer(renderer);
+        this.lightingCalculator = new ChunksLightCalculation(this);
     };
     generator(chunkX, chunkY, chunkZ, tileMap) {
         switch(this.type) {
@@ -79,40 +81,54 @@ class World {
         }
         this.mainPlayer.setController(new PlayerLocalController(this.mainPlayer, renderer.ctx.canvas));
     };
-    getChunk(chunkX, chunkY, chunkZ) {
-        return this.chunkMap[Chunk.chunkKeyByChunkXYZ(chunkX, chunkY, chunkZ)] || null;
+    getChunkByChunkKey(chunkKey) {
+        return this.chunkMap[chunkKey] || null;
+    };
+    getChunkByChunkXYZ(chunkX, chunkY, chunkZ) {
+        return this.getChunkByChunkKey(Chunk.chunkKeyByChunkXYZ(chunkX, chunkY, chunkZ));
     };
     getChunkByBlockXYZ(blockX, blockY, blockZ) {
-        return this.chunkMap[Chunk.chunkKeyByBlockXYZ(blockX, blockY, blockZ)] || null;
+        return this.getChunkByChunkKey(Chunk.chunkKeyByBlockXYZ(blockX, blockY, blockZ));
     };
     loadChunk(chunkX, chunkY, chunkZ) {
         let ck = Chunk.chunkKeyByChunkXYZ(chunkX, chunkY, chunkZ),
             chunk = this.chunkMap[ck];
         if (chunk) return chunk;
         chunk = this.chunkMap[ck] = new Chunk(this, chunkX, chunkY, chunkZ);
-        this.callbacks[ck]?.forEach(async cb => await cb());
-        this.callbacks[ck]?.filter(cb => cb._once).forEach(cb => this.removeLoadChunkListener(ck, cb._handle));
+        this.dispatchEvent("onChunkLoad", chunk);
         return chunk;
     };
-    addLoadChunkListener(chunkKey, callback, once = false) {
-        let cbs = this.callbacks[chunkKey];
-        if (!cbs) cbs = this.callbacks[chunkKey] = [];
+
+    onChunkLoad(callbackFn, once = false) {
+        return this.addEventListener("onChunkLoad", callbackFn, once);
+    };
+    onTileChanges(callbackFn, once = false) {
+        return this.addEventListener("onTileChanges", callbackFn, once);
+    };
+    addEventListener(callbackType, callbackFn, once = false) {
+        let cbs = this.callbacks[callbackType];
+        if (!cbs) cbs = this.callbacks[callbackType] = [];
         let handle = Math.random();
-        cbs[handle] = {callback, once};
-        callback._handle = handle;
-        callback._once = once;
-        cbs.push(callback);
+        while (handle in cbs) handle = Math.random();
+        cbs[handle] = {callbackFn, once};
+        callbackFn._handle = handle;
+        callbackFn._once = once;
+        cbs.push(callbackFn);
         return handle;
     };
-    removeLoadChunkListener(chunkKey, handle) {
-        let cbs = this.callbacks[chunkKey];
-        if (!cbs || !cbs[handle]) return false;
-        let i = cbs.indexOf(cbs[handle].callback);
-        if (i == -1) return false;
-        cbs.splice(i, 1);
-        delete cbs[handle];
-        return true;
+    dispatchEvent(callbackType, ...args) {
+        this.callbacks[callbackType]?.forEach(async cb => await cb(...args));
+        this.callbacks[callbackType]?.filter(cb => cb._once).forEach(cb => {
+            let cbs = this.callbacks[callbackType], handle = cb._handle;
+            if (!cbs || !cbs[handle]) return false;
+            let i = cbs.indexOf(cbs[handle].callbackFn);
+            if (i == -1) return false;
+            cbs.splice(i, 1);
+            delete cbs[handle];
+            return true;
+        });
     };
+
     getTile(blockX, blockY, blockZ) {
         [blockX, blockY, blockZ] = [blockX, blockY, blockZ].map(Math.floor);
         let c = this.chunkMap[Chunk.chunkKeyByBlockXYZ(blockX, blockY, blockZ)];
@@ -122,7 +138,11 @@ class World {
     setTile(blockX, blockY, blockZ, blockName) {
         [blockX, blockY, blockZ] = [blockX, blockY, blockZ].map(Math.floor);
         let c = this.chunkMap[Chunk.chunkKeyByBlockXYZ(blockX, blockY, blockZ)];
-        if (c) return c.setTile(...Chunk.getRelativeBlockXYZ(blockX, blockY, blockZ), blockName);
+        if (c) {
+            let t = c.setTile(...Chunk.getRelativeBlockXYZ(blockX, blockY, blockZ), blockName);
+            this.dispatchEvent("onTileChanges", blockX, blockY, blockZ);
+            return t;
+        }
         return null;
     };
     getLight(blockX, blockY, blockZ) {
@@ -143,127 +163,14 @@ class World {
         if (c) return c.getTorchlight(...Chunk.getRelativeBlockXYZ(blockX, blockY, blockZ));
         return null;
     };
-    updata(dt) {
+    update(dt) {
         for (let ck in this.chunkMap) {
-            this.chunkMap[ck].updata();
+            this.chunkMap[ck].update();
         }
-        this.entitys.forEach(e => e.updata(dt));
+        this.lightingCalculator.update();
+        this.entitys.forEach(e => e.update(dt));
     };
-    draw() {
-        for (let ck in this.chunkMap) {
-            this.chunkMap[ck].draw();
-        }
-        this.entitys.forEach(e => e.draw());
-        
-        let mainPlayer = this.mainPlayer;
-        // Need to decouple
-        if (mainPlayer.camera === null) return;
-        // highlight selected block
-        //let start = mainPlayer.position,
-        let start = mainPlayer.getEyePosition(),
-            end = mainPlayer.getDirection(20);
-        vec3.add(start, end, end);
-        let hit = this.rayTraceBlock(start, end, (x, y, z) => {
-            let b = this.getTile(x, y, z);
-            return b && b.name !== "air";
-        });
-        if (hit === null) return;
-
-        const {renderer} = this, {ctx} = renderer;
-        let [bx, by, bz] = hit.blockPos,
-            block = this.getTile(bx, by, bz),
-            selector = renderer.getProgram("selector").use().setUni("mvp", mainPlayer.camera.projview),
-            linever = [], linecol = [], lineEle = [];
-        let {lineverVbo, linecolVbo, lineIbo} = selector;
-        let blockFace = (_ => {
-            let c = this.chunkMap[Chunk.chunkKeyByBlockXYZ(bx, by, bz)];
-            let [rx, ry, rz] = Chunk.getRelativeBlockXYZ(bx, by, bz);
-            return c.mesh.blockFace[rx][ry][rz];
-        })();
-        switch (block.renderType) {
-        case Block.renderType.NORMAL: {
-            for (let f in block.vertexs)
-                linever.push(...block.vertexs[f].map((v, ind) => ind%3===0? v+bx: ind%3===1? v+by: v+bz));
-            if (hit.axis) {
-                let bfcol = blockFace[hit.axis].col;
-                linecol = [...Array(linever.length / 3 * 4)].map((_, i) => i % 4 === 3? 0.4: bfcol[i % 4]/0.6561);
-            }
-            else linecol = [...Array(linever.length / 3 * 4)].map((_, i) => i % 4 === 3? 0.5: 1.0);
-            break;}
-        case Block.renderType.FLOWER: {
-            linever.push(...block.vertexs.face.map((v, ind) => ind%3===0? v+bx: ind%3===1? v+by: v+bz));
-            linecol = blockFace.face.col.map((num, ind) => ind%4===3? 0.4: num/0.6561);
-            break;}
-        }
-        lineEle = (len => {
-            if (!len) return [];
-            let base = [0,1, 1,2, 2,3, 3,0], out = [];
-            for(let i = 0, j = 0; i < len; j = ++i*4)
-                out.push(...base.map(x => x + j));
-            return out;
-        })(linever.length / 12);
-        linever = new Float32Array(linever);
-        linecol = new Float32Array(linecol);
-        lineEle = new Int16Array(lineEle);
-        if (lineIbo) {
-            renderer.bindBoData(lineverVbo, linever, {drawType: ctx.DYNAMIC_DRAW});
-            renderer.bindBoData(linecolVbo, linecol, {drawType: ctx.DYNAMIC_DRAW});
-            renderer.bindBoData(lineIbo, lineEle, {drawType: ctx.DYNAMIC_DRAW});
-        }
-        else {
-            lineverVbo = selector.lineverVbo = renderer.createVbo(linever);
-            linecolVbo = selector.linecolVbo = renderer.createVbo(linecol);
-            lineIbo = selector.lineIbo = renderer.createIbo(lineEle);
-        }
-        // draw line
-        ctx.enable(ctx.BLEND);
-        ctx.blendFunc(ctx.SRC_ALPHA, ctx.ONE_MINUS_SRC_ALPHA);
-        ctx.bindBuffer(lineIbo.type, lineIbo);
-        selector.setAtt("pos", lineverVbo).setAtt("col", linecolVbo);
-        ctx.drawElements(ctx.LINES, lineIbo.length, ctx.UNSIGNED_SHORT, 0);
-        ctx.disable(ctx.BLEND);
-        
-        if (!hit.axis) return;
-        let ver = [], col = [], ele = [], {verVbo, colVbo, ibo} = selector;
-        switch (block.renderType) {
-        case Block.renderType.NORMAL: {
-            ver = block.vertexs[hit.axis].map((v, ind) => ind%3===0? v+bx: ind%3===1? v+by: v+bz);
-            ele = block.elements[hit.axis];
-            // col = [...Array(linever.length / 3 * 4)].map((_, i) => i % 4 === 3? 0.15: 1.0);
-            col = blockFace[hit.axis].col.map((num, ind) => ind%4===3? 0.1: num/0.6561);
-            break;}
-        case Block.renderType.FLOWER: {
-            ver = block.vertexs.face.map((v, ind) => ind%3===0? v+bx: ind%3===1? v+by: v+bz);
-            ele = block.elements.face;
-            col = blockFace.face.col.map((num, ind) => ind%4===3? 0.1: num/0.6561);
-            break;}
-        }
-        ver = new Float32Array(ver);
-        col = new Float32Array(col);
-        ele = new Int16Array(ele);
-        if (ibo) {
-            renderer.bindBoData(verVbo, ver, {drawType: ctx.DYNAMIC_DRAW});
-            renderer.bindBoData(colVbo, col, {drawType: ctx.DYNAMIC_DRAW});
-            renderer.bindBoData(ibo, ele, {drawType: ctx.DYNAMIC_DRAW});
-        }
-        else {
-            verVbo = selector.verVbo = renderer.createVbo(ver),
-            colVbo = selector.colVbo = renderer.createVbo(col),
-            ibo = selector.ibo = renderer.createIbo(ele);
-        }
-        // draw surface
-        ctx.disable(ctx.CULL_FACE);
-        ctx.enable(ctx.BLEND);
-        ctx.blendFunc(ctx.SRC_ALPHA, ctx.ONE_MINUS_SRC_ALPHA);
-        ctx.depthMask(false);
-        ctx.bindBuffer(ibo.type, ibo);
-        selector.setAtt("pos", verVbo).setAtt("col", colVbo);
-        ctx.drawElements(ctx.TRIANGLES, ibo.length, ctx.UNSIGNED_SHORT, 0);
-        ctx.depthMask(true);
-        ctx.disable(ctx.BLEND);
-        ctx.enable(ctx.CULL_FACE);
-    };
-    // return null->uncollision    else { axis->"x+-y+-z+-": collision face, "": in block, blockPos}
+    // return null->uncollision    else -> { axis->("x+-y+-z+-": collision face, "": in block, b)lockPos}
     rayTraceBlock(start, end, chunkFn) {
         if (start.some(Number.isNaN) || end.some(Number.isNaN) || vec3.equals(start, end))
             return null;
@@ -345,14 +252,13 @@ class World {
                 [xe, ye, ze] = vec3.add(leadvox, step),
                 x, y, z;
             for(x = xs; x !== xe; x += stepx)
-              for(y = ys; y !== ye; y += stepy)
-                for(z = zs; z !== ze; z += stepz)
-                    if(chunkFn(x, y, z))
-                        return {
-                            axis: axis,
-                            step: step[axis],
-                            pos:  lead[axis] + way * (vec[axis] / len),
-                        };
+            for(y = ys; y !== ye; y += stepy)
+            for(z = zs; z !== ze; z += stepz)
+                if(chunkFn(x, y, z)) return {
+                    axis: axis,
+                    step: step[axis],
+                    pos:  lead[axis] + way * (vec[axis] / len),
+                };
         }
         return null;
     };

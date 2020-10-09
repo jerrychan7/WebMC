@@ -45,7 +45,7 @@ asyncLoadResByUrl("src/blocks.json").then(obj => {
     };
 });
 
-export default class Block {
+class Block {
     constructor(blockName, {
         opacity = 15,
         luminance = 0,
@@ -59,14 +59,8 @@ export default class Block {
     } = {}) {
         this.name = blockName;
         this.renderType = renderType;
-        this.vertexs = blocksCfg.vertexs[renderType];
-        this.elements = Object.entries(this.vertexs).map(([face, vs]) => ({[face]: (len => {
-            if (!len) return [];
-            let base = [0,1,2, 0,2,3], out = [];
-            for(let i=0,j=0; i<len; j=++i*4)
-                out.push(...base.map(x => x+j));
-            return out;
-        })(vs.length/12)})).reduce((ac, o) => ({...ac, ...o}), {});
+        this.vertexs = Block.getVertexsByRenderType(renderType);
+        this.elements = Block.getElementsByRenderType(renderType);
         this.texture = { img: textureImg, uv: {} };
         this.initTexUV(textureCoord);
         this.opacity = opacity;
@@ -133,6 +127,18 @@ export default class Block {
     static get renderType() {
         return BlockRenderType;
     };
+    static getVertexsByRenderType(renderType) {
+        return blocksCfg.vertexs[renderType];
+    };
+    static getElementsByRenderType(renderType) {
+        return Object.entries(this.getVertexsByRenderType(renderType)).map(([face, vs]) => ({[face]: (len => {
+            if (!len) return [];
+            let base = [0,1,2, 0,2,3], out = [];
+            for(let i=0,j=0; i<len; j=++i*4)
+                out.push(...base.map(x => x+j));
+            return out;
+        })(vs.length/12)})).reduce((ac, o) => ({...ac, ...o}), {});
+    };
     static enrollBlock(block) {
         BLOCKS[block.name] = block;
     };
@@ -151,3 +157,8 @@ export default class Block {
         return defaultBlockTextureImg;
     }
 }
+
+export {
+    Block,
+    Block as default
+};

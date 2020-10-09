@@ -47,12 +47,12 @@ class Player extends Entity {
             [cx, cy, cz] = cxyz;
         if (vec3.exactEquals(cxyz, this.lastChunk))
             for (let dx = -1; dx <= 1; ++dx)
-            for (let dy = -1; dy <= 1; ++dy)
             for (let dz = -1; dz <= 1; ++dz)
+            for (let dy = 1; dy >= -1; --dy)
                 this.world.loadChunk(cx + dx, cy + dy, cz + dz);
         this.lastChunk = cxyz;
     };
-    updata(dt) {
+    update(dt) {
         dt /= 1000;
         if (!this.controller)
             return this.move(dt);

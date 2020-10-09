@@ -44,7 +44,7 @@ class Entity {
     setCamera(camera) {
         this.camera = camera;
     };
-    updata(dt) {};
+    update(dt) {};
     draw() {};
 };
 
