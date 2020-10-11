@@ -196,6 +196,21 @@ const mat4 = {
         ]);
         return dest;
     },
+    ortho(left, right, bottom, top, near, far, dest = new Mat4Type(16)) {
+        var lr = 1 / (left - right),
+            bt = 1 / (bottom - top),
+            nf = 1 / (near - far);
+        dest.set([
+            -2 * lr,       0,      0, 0,
+                  0, -2 * bt,      0, 0,
+                  0,       0, 2 * nf, 0,
+            (left + right) * lr,
+            (top + bottom) * bt,
+            (far + near) * nf,
+            1
+        ]);
+        return dest;
+    },
     //转置
     transpose(mat, dest = new Mat4Type(16)) {
         dest.set([
@@ -215,7 +230,9 @@ const mat4 = {
             w = i * n - j * m, x = i * o - k * m,
             y = i * p - l * m, z = j * o - k * n,
             A = j * p - l * n, B = k * p - l * o,
-            ivd = 1 / (q * B - r * A + s * z + t * y - u * x + v * w);
+            det = q * B - r * A + s * z + t * y - u * x + v * w;
+        if (det === 0) return mat4.identity(dest);
+        let ivd = 1.0 / det;
         dest.set([
             ( f * B - g * A + h * z) * ivd,
             (-b * B + c * A - d * z) * ivd,
@@ -449,4 +466,12 @@ const vec2 = {
     },
 };
 
-export { mat4, vec3, vec2, };
+const PI = Math.PI;
+const d2r = deg => deg * PI / 180;
+const r2d = rad => rad * 180 / PI;
+
+export {
+    mat4, vec3, vec2,
+    d2r as degree2radian,
+    r2d as radian2degree,
+};

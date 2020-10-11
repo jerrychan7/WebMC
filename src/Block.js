@@ -1,5 +1,5 @@
 import {asyncLoadResByUrl} from "./loadResources.js";
-import {textureMipmapByTile} from "./processingPictures.js";
+import {textureMipmapByTile, blockInventoryTexture} from "./processingPictures.js";
 
 let defaultBlockTextureImg = null;
 asyncLoadResByUrl("texture/terrain-atlas.png").then(img => {
@@ -75,11 +75,13 @@ class Block {
             blockIDs.set(id, t);
         }
         BLOCKS[blockName] = this;
+        this.texture.inventory = blockInventoryTexture(this);
+        this.showName = blockName.toLowerCase().replace(/_/g, " ").replace(/^\w|\s\w/g, w => w.toUpperCase());
     };
 
     get isOpaque() { return this.opacity === 15; };
 
-    initTexUV(texCoord) {
+    initTexUV(texCoord = this.texture.textureCoord) {
         for (let texture of texCoord) {
             let [x, y] = texture;
             texture[0] = y-1; texture[1] = x-1;
@@ -147,6 +149,9 @@ class Block {
     };
     static getBlockByBlockIDandData(id, bd = 0) {
         return blockIDs.has(id)? blockIDs.get(id)[bd]: undefined;
+    };
+    static listBlocks() {
+        return Object.values(BLOCKS);
     };
     static initBlocksByDefault() {
         Object.entries(blocksCfg.blocks).forEach(([blockName, cfg]) => {

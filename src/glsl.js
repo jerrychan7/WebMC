@@ -53,3 +53,44 @@ export let selector = {
             gl_FragColor = vCol;
         }`
 };
+
+export let blockInventoryTexure = {
+    vert: `
+        attribute vec3 position;
+        attribute vec4 normal;
+        attribute vec4 color;
+        attribute vec2 textureCoord;
+        uniform mat4 mvpMatrix;
+        uniform mat4 normalMatrix;
+        uniform vec3 diffuseLightDirection;     // need normalize
+        uniform vec3 diffuseLightColor;
+        uniform vec3 ambientLightColor;
+        varying   vec4 vColor;
+        varying   vec2 vTextureCoord;
+        void main(void) {
+            gl_Position    = mvpMatrix * vec4(position, 1.0);
+            vTextureCoord  = textureCoord;
+            vec4 nor = normalMatrix * normal;
+            vec3 nor2 = normalize(nor.xyz);
+            // normal dot light direction
+            float nDotL = max(dot(diffuseLightDirection, nor2), 0.0);
+            vec3 diffuse = diffuseLightColor * color.rgb * nDotL;
+            vec3 ambient = ambientLightColor * color.rgb;
+            vColor = vec4(diffuse + ambient, color.a);
+        }`,
+    frag: `
+    #ifdef GL_FRAGMENT_PRECISION_HIGH
+    precision highp float;
+    #else
+    precision mediump float;
+    #endif
+    uniform sampler2D texture;
+    varying vec4      vColor;
+    varying vec2      vTextureCoord;
+
+    void main(void){
+        vec4 smpColor = texture2D(texture, vTextureCoord);
+        if (smpColor.a == 0.0) discard;
+        gl_FragColor  = vColor * smpColor;
+    }`
+};

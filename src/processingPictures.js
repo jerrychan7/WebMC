@@ -8,8 +8,14 @@ class Canvas2D {
         return new Proxy(this, {
             get(tar, key) {
                 if (key in tar) return tar[key];
-                if (key in tar.canvas) return tar.canvas[key].bind(tar.canvas);
-                if (key in tar.ctx) return tar.ctx[key].bind(tar.ctx);
+                if (key in tar.canvas)
+                    return typeof tar.canvas[key] === "function"
+                        ? tar.canvas[key].bind(tar.canvas)
+                        : tar.canvas[key];
+                if (key in tar.ctx)
+                    return typeof tar.ctx[key] === "function"
+                        ? tar.ctx[key].bind(tar.ctx)
+                        : tar.ctx[key];
             }
         });
     };
@@ -29,6 +35,14 @@ class Canvas2D {
     };
     setImgSmoothingQuality(level = 2) {
         this.ctx.imageSmoothingQuality = (["low", "medium", "high"])[level];
+    };
+    toImage() {
+        let img = new Image(this.canvas.width, this.canvas.height);
+        img.src = this.canvas.toDataURL();
+        return img;
+    };
+    clear() {
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     };
 }
 
@@ -77,9 +91,117 @@ export function textureMipmapByTile(img, mipLevel = 1, tileCount = [32, 16]) {
             canvas.drawImage(img, x * singleW,            y * singleH, hSingleW, hSingleH,
                 x * 2 * sw + hsw * 3, y * 2 * sh + hsh * 3, hsw, hsh);
         }
-        let mipimg = new Image(w, h);
-        mipimg.src = canvas.toDataURL();
-        mipmap[i] = mipimg;
+        mipmap[i] = canvas.toImage();
     }
     return img.mipmap = mipmap;
+}
+
+import { Render } from "./Render.js";
+import { Camera } from "./Camera.js";
+import * as glsl from "./glsl.js";
+import { mat4, vec3 } from "./gmath.js";
+import { Block } from "./Block.js";
+class BlockInventoryTexRender extends Render {
+    constructor() {
+        let canvas = document.createElement("canvas");
+        super(canvas);
+        this.canvas = canvas;
+        this.ctx2d = new Canvas2D();
+        this.setSize(512, 512);
+        const {ctx} = this;
+        ctx.enable(ctx.DEPTH_TEST);
+        const {SQRT2} = Math;
+        const wsize = 0.425 + SQRT2/4;
+        let mainCamera = new Camera(this.aspectRatio, {
+            projectionType: Camera.projectionType.ortho,
+            viewType: Camera.viewType.lookAt,
+            left: -wsize, right: wsize, bottom: -wsize, top: wsize, near: -1, far: 5,
+            position: [1, 12 / 16, 1],
+        });
+        this.mainCamera = mainCamera;
+        this.addCamera(mainCamera);
+        this.prg = this.createProgram("blockInventoryTexure", glsl.blockInventoryTexure.vert, glsl.blockInventoryTexure.frag);
+        this.bo = {
+            ver: this.createVbo([], ctx.DYNAMIC_DRAW),
+            nor: this.createVbo([], ctx.DYNAMIC_DRAW),
+            col: this.createVbo([], ctx.DYNAMIC_DRAW),
+            tex: this.createVbo([], ctx.DYNAMIC_DRAW),
+            ele: this.createIbo([], ctx.DYNAMIC_DRAW),
+        };
+        let mM = mat4.identity();
+        mat4.translate(mM, [-0.5, -0.5, -0.5], mM);
+        this.mM = mM;
+        this.mvpM = mat4.multiply(mainCamera.projview, mM);
+        let imM = mat4.inverse(mM);
+        this.itmM = mat4.transpose(imM, imM);
+    };
+    toImage() {
+        let img = new Image(this.canvas.width, this.canvas.height);
+        img.src = this.canvas.toDataURL();
+        return img;
+    };
+    gen(block) {
+        if (block.name === "air") {
+            this.ctx2d.clear();
+            return this.ctx2d.toImage();
+        }
+        if (block.renderType === Block.renderType.NORMAL) {
+            let normal = [], color = [], ver = [], tex = [], ele = [], totalVer = 0;
+            for (let face in block.vertexs) {
+                let vs = block.vertexs[face],
+                    pa = vec3.create(vs[0], vs[1], vs[2]),
+                    pb = vec3.create(vs[3], vs[4], vs[5]),
+                    pc = vec3.create(vs[6], vs[7], vs[8]),
+                    ab = vec3.subtract(pb, pa),
+                    ac = vec3.subtract(pc, pa),
+                    n = vec3.cross(ab, ac),
+                    verNum = vs.length / 3;
+                for (let i = 0; i < verNum; ++i) {
+                    normal.push(...n);
+                    color.push(1.0, 1.0, 1.0, 1.0);
+                }
+                ver.push(...vs);
+                tex.push(...block.texture.uv[face]);
+                ele.push(...block.elements[face].map(v => v + totalVer));
+                totalVer += verNum;
+            }
+            const blockTex = this.getOrCreateTexture(block.texture.img);
+            const {ctx, prg} = this;
+            this.bindBoData(this.bo.ver, ver, {drawType: ctx.DYNAMIC_DRAW});
+            this.bindBoData(this.bo.nor, normal, {drawType: ctx.DYNAMIC_DRAW});
+            this.bindBoData(this.bo.col, color, {drawType: ctx.DYNAMIC_DRAW});
+            this.bindBoData(this.bo.tex, tex, {drawType: ctx.DYNAMIC_DRAW});
+            this.bindBoData(this.bo.ele, ele, {drawType: ctx.DYNAMIC_DRAW});
+            prg.use().bindTex("texture", blockTex)
+            .setUni("diffuseLightColor", block.luminance? [0, 0, 0]: [1.0, 1.0, 1.0])
+            .setUni("ambientLightColor", block.luminance? [1, 1, 1]: [0.2, 0.2, 0.2])
+            .setUni("diffuseLightDirection", vec3.normalize([0.5, 3.0, 4.0]))
+            .setUni("diffuseLightDirection", vec3.normalize([0.4, 1, 0.7]))
+            .setUni("mvpMatrix", this.mvpM)
+            .setUni("normalMatrix", this.itmM)
+            .setAtt("position", this.bo.ver)
+            .setAtt("normal", this.bo.nor, 3)
+            .setAtt("color", this.bo.col)
+            .setAtt("textureCoord", this.bo.tex);
+            ctx.clear(ctx.COLOR_BUFFER_BIT | ctx.DEPTH_BUFFER_BIT);
+            ctx.bindBuffer(this.bo.ele.type, this.bo.ele);
+            ctx.drawElements(ctx.TRIANGLES, this.bo.ele.length, ctx.UNSIGNED_SHORT, 0);
+            ctx.flush();
+            return this.toImage();
+        }
+        const {ctx2d} = this;
+        ctx2d.clear();
+        const img = block.texture.img.mipmap? block.texture.img.mipmap[0]: block.texture.img;
+        const w = img.width, h = img.height, uv = Object.values(block.texture.uv)[0];
+        ctx2d.drawImage(img, w * uv[0], h * uv[1], w * (uv[4] - uv[0]), h * (uv[3] - uv[1]), 0, 0, this.canvas.width, this.canvas.height);
+        return ctx2d.toImage();
+    };
+    setSize(w, h) {
+        super.setSize(w, h);
+        this.ctx2d.setSize(w, h);
+    };
+}
+const blockInventoryTexRender = new BlockInventoryTexRender();
+export function blockInventoryTexture(block) {
+    return blockInventoryTexRender.gen(block);
 }

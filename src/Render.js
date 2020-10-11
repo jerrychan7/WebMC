@@ -84,7 +84,10 @@ class Render {
         return bufferObj;
     };
 
-    createTexture(img, name = img.outerHTML.match(/src="([^"]*)"/)[1], doYFlip = false) {
+    _getImageName(img) {
+        return img.outerHTML.match(/src="([^"]*)"/)?.[1] || String(Math.random());
+    };
+    createTexture(img, name = this._getImageName(img), doYFlip = false) {
         const {ctx} = this,
               tex  = ctx.createTexture();
         if (doYFlip) ctx.pixelStorei(ctx.UNPACK_FLIP_Y_WEBGL, true);
@@ -107,6 +110,9 @@ class Render {
         return tex;
     };
     getTexture(name) { return this.texCache[name]; };
+    getOrCreateTexture(img, name = this._getImageName(img), doYFlip = false) {
+        return this.getTexture(name) || this.createTexture(img, name, doYFlip);
+    };
 };
 
 export {
