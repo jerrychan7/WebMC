@@ -22,6 +22,9 @@ class Player extends Entity {
     setController(controller) {
         this.controller = controller;
     };
+    setInventory(inventory) {
+        this.inventory = inventory;
+    };
     get onGround() { return this.rest[1] === -1; };
     move(dt) {
         vec3.scaleAndAdd(this.velocity, dt, this.acceleration, this.velocity);
@@ -122,6 +125,7 @@ class Player extends Entity {
             }
         }
         this.move(dt);
+        this.inventory?.update();
     };
 };
 

@@ -33,11 +33,123 @@
             bottom: 0; right: 0;
             z-index: 1;
         }
+
+        /* 求css大佬解救 */
+        .mc-hotbar, .mc-hotbar-background, .mc-hotbar-selector-background {
+            z-index: 5;
+            display: block;
+        }
+        .mc-hotbar, .mc-hotbar-background {
+            height: 44px;
+            width: 364px;
+        }
+        .mc-hotbar-selector-background {
+            height: 48px;
+            width: 48px;
+            position: absolute;
+            top: -2px; left: -2px;
+            z-index: 3;
+        }
+        .mc-hotbar-background {
+            opacity: 0.75;
+        }
+        .mc-hotbar {
+            position: fixed;
+            bottom: 0;
+            left: 0; right: 0;
+            margin: auto auto;
+        }
+        #mc-hotbar-items {
+            position: absolute;
+            top: 8px; left: 8px;
+            z-index: 4;
+            cursor: pointer;
+        }
+        #mc-hotbar-items > img {
+            width: 30px; height: 30px;
+        }
+        #mc-hotbar-items > img:not(:first-child) {
+            margin: 0 0 0 10px;
+        }
+
+        body .mc-inventory {
+            transform: scale(2);
+        }
+        .mc-inventory {
+            display: none;
+            width: 352px; height: 192px;
+            margin: auto auto;
+            position: absolute;
+            left: 0; top: 0;
+            bottom: 0; right: 0;
+            z-index: 20;
+        }
+        .mc-inventory .mc-inventory-border {
+            border-width: 16px;
+            top: -16px; left: -16px;
+        }
+        .mc-inventory-item-background {
+            display: block; width: 11.111111%; height: 16.666667%; float: left;
+            position: relative;
+        }
+        .mc-inventory-item-background:hover {
+            filter: brightness(1.5);
+        }
+        .mc-inventory-item-background:active {
+            filter: brightness(0.7);
+        }
+        .mc-inventory-items-background {
+            display: block; position: relative;
+            width: 288px; height: 192px;
+            float: left;
+            z-index: 6;
+        }
+        .mc-inventory-item-background img {
+            width: 75%; height: 75%;
+            position: absolute;
+            top: 0; bottom: 0;
+            left: 0; right: 0;
+            margin: auto;
+        }
+        .mc-inventory-tab {
+            height: 32px; width: 32px;
+            position: relative;
+            float: left;
+            left: -24px;
+            top: -12.5px;
+        }
+        .mc-inventory-tab .mc-close-btn {
+            width: 18px; height: 18px;
+            position: relative;
+            top: 50%;
+            transform: translateY(-50%);
+            margin: auto auto;
+            z-index: 10;
+        }
+        .mc-inventory-tab .mc-inventory-tab-front-right {
+            width: 100%; height: 100%;
+            position: absolute;
+            z-index: 9;
+        }
     </style>
     <script src="./src/main.js" type="module"></script>
 </head>
 <body>
     <div class="mc-crosshairs"></div>
+    <div class="mc-inventory">
+        <div class="mc-inventory-items-background mc-inventory-border"></div>
+        <div class="mc-inventory-tab">
+            <div class="mc-inventory-tab-front-right"></div>
+            <div class="mc-close-btn"
+                onclick="document.getElementsByClassName('mc-inventory')[0].style.display='none';">
+            </div>
+        </div>
+    </div>
+    <div class="mc-hotbar">
+        <div class="mc-hotbar-background"></div>
+        <div id="mc-hotbar-items"></div>
+        <div class="mc-hotbar-selector-background"></div>
+    </div>
     <canvas id="canvas"></canvas>
 </body>
 </html>

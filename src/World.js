@@ -2,6 +2,7 @@ import Chunk from "./Chunk.js";
 import Block from "./Block.js";
 import Player from "./Player.js";
 import PlayerLocalController from "./PlayerLocalController.js";
+import Inventory from "./Inventory.js";
 import { vec3 } from "./gmath.js";
 import { PerlinNoise } from "./noise.js";
 import { ChunksLightCalculation } from "./WorldLight.js";
@@ -80,6 +81,7 @@ class World {
             this.chunkMap[ck].setRenderer(renderer);
         }
         this.mainPlayer.setController(new PlayerLocalController(this.mainPlayer, renderer.ctx.canvas));
+        this.mainPlayer.setInventory(new Inventory(this.mainPlayer));
     };
     getChunkByChunkKey(chunkKey) {
         return this.chunkMap[chunkKey] || null;

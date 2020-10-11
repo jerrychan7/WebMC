@@ -43,12 +43,15 @@ class Input {
             if (event === "mousedown") return;
             cbs.unshift((_, locked) => locked);
         });
+        this.autoLock = true;
     };
     disableAutoPointerLock() {
         if (this.autoLock === false) return;
-        Object.entries(this[Symbol.for("callbacks")]).forEach(([event, cbs]) => {
-            cbs.shift();
-        });
+        Object.values(this[Symbol.for("callbacks")]).forEach(cbs => cbs.shift());
+        this.autoLock = false;
+    };
+    exitPointerLock() {
+        this.doc.exitPointerLock();
     };
 
     [Symbol.for("onKeyDown")](e) {

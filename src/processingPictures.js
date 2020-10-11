@@ -96,6 +96,92 @@ export function textureMipmapByTile(img, mipLevel = 1, tileCount = [32, 16]) {
     return img.mipmap = mipmap;
 }
 
+import { asyncLoadResByUrl, setResource } from "./loadResources.js";
+asyncLoadResByUrl("texture/gui.png")
+.then(img => {
+    const {width, height} = img,
+          style = document.createElement("style"),
+          canvas = new Canvas2D(182, 22);
+    const cr = (w, h) => [w / 256 * width, h / 256 * height];
+    canvas.drawImage(img, 0, 0, ...cr(182, 22), 0, 0, canvas.width, canvas.height);
+    setResource("hotbar_background", canvas.toImage());
+    style.innerHTML += ".mc-hotbar-background {\n" +
+                       `    background-image: url(${canvas.toDataURL()});\n` +
+                       "    background-size: 100% 100%;\n" +
+                       "    background-repeat: no-repeat;\n" +
+                       "}\n";
+    canvas.setSize(24, 24);
+    canvas.drawImage(img, ...cr(0, 22), ...cr(24, 24), 0, 0, canvas.width, canvas.height);
+    setResource("hotbar_selector", canvas.toImage());
+    style.innerHTML += ".mc-hotbar-selector-background {\n" +
+                       `    background-image: url(${canvas.toDataURL()});\n` +
+                       "    background-size: 100% 100%;\n" +
+                       "    background-repeat: no-repeat;\n" +
+                       "}\n";
+    canvas.setSize(16, 16);
+    canvas.drawImage(img, ...cr(200, 46), ...cr(16, 16), 0, 0, canvas.width, canvas.height);
+    setResource("inventory_item_background", canvas.toImage());
+    style.innerHTML += ".mc-inventory-item-background {\n" +
+                       `    background-image: url(${canvas.toDataURL()});\n` +
+                       "    background-size: 100% 100%;\n" +
+                       "}\n";
+    document.head.appendChild(style);
+});
+asyncLoadResByUrl("texture/spritesheet.png")
+.then(img => {
+    const {width, height} = img,
+          style = document.createElement("style"),
+          canvas = new Canvas2D(18, 18);
+    const cr = (w, h) => [w / 256 * width, h / 256 * height];
+    canvas.drawImage(img, ...cr(60, 0), ...cr(18, 18), 0, 0, canvas.width, canvas.height);
+    setResource("close_btn", canvas.toImage());
+    style.innerHTML += ".mc-close-btn {\n" +
+                       `    background-image: url(${canvas.toDataURL()});\n` +
+                       "    background-size: 100% 100%;\n" +
+                       "    background-repeat: no-repeat;\n" +
+                       "}\n";
+    canvas.clear();
+    canvas.drawImage(img, ...cr(78, 0), ...cr(18, 18), 0, 0, canvas.width, canvas.height);
+    setResource("close_btn_active", canvas.toImage());
+    style.innerHTML += ".mc-close-btn:active {\n" +
+                       `    background-image: url(${canvas.toDataURL()});\n` +
+                       "    background-size: 100% 100%;\n" +
+                       "    background-repeat: no-repeat;\n" +
+                       "}\n";
+    canvas.setSize(16, 16);
+    canvas.drawImage(img, 0, 0, ...cr(16, 16), 0, 0, canvas.width, canvas.height);
+    setResource("inventory_border", canvas.toImage());
+    style.innerHTML += ".mc-inventory-border {\n" +
+                       "    border: 16px solid transparent;\n" +
+                       `    border-image: url(${canvas.toDataURL()}) 6 stretch;\n` +
+                       "}\n";
+    canvas.setSize(14, 14);
+    canvas.drawImage(img, ...cr(34, 43), ...cr(14, 14), 0, 0, canvas.width, canvas.height);
+    setResource("inventory_tab_back", canvas.toImage());
+    style.innerHTML += ".mc-inventory-tab-back {\n" +
+                       `    background-image: url(${canvas.toDataURL()});\n` +
+                       "    background-size: 100% 100%;\n" +
+                       "    background-repeat: no-repeat;\n" +
+                       "}\n";
+    canvas.setSize(13, 14);
+    canvas.drawImage(img, ...cr(49, 43), ...cr(13, 14), 0, 0, canvas.width, canvas.height);
+    setResource("inventory_tab_back_left", canvas.toImage());
+    style.innerHTML += ".mc-inventory-tab-front-left {\n" +
+                       `    background-image: url(${canvas.toDataURL()});\n` +
+                       "    background-size: 100% 100%;\n" +
+                       "    background-repeat: no-repeat;\n" +
+                       "}\n";
+    canvas.setSize(14, 14);
+    canvas.drawImage(img, ...cr(65, 55), ...cr(14, 14), 0, 0, canvas.width, canvas.height);
+    setResource("inventory_tab_back_right", canvas.toImage());
+    style.innerHTML += ".mc-inventory-tab-front-right {\n" +
+                       `    background-image: url(${canvas.toDataURL()});\n` +
+                       "    background-size: 100% 100%;\n" +
+                       "    background-repeat: no-repeat;\n" +
+                       "}\n";
+    document.head.appendChild(style);
+});
+
 import { Render } from "./Render.js";
 import { Camera } from "./Camera.js";
 import * as glsl from "./glsl.js";

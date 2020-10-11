@@ -14,6 +14,8 @@ class PlayerLocalController extends EntityController {
         this.input.addEventListener("mousedown", this.mousedown.bind(this));
         this.input.addEventListener("keydown", this.keydown.bind(this));
         this.input.addEventListener("keyup", this.keyup.bind(this));
+        this.input.addEventListener("wheelup", this.wheelup.bind(this));
+        this.input.addEventListener("wheeldown", this.wheeldown.bind(this));
         this.keys = this.input.keys;
     };
     mousemove(e, locked) {
@@ -47,15 +49,35 @@ class PlayerLocalController extends EntityController {
         if (e.button === 2) {
             pos["xyz".indexOf(hit.axis[0])] += hit.axis[1] === '-'? -1: 1;
             if (vec3.exactEquals(pos, start.map(Math.floor))) return;
-            world.setTile(...pos, "grass");
+            let blockName = this.entity.inventory.getOnHands().name;
+            if (blockName !== "air") world.setTile(...pos, blockName);
         }
         // right button
         else if (e.button === 0) {
             world.setTile(...pos, "air");
         }
     };
-    keydown(e, locked) { };
+    keydown(e, locked) {
+        if (this.entity.inventory) {
+            if (String.fromCharCode(e.keyCode) === 'E') {
+                this.input.exitPointerLock();
+                this.entity.inventory.showInventoryPage();
+            }
+        }
+    };
     keyup(e, locked) { };
+    wheelup() {
+        const t = new Date();
+        if (t - this.lastWeelTime < 100) return;
+        this.entity.inventory?.hotbarSelectNext();
+        this.lastWeelTime = t;
+    };
+    wheeldown() {
+        const t = new Date();
+        if (t - this.lastWeelTime < 100) return;
+        this.entity.inventory?.hotbarSelectPrev();
+        this.lastWeelTime = t;
+    };
 };
 
 export {
