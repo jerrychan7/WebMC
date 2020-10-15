@@ -10,22 +10,20 @@ class Inventory {
         this.hotbar.push(...listBlocks.slice(0, 9));
         this.hotbar.updated = true;
         this.hotbar.selectOn = 0;
-        for (let i = 0; i < 6; ++i)
-        for (let j = 0; j < 9; ++j) {
+        for (let b of listBlocks) {
             let div = document.createElement("div");
             div.classList = "mc-inventory-item-background";
-            let b = listBlocks[i * 9 + j]? listBlocks[i * 9 + j]: listBlocks[0];
             div.append(b.texture.inventory.cloneNode());
             div.block = b;
             div.onclick = this.onInventoryItemClick.bind(this, div);
-            document.getElementsByClassName("mc-inventory-items-background")[0].append(div);
+            document.getElementsByClassName("mc-inventory-items")[0].append(div);
         }
     };
     getOnHands() {
         return this.hotbar[this.hotbar.selectOn];
     };
     showInventoryPage() {
-        this.inventoryPage.style.display = "block";
+        this.inventoryPage.style.display = "";
     };
     onInventoryItemClick(div) {
         this.hotbar[this.hotbar.selectOn] = div.block;
@@ -41,11 +39,11 @@ class Inventory {
         this.updateHotbarSelector(this.hotbar.selectOn - 1);
     };
     updateHotbarSelector(i = this.hotbar.selectOn) {
-        i = Math.max(0, Math.min(i, this.hotbar.length - 1));
-        console.log(i)
+        // i = Math.max(0, Math.min(i, this.hotbar.length - 1));
+        i = (i + this.hotbar.length) % this.hotbar.length;
         this.hotbar.selectOn = i;
         let div = document.getElementsByClassName("mc-hotbar-selector-background")[0];
-        div.style.left = (this.hotbar.selectOn * 40 - 2) + "px";
+        div.style.setProperty("--offset", i);
     };
     update() {
         if (this.hotbar.updated) {

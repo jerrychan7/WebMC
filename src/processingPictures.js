@@ -94,92 +94,107 @@ export function textureMipmapByTile(img, mipLevel = 1, tileCount = [32, 16]) {
         mipmap[i] = canvas.toImage();
     }
     return img.mipmap = mipmap;
+
+    /**single tile:
+     *                  +----+
+     * +--+             |1212|
+     * |12| =>          |3434|
+     * |34| =>          |1212|
+     * +--+             |3434|
+     *                  +----+
+     */
+    // pad = 2;
+    // if (pad > 1) {
+    //     w *= pad * 2;
+    //     h *= pad * 2;
+    // }
+    // for (let i = pad > 1? 0: 1; w > wTileCount && h > hTileCount; ++i) {
+    //     w = (w >>> 1) || w;
+    //     h = (h >>> 1) || h;
+    //     canvas.setSize(w, h);
+    //     let sw = w / wTileCount / pad, sh = h / hTileCount / pad;
+    //     console.log(w, h, sw, sh)
+    //     for (let x = 0; x < wTileCount; ++x)
+    //     for (let y = 0; y < hTileCount; ++y) {
+    //         for (let dx = 0; dx < pad; ++dx)
+    //         for (let dy = 0; dy < pad; ++dy) {
+    //             canvas.drawImage(img, x * singleW, y * singleH, singleW, singleH, (x * pad + dx) * sw, (y * pad + dy) * sh, sw, sh);
+    //         }
+    //     }
+    //     let mipimg = new Image(w, h);
+    //     // mipimg.onload = () => {
+    //     //     console.log(i);
+    //     // };
+    //     mipimg.src = canvas.toDataURL();
+    //     mipmap[i] = mipimg;
+    // }
+    // mipmap.pad = pad;
 }
 
 import { asyncLoadResByUrl, setResource } from "./loadResources.js";
+function setBorderOrBgStyle(img, canvas, sx, sy, sw, sh, styleDOM, classSelector, {
+    originalImgW = 256, originalImgH = originalImgW,
+    zoomW = 1, zoomH = zoomW,
+    cssVarName = classSelector.replace(/:/g, '-'),
+    border = false,
+        slice, // array
+        keepCenter = true,
+        color = "transparent",
+        style = "solid",
+        repeat = "stretch",
+    background = false,
+        size = "cover",
+        bgRepeat = "no-repeat",
+        clip
+} = {}) {
+    const {width, height} = img;
+    const cr = (w, h) => [w / originalImgW * width, h / originalImgH * height];
+    const imgWidth = sw * zoomW, imgHeight = sh * zoomH;
+    canvas.setSize(imgWidth, imgHeight);
+    canvas.drawImage(img, ...cr(sx, sy), ...cr(sw, sh), 0, 0, imgWidth, imgHeight);
+    if (border) {
+        if (slice === undefined) return canvas.toImage();
+        if (slice.length === 1) slice = [slice[0], slice[0], slice[0], slice[0]];
+        if (slice.length === 2) slice = [slice[0], slice[1], slice[0], slice[1]];
+        if (slice.length === 3) slice = [slice[0], slice[1], slice[2], slice[1]];
+    }
+    let url = canvas.toDataURL();
+    styleDOM.innerHTML += `:root { --${cssVarName}-img-width: ${imgWidth}; --${cssVarName}-img-height: ${imgHeight}; ${
+                border? `--${cssVarName}-border-img-top: ${slice[0]}; --${cssVarName}-border-img-right: ${slice[1]}; --${cssVarName}-border-img-bottom: ${slice[2]}; --${cssVarName}-border-img-left: ${slice[3]};`
+                : ""
+            }}\n`
+        + `.${classSelector} {\n`
+        + `    --img-width: var(--${classSelector}-img-width);\n`
+        + `    --img-height: var(--${classSelector}-img-height);\n`
+        + (background?
+              `    background-image: url(${url});\n`
+            + `    background-size: ${size};\n`
+            + (clip? `    background-clip: ${clip};\n`: "")
+            + (bgRepeat? `    background-repeat: ${bgRepeat};\n`: ""): "")
+        + (border? 
+              `    border: ${color} ${style};\n`
+            + `    border-image: url(${url}) ${slice.join(" ")} ${keepCenter? "fill": ""} ${repeat};\n`: "")
+        + `}\n`;
+    return canvas.toImage();
+}
 asyncLoadResByUrl("texture/gui.png")
 .then(img => {
-    const {width, height} = img,
-          style = document.createElement("style"),
-          canvas = new Canvas2D(182, 22);
-    const cr = (w, h) => [w / 256 * width, h / 256 * height];
-    canvas.drawImage(img, 0, 0, ...cr(182, 22), 0, 0, canvas.width, canvas.height);
-    setResource("hotbar_background", canvas.toImage());
-    style.innerHTML += ".mc-hotbar-background {\n" +
-                       `    background-image: url(${canvas.toDataURL()});\n` +
-                       "    background-size: 100% 100%;\n" +
-                       "    background-repeat: no-repeat;\n" +
-                       "}\n";
-    canvas.setSize(24, 24);
-    canvas.drawImage(img, ...cr(0, 22), ...cr(24, 24), 0, 0, canvas.width, canvas.height);
-    setResource("hotbar_selector", canvas.toImage());
-    style.innerHTML += ".mc-hotbar-selector-background {\n" +
-                       `    background-image: url(${canvas.toDataURL()});\n` +
-                       "    background-size: 100% 100%;\n" +
-                       "    background-repeat: no-repeat;\n" +
-                       "}\n";
-    canvas.setSize(16, 16);
-    canvas.drawImage(img, ...cr(200, 46), ...cr(16, 16), 0, 0, canvas.width, canvas.height);
-    setResource("inventory_item_background", canvas.toImage());
-    style.innerHTML += ".mc-inventory-item-background {\n" +
-                       `    background-image: url(${canvas.toDataURL()});\n` +
-                       "    background-size: 100% 100%;\n" +
-                       "}\n";
-    document.head.appendChild(style);
+    const canvas = new Canvas2D(), style = document.createElement("style");
+    setBorderOrBgStyle(img, canvas, 0, 0, 182, 22, style, "mc-hotbar-background", {background: true});
+    style.innerHTML += ":root { --mc-hotbar-item-cell-width: 20; --mc-hotbar-item-cell-height: 20; }\n";
+    setBorderOrBgStyle(img, canvas, 0, 22, 24, 24, style, "mc-hotbar-selector-background", {background: true});
+    setBorderOrBgStyle(img, canvas, 200, 46, 16, 16, style, "mc-inventory-item-background", {background: true});
+    document.head.prepend(style);
 });
 asyncLoadResByUrl("texture/spritesheet.png")
 .then(img => {
-    const {width, height} = img,
-          style = document.createElement("style"),
-          canvas = new Canvas2D(18, 18);
-    const cr = (w, h) => [w / 256 * width, h / 256 * height];
-    canvas.drawImage(img, ...cr(60, 0), ...cr(18, 18), 0, 0, canvas.width, canvas.height);
-    setResource("close_btn", canvas.toImage());
-    style.innerHTML += ".mc-close-btn {\n" +
-                       `    background-image: url(${canvas.toDataURL()});\n` +
-                       "    background-size: 100% 100%;\n" +
-                       "    background-repeat: no-repeat;\n" +
-                       "}\n";
-    canvas.clear();
-    canvas.drawImage(img, ...cr(78, 0), ...cr(18, 18), 0, 0, canvas.width, canvas.height);
-    setResource("close_btn_active", canvas.toImage());
-    style.innerHTML += ".mc-close-btn:active {\n" +
-                       `    background-image: url(${canvas.toDataURL()});\n` +
-                       "    background-size: 100% 100%;\n" +
-                       "    background-repeat: no-repeat;\n" +
-                       "}\n";
-    canvas.setSize(16, 16);
-    canvas.drawImage(img, 0, 0, ...cr(16, 16), 0, 0, canvas.width, canvas.height);
-    setResource("inventory_border", canvas.toImage());
-    style.innerHTML += ".mc-inventory-border {\n" +
-                       "    border: 16px solid transparent;\n" +
-                       `    border-image: url(${canvas.toDataURL()}) 6 stretch;\n` +
-                       "}\n";
-    canvas.setSize(14, 14);
-    canvas.drawImage(img, ...cr(34, 43), ...cr(14, 14), 0, 0, canvas.width, canvas.height);
-    setResource("inventory_tab_back", canvas.toImage());
-    style.innerHTML += ".mc-inventory-tab-back {\n" +
-                       `    background-image: url(${canvas.toDataURL()});\n` +
-                       "    background-size: 100% 100%;\n" +
-                       "    background-repeat: no-repeat;\n" +
-                       "}\n";
-    canvas.setSize(13, 14);
-    canvas.drawImage(img, ...cr(49, 43), ...cr(13, 14), 0, 0, canvas.width, canvas.height);
-    setResource("inventory_tab_back_left", canvas.toImage());
-    style.innerHTML += ".mc-inventory-tab-front-left {\n" +
-                       `    background-image: url(${canvas.toDataURL()});\n` +
-                       "    background-size: 100% 100%;\n" +
-                       "    background-repeat: no-repeat;\n" +
-                       "}\n";
-    canvas.setSize(14, 14);
-    canvas.drawImage(img, ...cr(65, 55), ...cr(14, 14), 0, 0, canvas.width, canvas.height);
-    setResource("inventory_tab_back_right", canvas.toImage());
-    style.innerHTML += ".mc-inventory-tab-front-right {\n" +
-                       `    background-image: url(${canvas.toDataURL()});\n` +
-                       "    background-size: 100% 100%;\n" +
-                       "    background-repeat: no-repeat;\n" +
-                       "}\n";
-    document.head.appendChild(style);
+    const canvas = new Canvas2D(), style = document.createElement("style");
+    setBorderOrBgStyle(img, canvas, 60, 0, 18, 18, style, "mc-close-btn", {background: true});
+    setBorderOrBgStyle(img, canvas, 78, 0, 18, 18, style, "mc-close-btn:active", {background: true});
+    setBorderOrBgStyle(img, canvas, 34, 43, 14, 14, style, "mc-inventory-items", {border: true, slice: [3]});
+    setBorderOrBgStyle(img, canvas, 49, 43, 13, 14, style, "mc-inventory-tab-background-left", {border: true, slice: [3]});
+    setBorderOrBgStyle(img, canvas, 65, 55, 14, 14, style, "mc-inventory-tab-background-right", {border: true, slice: [3]});
+    document.head.prepend(style);
 });
 
 import { Render } from "./Render.js";

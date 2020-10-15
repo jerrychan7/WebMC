@@ -34,62 +34,97 @@
             z-index: 1;
         }
 
-        /* 求css大佬解救 */
-        .mc-hotbar, .mc-hotbar-background, .mc-hotbar-selector-background {
-            z-index: 5;
-            display: block;
-        }
-        .mc-hotbar, .mc-hotbar-background {
-            height: 44px;
-            width: 364px;
-        }
-        .mc-hotbar-selector-background {
-            height: 48px;
-            width: 48px;
-            position: absolute;
-            top: -2px; left: -2px;
-            z-index: 3;
-        }
-        .mc-hotbar-background {
-            opacity: 0.75;
-        }
         .mc-hotbar {
             position: fixed;
             bottom: 0;
-            left: 0; right: 0;
-            margin: auto auto;
+            width: 100%;
+        }
+        :root {
+            --mc-hotbar-background-width: 45%;
+            --mc-hotbar-scale-factor-per-pixel: calc(var(--mc-hotbar-background-width) / var(--mc-hotbar-background-img-width));
+        }
+        .mc-hotbar-background {
+            opacity: 0.75;
+            width: var(--mc-hotbar-background-width);
+            padding-top: calc(var(--mc-hotbar-scale-factor-per-pixel) * var(--img-height));
+            margin: auto;
+        }
+        .mc-hotbar-selector-warp {
+            width: 100%; height: 100%;
+            position: absolute;
+            top: 0;
+        }
+        .mc-hotbar-selector-background {
+            position: absolute;
+            --width-one-pixel: var(--mc-hotbar-scale-factor-per-pixel);
+            --height-one-pixel: calc(100% / var(--mc-hotbar-background-img-height));
+            width: calc(var(--width-one-pixel) * var(--img-height));
+            padding-top: calc(var(--width-one-pixel) * var(--img-height));
+            top: calc(-1 * var(--height-one-pixel));
+
+            --offset: 0;
+            left: calc(var(--offset) * var(--mc-hotbar-item-cell-width) * var(--width-one-pixel)
+                + (100% - var(--mc-hotbar-background-width)) / 2 - var(--width-one-pixel));
         }
         #mc-hotbar-items {
             position: absolute;
-            top: 8px; left: 8px;
-            z-index: 4;
-            cursor: pointer;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            padding-left: calc((100% - var(--mc-hotbar-background-width)) / 2);
         }
         #mc-hotbar-items > img {
-            width: 30px; height: 30px;
+            width: calc(15 * var(--mc-hotbar-scale-factor-per-pixel));
+            height: auto;
+            cursor: pointer;
+            padding:
+                calc(4 * var(--mc-hotbar-scale-factor-per-pixel))
+                calc(2 * var(--mc-hotbar-scale-factor-per-pixel))
+                calc(3 * var(--mc-hotbar-scale-factor-per-pixel))
+                calc(3 * var(--mc-hotbar-scale-factor-per-pixel));
         }
-        #mc-hotbar-items > img:not(:first-child) {
-            margin: 0 0 0 10px;
+        #mc-hotbar-items > img:first-child {
+            margin-left: calc(1 * var(--mc-hotbar-scale-factor-per-pixel));
         }
+        #mc-hotbar-items > img:hover {
+            filter: brightness(1.5);
+        }
+        #mc-hotbar-items > img:active {
+            filter: brightness(0.7);
+        }
+        .mc-hotbar, .mc-hotbar-background, #mc-hotbar-items { z-index: 5; }
+        .mc-hotbar-selector-background { z-index: 4; }
 
-        body .mc-inventory {
-            transform: scale(2);
-        }
         .mc-inventory {
-            display: none;
-            width: 352px; height: 192px;
-            margin: auto auto;
+            overflow: hidden;
             position: absolute;
-            left: 0; top: 0;
-            bottom: 0; right: 0;
-            z-index: 20;
+            background-color: rgba(0, 0, 0, 0.5);
+            width: 100%; height: 100vh;
+            font-size: 0;
+            text-align: center;
+            display: table;
         }
-        .mc-inventory .mc-inventory-border {
-            border-width: 16px;
-            top: -16px; left: -16px;
+        .mc-inventory > div {
+            display: table-cell;
+            vertical-align: middle;
+        }
+        [class*="mc-inventory-tabs"],
+        .mc-inventory-items {
+            display: inline-block;
+            vertical-align: top;
+            position: relative;
+        }
+        .mc-inventory-items {
+            width: 50%; max-height: 65vh;
+            overflow-y: overlay;
+            text-align: left;
+            padding: 10px 30px;
         }
         .mc-inventory-item-background {
-            display: block; width: 11.111111%; height: 16.666667%; float: left;
+            display: inline-block;
+            width: 11.111111%;
+            padding-top: 11.111111%;
+            /* width: 64px; height: 64px; */
             position: relative;
         }
         .mc-inventory-item-background:hover {
@@ -97,12 +132,6 @@
         }
         .mc-inventory-item-background:active {
             filter: brightness(0.7);
-        }
-        .mc-inventory-items-background {
-            display: block; position: relative;
-            width: 288px; height: 192px;
-            float: left;
-            z-index: 6;
         }
         .mc-inventory-item-background img {
             width: 75%; height: 75%;
@@ -112,43 +141,55 @@
             margin: auto;
         }
         .mc-inventory-tab {
-            height: 32px; width: 32px;
             position: relative;
-            float: left;
-            left: -24px;
-            top: -12.5px;
         }
-        .mc-inventory-tab .mc-close-btn {
-            width: 18px; height: 18px;
-            position: relative;
-            top: 50%;
-            transform: translateY(-50%);
-            margin: auto auto;
-            z-index: 10;
-        }
-        .mc-inventory-tab .mc-inventory-tab-front-right {
-            width: 100%; height: 100%;
+        .mc-inventory-tab-item {
             position: absolute;
-            z-index: 9;
+            top: 0;
+            width: 100%; height: 100%;
         }
+        [class*="mc-inventory-tab-background"] {
+            width: 64px; height: 64px;
+            position: relative;
+        }
+        [class*="mc-inventory-tab-background"],
+        .mc-inventory-items { border-width: calc(4px * var(--mc-inventory-items-border-img-top)); }
+        [class*="mc-inventory-tabs"] { width: calc(64px + 4px * var(--mc-inventory-items-border-img-top) * 2); }
+        /* Overlap 2 pixels */
+        .mc-inventory-tabs-left  { left: calc(4px * 2); }
+        .mc-inventory-tabs-right { right: calc(4px * 2); }
+        .mc-inventory-tab-item * {
+            position: absolute;
+            top: 0; bottom: 0; left: 0; right: 0;
+            width: 60%; height: 60%;
+            margin: auto;
+        }
+
+        .mc-inventory { z-index: 5; }
+        .mc-inventory-items { z-index: 6; }
+        [class*="mc-inventory-tab-background"] { z-index: 5; }
+        [class*="mc-inventory-tab-background"][active] { z-index: 7; }
+        .mc-inventory-tab-item>* { z-index: 8; }
     </style>
     <script src="./src/main.js" type="module"></script>
 </head>
 <body>
     <div class="mc-crosshairs"></div>
-    <div class="mc-inventory">
-        <div class="mc-inventory-items-background mc-inventory-border"></div>
-        <div class="mc-inventory-tab">
-            <div class="mc-inventory-tab-front-right"></div>
-            <div class="mc-close-btn"
-                onclick="document.getElementsByClassName('mc-inventory')[0].style.display='none';">
+    <div class="mc-inventory" style="display: none;"><div>
+        <div class="mc-inventory-tabs-left"></div>
+        <div class="mc-inventory-items"></div>
+        <div class="mc-inventory-tabs-right">
+            <div class="mc-inventory-tab">
+                <div class="mc-inventory-tab-background-right" active></div>
+                <div class="mc-inventory-tab-item"><div class="mc-close-btn"
+                    onclick="document.getElementsByClassName('mc-inventory')[0].style.display='none';"></div></div>
             </div>
         </div>
-    </div>
+    </div></div>
     <div class="mc-hotbar">
         <div class="mc-hotbar-background"></div>
         <div id="mc-hotbar-items"></div>
-        <div class="mc-hotbar-selector-background"></div>
+        <div class="mc-hotbar-selector-warp"><div class="mc-hotbar-selector-background"></div></div>
     </div>
     <canvas id="canvas"></canvas>
 </body>
