@@ -10,6 +10,7 @@ asyncLoadResByUrl("texture/terrain-atlas.png").then(img => {
 const BlockRenderType = {
     NORMAL: Symbol("block render type: normal"),
     FLOWER: Symbol("block render type: flower"),
+    CACTUS: Symbol("block render type: cactus"),
 };
 // BLOCKS: block name -> block      blockIDs: block id -> [db] -> block
 const BLOCKS = {}, blockIDs = new Map();
@@ -39,7 +40,14 @@ asyncLoadResByUrl("src/blocks.json").then(obj => {
         [BlockRenderType.FLOWER]:
             ("face:14630572").split(",").map(s => s.split(":"))
             .map(([face, vs]) => {
-                return ({[face]: [...vs].map(i => brtv.normal[i]).reduce((ac, d) => {ac.push(...d); return ac;},[])});
+                return ({[face]: [...vs].map(i => brtv.flower[i]).reduce((ac, d) => {ac.push(...d); return ac;},[])});
+            })
+            .reduce((ac, o) => ({...ac, ...o}), {}),
+        [BlockRenderType.CACTUS]:
+            ("x+:12 13 14 15,x-:20 21 22 23,y+:0 1 2 3,y-:4 5 6 7,z+:8 9 10 11,z-:16 17 18 19")
+            .split(",").map(s => s.split(":"))
+            .map(([face, vs]) => {
+                return ({[face]: vs.split(" ").map(i => brtv.cactus[i]).reduce((ac, d) => {ac.push(...d); return ac;},[])});
             })
             .reduce((ac, o) => ({...ac, ...o}), {}),
     };
@@ -99,6 +107,7 @@ class Block {
                 (x+1)*xsize-dx, y*ysize+dy
             ];
         switch (this.renderType) {
+            case BlockRenderType.CACTUS:
             case BlockRenderType.NORMAL: {
                 if (coordinate.length === 1) {
                     let uvw = cr2uv(coordinate[0]);
@@ -109,6 +118,12 @@ class Block {
                     uv["y-"] = cr2uv(coordinate[1]);
                     let uvw = cr2uv(coordinate[2]);
                     "x+,x-,z+,z-".split(",").forEach(k => uv[k] = uvw);
+                }
+                else if (coordinate.length === 4) {
+                    uv["y+"] = cr2uv(coordinate[0]);
+                    uv["y-"] = cr2uv(coordinate[1]);
+                    uv["x+"] = uv["x-"] = cr2uv(coordinate[2]);
+                    uv["z+"] = uv["z-"] = cr2uv(coordinate[3]);
                 }
                 else if (coordinate.length === 6) {
                     "x+,x-,y+,y-,z+,z-".split(",").forEach((k, i) => uv[k] = cr2uv(coordinate[i]));

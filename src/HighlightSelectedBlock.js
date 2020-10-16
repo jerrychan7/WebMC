@@ -12,7 +12,8 @@ class HighlightSelectedBlock {
             let blockEles = Block.getElementsByRenderType(renderType);
             let lineVer = [], vers = Block.getVertexsByRenderType(renderType), surfaceMesh = {};
             for (let f in vers) {
-                lineVer.push(...vers[f]);
+                if (renderType !== Block.renderType.CACTUS || (f != "y+" && f != "y-"))
+                    lineVer.push(...vers[f]);
                 surfaceMesh[f] = {
                     ver: renderer.createVbo(vers[f]),
                     ele: renderer.createIbo(blockEles[f]),
@@ -61,6 +62,7 @@ class HighlightSelectedBlock {
         selector.setUni("mvp", this.mvp);
         let mesh = this.meshs.get(block.renderType), lineMesh = mesh.line, surfaceMeshs = mesh.surface;
         switch (block.renderType) {
+        case Block.renderType.CACTUS:
         case Block.renderType.NORMAL: {
             if (!hit.axis) break;
             let [dx, dy, dz] = ({"x+":[1,0,0], "x-":[-1,0,0], "y+":[0,1,0], "y-":[0,-1,0], "z+":[0,0,1], "z-":[0,0,-1]})[hit.axis];

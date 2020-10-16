@@ -246,7 +246,7 @@ class BlockInventoryTexRender extends Render {
             this.ctx2d.clear();
             return this.ctx2d.toImage();
         }
-        if (block.renderType === Block.renderType.NORMAL) {
+        if (block.renderType === Block.renderType.NORMAL || block.renderType === Block.renderType.CACTUS) {
             let normal = [], color = [], ver = [], tex = [], ele = [], totalVer = 0;
             for (let face in block.vertexs) {
                 let vs = block.vertexs[face],

@@ -78,6 +78,7 @@ class ChunksModule {
                 bf = blockFace[i][j][k];
             // 如果周围方块透明 绘制
             switch(cblock.renderType) {
+            case Block.renderType.CACTUS:
             case Block.renderType.NORMAL: {
                 [[1,0,0,"x+"], [-1,0,0,"x-"], [0,1,0,"y+"], [0,-1,0,"y-"], [0,0,1,"z+"], [0,0,-1,"z-"]]
                 .forEach(([dx, dy, dz, face]) => {
@@ -93,6 +94,7 @@ class ChunksModule {
                             ? world.getLight(wx + dx, wy + dy, wz + dz)
                             : chunk.getLight(rx, ry, rz);
                     if (bl === null) bl = 15;
+                    bff.disableCullFace = cblock.renderType === Block.renderType.CACTUS;
                     bff.ver = cblock.vertexs[face].map((v, ind) => ind%3===0? v+wx: ind%3===1? v+wy: v+wz);
                     bff.col = calCol(verNum, bl);
                     bff.ele = cblock.elements[face];
@@ -134,6 +136,7 @@ class ChunksModule {
         let bf = {};
         // handle center
         if (cblock.name !== "air") switch (cblock.renderType) {
+            case Block.renderType.CACTUS:
             case Block.renderType.NORMAL: {
                 [[1,0,0,"x+"], [-1,0,0,"x-"], [0,1,0,"y+"], [0,-1,0,"y-"], [0,0,1,"z+"], [0,0,-1,"z-"]]
                 .forEach(([dx, dy, dz, face]) => {
@@ -144,6 +147,7 @@ class ChunksModule {
                         verNum = cblock.vertexs[face].length / 3;
                     if (bl === null) bl = 15;
                     bf[face] = {
+                        disableCullFace: cblock.renderType === Block.renderType.CACTUS,
                         ver: cblock.vertexs[face].map((v, ind) => ind%3===0? v+blockX: ind%3===1? v+blockY: v+blockZ),
                         ele: cblock.elements[face],
                         tex: cblock.texture.uv[face],
@@ -185,6 +189,7 @@ class ChunksModule {
                 [arx, ary, arz] = Chunk.getRelativeBlockXYZ(awx, awy, awz),
                 abf = this.blockFace[achunkKey][arx][ary][arz];
             switch (ablock.renderType) {
+            case Block.renderType.CACTUS:
             case Block.renderType.NORMAL: {
                 if (cblock.isOpaque){
                     delete abf[inverseFace];
@@ -215,6 +220,7 @@ class ChunksModule {
             let [wx, wy, wz] = chunk.blockRXYZ2BlockXYZ(i, j, k),
                 bf = blockFace[i][j][k];
             switch(cblock.renderType) {
+            case Block.renderType.CACTUS:
             case Block.renderType.NORMAL: {
                 [[1,0,0,"x+"], [-1,0,0,"x-"], [0,1,0,"y+"], [0,-1,0,"y-"], [0,0,1,"z+"], [0,0,-1,"z-"]]
                 .forEach(([dx, dy, dz, face]) => {
