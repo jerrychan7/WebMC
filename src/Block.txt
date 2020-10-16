@@ -16,7 +16,10 @@ id bd 方块名 透明度 硬度 抗暴 最大堆叠上限 亮度 掉落 渲染�
     stackable: 可堆叠数量(缺省64),
     textureImg: url 材质图片 缺省使用默认材质,
     texture:[] 材质数组 详见下(除空气外 其他缺省为丢失材质),
-    friction: 摩擦力(缺省1)
+    friction: 摩擦力(缺省1),
+    showName: 方块的显示名称(缺省时，名字的_被替换成空格，单词首字母大写),
+    isLeaves: 是否是树叶(缺省时，名字以leaves结尾时true，否则为false),
+    isGlass: 是否是玻璃(缺省时，名字以glass结尾时true，否则为false),
 }
 
 "normal":0,         普通方块

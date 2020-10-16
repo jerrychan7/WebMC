@@ -64,6 +64,10 @@ class Block {
         friction = 1,
         id = blockIDs.size,
         bd = 0,
+        showName = blockName.toLowerCase().replace(/_/g, " ").replace(/^\w|\s\w/g, w => w.toUpperCase()),
+        isLeaves = blockName.endsWith("leaves"),
+        isGlass = blockName.endsWith("glass"),
+        ...others
     } = {}) {
         this.name = blockName;
         this.renderType = renderType;
@@ -84,7 +88,9 @@ class Block {
         }
         BLOCKS[blockName] = this;
         this.texture.inventory = blockInventoryTexture(this);
-        this.showName = blockName.toLowerCase().replace(/_/g, " ").replace(/^\w|\s\w/g, w => w.toUpperCase());
+        this.showName = showName;
+        this.isLeaves = isLeaves; this.isGlass = isGlass;
+        for (let k in others) this[k] = others[k];
     };
 
     get isOpaque() { return this.opacity === 15; };

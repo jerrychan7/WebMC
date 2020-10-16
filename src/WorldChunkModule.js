@@ -88,6 +88,7 @@ class ChunksModule {
                             ? world.getTile(wx + dx, wy + dy, wz + dz)
                             : chunk.getTile(rx, ry, rz);
                     if (b?.isOpaque) return delete bf[face];
+                    if (cblock.isGlass && b.isGlass) return delete bf[face];
                     let verNum = cblock.vertexs[face].length / 3,
                         bff = bf[face] || {},
                         bl = inOtherChunk
@@ -95,6 +96,7 @@ class ChunksModule {
                             : chunk.getLight(rx, ry, rz);
                     if (bl === null) bl = 15;
                     bff.disableCullFace = cblock.renderType === Block.renderType.CACTUS;
+                    if (cblock.isLeaves && !b.isLeaves) bff.disableCullFace = true;
                     bff.ver = cblock.vertexs[face].map((v, ind) => ind%3===0? v+wx: ind%3===1? v+wy: v+wz);
                     bff.col = calCol(verNum, bl);
                     bff.ele = cblock.elements[face];
@@ -143,6 +145,7 @@ class ChunksModule {
                     let wx = blockX + dx, wy = blockY + dy, wz = blockZ + dz,
                         b = world.getTile(wx, wy, wz);
                     if (b?.isOpaque) return;
+                    if (cblock.isGlass && b.isGlass) return delete bf[face];
                     let bl = world.getLight(wx, wy, wz),
                         verNum = cblock.vertexs[face].length / 3;
                     if (bl === null) bl = 15;
@@ -153,6 +156,7 @@ class ChunksModule {
                         tex: cblock.texture.uv[face],
                         col: [...Array(verNum * 4)].map((_, ind) => ind % 4 === 3? 1.0: Math.pow(0.9, 15 - bl)),
                     };
+                    if (cblock.isLeaves && !b.isLeaves) bf[face].disableCullFace = true;
                 });
                 break;}
             case Block.renderType.FLOWER: {
@@ -191,7 +195,7 @@ class ChunksModule {
             switch (ablock.renderType) {
             case Block.renderType.CACTUS:
             case Block.renderType.NORMAL: {
-                if (cblock.isOpaque){
+                if ((cblock.isGlass && ablock.isGlass) || cblock.isOpaque){
                     delete abf[inverseFace];
                     break;
                 }
@@ -202,6 +206,7 @@ class ChunksModule {
                     tex: ablock.texture.uv[inverseFace],
                     col: [...Array(verNum * 4)].map((_, ind) => ind % 4 === 3? 1.0: Math.pow(0.9, 15 - cbl)),
                 };
+                if ((!cblock.isLeaves) && ablock.isLeaves) abf[inverseFace].disableCullFace = true;
                 break;}
             case Block.renderType.FLOWER: break;
             }
@@ -378,8 +383,11 @@ class ChunksModule {
                     .setAtt("color", bufferObj.disableCullFace.col)
                     .setAtt("textureCoord", bufferObj.disableCullFace.tex);
                 ctx.disable(ctx.CULL_FACE);
+                ctx.enable(ctx.POLYGON_OFFSET_FILL);
+                ctx.polygonOffset(1.0, 1.0);
                 ctx.bindBuffer(bufferObj.disableCullFace.ele.type, bufferObj.disableCullFace.ele);
                 ctx.drawElements(ctx.TRIANGLES, bufferObj.disableCullFace.ele.length, ctx.UNSIGNED_SHORT, 0);
+                ctx.disable(ctx.POLYGON_OFFSET_FILL);
                 ctx.enable(ctx.CULL_FACE);
             }
         }
