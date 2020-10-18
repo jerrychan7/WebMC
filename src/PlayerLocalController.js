@@ -64,8 +64,21 @@ class PlayerLocalController extends EntityController {
                 this.entity.inventory.showInventoryPage();
             }
         }
+        if (String.fromCharCode(e.keyCode) === ' ') {
+            let {spaceDownTime, spaceUpTime} = this;
+            let now = new Date();
+            if (spaceDownTime - spaceUpTime < 0 && now - spaceDownTime > 90 && now - spaceDownTime < 250)
+                this.doubleClickSpace = true;
+            else this.doubleClickSpace = false;
+            if (this.doubleClickSpace) {
+                this.entity.toFlyMode?.(!this.entity.isFly);
+            }
+            this.spaceDownTime = now;
+        }
     };
-    keyup(e, locked) { };
+    keyup(e, locked) {
+        if (!this.keys[" "]) this.spaceUpTime = new Date();
+    };
     wheelup() {
         const t = new Date();
         if (t - this.lastWeelTime < 100) return;

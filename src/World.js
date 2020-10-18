@@ -234,6 +234,16 @@ class World {
         }
         this.lightingCalculator.update();
         this.entitys.forEach(e => e.update(dt));
+
+        const {mainPlayer} = this;
+        let cxyz = Chunk.getChunkXYZByBlockXYZ(...mainPlayer.position),
+            [cx, cy, cz] = cxyz;
+        if (vec3.exactEquals(cxyz, mainPlayer.lastChunk || []))
+            for (let dx = -1; dx <= 1; ++dx)
+            for (let dz = -1; dz <= 1; ++dz)
+            for (let dy = 1; dy >= -1; --dy)
+                this.loadChunk(cx + dx, cy + dy, cz + dz);
+        mainPlayer.lastChunk = cxyz;
     };
     // return null->uncollision    else -> { axis->("x+-y+-z+-": collision face, "": in block, b)lockPos}
     rayTraceBlock(start, end, chunkFn) {

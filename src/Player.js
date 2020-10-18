@@ -1,23 +1,38 @@
-import Chunk from "./Chunk.js";
 import Entity from "./Entity.js";
 import { vec3 } from "./gmath.js";
+import Block from "./Block.js";
 
 class Player extends Entity {
     constructor(world = null, {
-        position = [0, 10, 0]
+        position = [0, 10, 0],
+        pitch = 0, yaw = 0,
     } = {}) {
         super({
             min: [-0.25, 0, -0.25],
             max: [0.25, 1.8, 0.25]
         }, [0, 1.65, 0], world);
         super.position = vec3.create(...position);
+        super.pitch = pitch; super.yaw = yaw;
         this.moveSpeed = 4.317;     // block / s
-        this.jumpSpeed = 4.95;      // h = v^2 / 2g = 1.25 -> v = √2gh = √24.5 ≈ 4.95
-        super.gravityAcceleration = 9.8; // block / s ^ 2
+        super.gravityAcceleration = 20; // block / s ^ 2
+        // h = v^2 / 2g = 1.25 -> v = √2gh
+        this.jumpSpeed = Math.sqrt(2 * this.gravityAcceleration * 1.25);
         this.velocity = vec3.create();
         this.rest = vec3.create();
         this.acceleration = vec3.create(0, -this.gravityAcceleration, 0);
-        this.lastChunk = Chunk.getChunkXYZByBlockXYZ(this.position);
+        this.lastChunk = [];
+        this.isFly = false;
+    };
+    toFlyMode(fly = false) {
+        this.isFly = fly;
+        if (fly) {
+            this.acceleration[1] = 0;
+            this.moveSpeed = 20;
+        }
+        else {
+            this.acceleration[1] = -this.gravityAcceleration;
+            this.moveSpeed = 4.317;
+        }
     };
     setController(controller) {
         this.controller = controller;
@@ -31,7 +46,7 @@ class Player extends Entity {
         let dv = vec3.scale(this.velocity, dt);
         let chunkFn = (x, y, z) => {
             let b = this.world.getTile(x, y, z);
-            return b?.name !== "air";
+            return b?.name !== "air" && b?.renderType !== Block.renderType.FLOWER;
         };
         vec3.create(0, 0, 0, this.rest);
         for (let i = 0, dvel = vec3.create(); i < 3; dvel[i++] = 0) {
@@ -46,14 +61,6 @@ class Player extends Entity {
             }
         }
         vec3.add(this.position, dv, this.position);
-        let cxyz = Chunk.getChunkXYZByBlockXYZ(...this.position),
-            [cx, cy, cz] = cxyz;
-        if (vec3.exactEquals(cxyz, this.lastChunk))
-            for (let dx = -1; dx <= 1; ++dx)
-            for (let dz = -1; dz <= 1; ++dz)
-            for (let dy = 1; dy >= -1; --dy)
-                this.world.loadChunk(cx + dx, cy + dy, cz + dz);
-        this.lastChunk = cxyz;
     };
     update(dt) {
         dt /= 1000;
@@ -61,10 +68,18 @@ class Player extends Entity {
             return this.move(dt);
         const {keys} = this.controller;
         let dirvec = this.getForward(this.moveSpeed);
-        if (keys[" "] && this.onGround)
-            this.velocity[1] += this.jumpSpeed;
-        if ((keys[16] || keys.X) && !this.onGround)
-            this.velocity[1] -= this.jumpSpeed;
+
+        if (this.isFly) {
+            if (keys[" "]) this.velocity[1] = 20;
+            else if (keys[16] || keys.X) this.velocity[1] = -20;
+            else this.velocity[1] = 0;
+        }
+        else {
+            if (keys[" "] && this.onGround)
+                this.velocity[1] += this.jumpSpeed;
+            if ((keys[16] || keys.X) && !this.onGround)
+                this.velocity[1] -= this.jumpSpeed;
+        }
         let up = keys.W || keys[38],
             down = keys.S || keys[40],
             left = keys.A || keys[37],
