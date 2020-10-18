@@ -13,25 +13,40 @@ class Player extends Entity {
         }, [0, 1.65, 0], world);
         super.position = vec3.create(...position);
         super.pitch = pitch; super.yaw = yaw;
-        this.moveSpeed = 4.317;     // block / s
+        this.normalMoveSpeed = 4.317;
+        this.runMoveSpeed = 5.612;
+        this.flyMoveSpeed = 11;
+        this.flyRunMoveSpeed = 22;
+        this.moveSpeed = this.normalMoveSpeed;     // block / s
         super.gravityAcceleration = 20; // block / s ^ 2
         // h = v^2 / 2g = 1.25 -> v = √2gh
         this.jumpSpeed = Math.sqrt(2 * this.gravityAcceleration * 1.25);
+        this.normalJumpSpeed = this.jumpSpeed;
+        this.flyJumpSpeed = 20;
         this.velocity = vec3.create();
         this.rest = vec3.create();
         this.acceleration = vec3.create(0, -this.gravityAcceleration, 0);
         this.lastChunk = [];
-        this.isFly = false;
+        this.isFly = false; this.isRun = false;
     };
     toFlyMode(fly = false) {
         this.isFly = fly;
         if (fly) {
             this.acceleration[1] = 0;
-            this.moveSpeed = 20;
+            this.moveSpeed = this.isRun? this.flyRunMoveSpeed: this.flyMoveSpeed;
         }
         else {
             this.acceleration[1] = -this.gravityAcceleration;
-            this.moveSpeed = 4.317;
+            this.moveSpeed = this.isRun? this.normalMoveSpeed: this.runMoveSpeed;
+        }
+    };
+    toRunMode(run = false) {
+        this.isRun = run;
+        if (run) {
+            this.moveSpeed = this.isFly? this.flyRunMoveSpeed: this.runMoveSpeed;
+        }
+        else {
+            this.moveSpeed = this.isFly? this.flyMoveSpeed: this.normalMoveSpeed;
         }
     };
     setController(controller) {
@@ -70,8 +85,8 @@ class Player extends Entity {
         let dirvec = this.getForward(this.moveSpeed);
 
         if (this.isFly) {
-            if (keys[" "]) this.velocity[1] = 20;
-            else if (keys[16] || keys.X) this.velocity[1] = -20;
+            if (keys[" "]) this.velocity[1] = this.flyJumpSpeed;
+            else if (keys[16] || keys.X) this.velocity[1] = -this.flyJumpSpeed;
             else this.velocity[1] = 0;
         }
         else {
