@@ -31,7 +31,7 @@ export let showBlock = {
         varying vec2      vTextureCoord;
         void main(void){
             vec4 smpColor = texture2D(texture, vTextureCoord);
-            if (smpColor.a == 0.0) discard;
+            if (smpColor.a <= 0.3) discard;
             gl_FragColor  = vColor * smpColor;
         }`
 };

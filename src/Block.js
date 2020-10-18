@@ -119,6 +119,11 @@ class Block {
                     let uvw = cr2uv(coordinate[0]);
                     "x+,x-,y+,y-,z+,z-".split(",").map(k => uv[k] = uvw);
                 }
+                else if (coordinate.length === 2) {
+                    uv["y+"] = uv["y-"] = cr2uv(coordinate[0]);
+                    let uvw = cr2uv(coordinate[1]);
+                    "x+,x-,z+,z-".split(",").forEach(k => uv[k] = uvw);
+                }
                 else if (coordinate.length === 3) {
                     uv["y+"] = cr2uv(coordinate[0]);
                     uv["y-"] = cr2uv(coordinate[1]);

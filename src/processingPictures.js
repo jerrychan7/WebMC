@@ -65,7 +65,7 @@ export function textureMipmapByTile(img, mipLevel = 1, tileCount = [32, 16]) {
     for (let i = 0; w > wTileCount && h > hTileCount && (mipLevel? i < mipLevel: true) ; ++i) {
         w = (w >>> 1) || w;
         h = (h >>> 1) || h;
-        canvas.setSize(w, h);
+        canvas.setSize(w, h, true);
         let sw = w / wTileCount / 2, sh = h / hTileCount / 2,
             hsw = sw / 2, hsh = sh / 2;
         for (let x = 0; x < wTileCount; ++x)
