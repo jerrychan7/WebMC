@@ -24,9 +24,9 @@ class World {
         this.seed = seed;
         this.noise = new PerlinNoise(seed);
         this.generator = this.generator.bind(this);
-        for (let x = -1; x <= 1; ++x)
-        for (let z = -1; z <= 1; ++z)
-        for (let y = 1; y >= -1; --y)
+        for (let x = -2; x <= 2; ++x)
+        for (let z = -2; z <= 2; ++z)
+        for (let y = 2; y >= -2; --y)
             this.loadChunk(x, y, z);
         this.setRenderer(renderer);
         this.lightingCalculator = new ChunksLightCalculation(this);

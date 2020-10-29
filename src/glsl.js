@@ -94,3 +94,22 @@ export let blockInventoryTexure = {
         gl_FragColor  = vColor * smpColor;
     }`
 };
+
+export let startGamePage = {
+    vert: `
+        attribute vec3 position;
+        attribute vec2 textureCoord;
+        uniform   mat4 mvpMatrix;
+        varying   vec2 vTextureCoord;
+        void main(void){
+            vTextureCoord = textureCoord;
+            gl_Position = mvpMatrix * vec4(position, 1.0);
+        }`,
+    frag: `
+        precision lowp float;
+        uniform sampler2D texture;
+        varying vec2 vTextureCoord;
+        void main(void){
+            gl_FragColor = texture2D(texture, vTextureCoord);
+        }`
+};

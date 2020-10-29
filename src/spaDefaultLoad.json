@@ -1,0 +1,21 @@
+{
+    "start_game_page": {
+        "pageType": "jump",
+        "filePath": "/src/pages/start_game_page.html",
+        "include":  "/src/render_start_game_page.js"
+    },
+    "how_to_play": {
+        "pageType": "float",
+        "filePath": "/src/pages/how_to_play.html"
+    },
+    "play_game_page": {
+        "pageType": "jump",
+        "filePath": "/src/pages/play_game_page.html",
+        "include":  "/src/playGame.js"
+    },
+    "loading_terrain_page": {
+        "pageType": "float",
+        "filePath": "/src/pages/loading_terrain_page.html",
+        "include":  "/src/loading_terrain_page.js"
+    }
+}

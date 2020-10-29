@@ -36,8 +36,10 @@ class Canvas2D {
     setImgSmoothingQuality(level = 2) {
         this.ctx.imageSmoothingQuality = (["low", "medium", "high"])[level];
     };
-    toImage() {
+    toImage(onload = function() {}, onerror = function() {}) {
         let img = new Image(this.canvas.width, this.canvas.height);
+        img.onload = onload;
+        img.onerror = onerror;
         img.src = this.canvas.toDataURL();
         return img;
     };
@@ -135,7 +137,8 @@ import { asyncLoadResByUrl, setResource } from "./loadResources.js";
 function setBorderOrBgStyle(img, canvas, sx, sy, sw, sh, styleDOM, classSelector, {
     originalImgW = 256, originalImgH = originalImgW,
     zoomW = 1, zoomH = zoomW,
-    cssVarName = classSelector.replace(/:/g, '-'),
+    sizeW = sw * zoomW, sizeH = sh * zoomH,
+    cssVarName = classSelector.replace(/[:\[\]]/g, c => c === ']'? '': '-'),
     border = false,
         slice, // array
         keepCenter = true,
@@ -143,13 +146,14 @@ function setBorderOrBgStyle(img, canvas, sx, sy, sw, sh, styleDOM, classSelector
         style = "solid",
         repeat = "stretch",
     background = false,
+        bgImg = "",
         size = "cover",
         bgRepeat = "no-repeat",
         clip
 } = {}) {
     const {width, height} = img;
     const cr = (w, h) => [w / originalImgW * width, h / originalImgH * height];
-    const imgWidth = sw * zoomW, imgHeight = sh * zoomH;
+    const imgWidth = sizeW, imgHeight = sizeH;
     canvas.setSize(imgWidth, imgHeight);
     canvas.drawImage(img, ...cr(sx, sy), ...cr(sw, sh), 0, 0, imgWidth, imgHeight);
     if (border) {
@@ -164,10 +168,10 @@ function setBorderOrBgStyle(img, canvas, sx, sy, sw, sh, styleDOM, classSelector
                 : ""
             }}\n`
         + `.${classSelector} {\n`
-        + `    --img-width: var(--${classSelector}-img-width);\n`
-        + `    --img-height: var(--${classSelector}-img-height);\n`
+        + `    --img-width: var(--${cssVarName}-img-width);\n`
+        + `    --img-height: var(--${cssVarName}-img-height);\n`
         + (background?
-              `    background-image: url(${url});\n`
+              `    background-image: ${bgImg + (bgImg? ",": "")} url(${url});\n`
             + `    background-size: ${size};\n`
             + (clip? `    background-clip: ${clip};\n`: "")
             + (bgRepeat? `    background-repeat: ${bgRepeat};\n`: ""): "")
@@ -184,6 +188,10 @@ asyncLoadResByUrl("texture/gui.png")
     style.innerHTML += ":root { --mc-hotbar-item-cell-width: 20; --mc-hotbar-item-cell-height: 20; }\n";
     setBorderOrBgStyle(img, canvas, 0, 22, 24, 24, style, "mc-hotbar-selector-background", {background: true});
     setBorderOrBgStyle(img, canvas, 200, 46, 16, 16, style, "mc-inventory-item-background", {background: true});
+    setBorderOrBgStyle(img, canvas, 0, 66, 200, 20, style, "mc-button", {border: true, slice: [3]});
+    setBorderOrBgStyle(img, canvas, 0, 86, 200, 20, style, "mc-button:hover", {border: true, slice: [3]});
+    setBorderOrBgStyle(img, canvas, 0, 46, 200, 20, style, "mc-button:active", {border: true, slice: [3]});
+    setBorderOrBgStyle(img, canvas, 0, 46, 200, 20, style, "mc-button[disabled]", {border: true, slice: [3]});
     document.head.prepend(style);
 });
 asyncLoadResByUrl("texture/spritesheet.png")
@@ -195,6 +203,34 @@ asyncLoadResByUrl("texture/spritesheet.png")
     setBorderOrBgStyle(img, canvas, 49, 43, 13, 14, style, "mc-inventory-tab-background-left", {border: true, slice: [3]});
     setBorderOrBgStyle(img, canvas, 65, 55, 14, 14, style, "mc-inventory-tab-background-right", {border: true, slice: [3]});
     document.head.prepend(style);
+});
+asyncLoadResByUrl("texture/background.png")
+.then(img => {
+    const canvas = new Canvas2D(), style = document.createElement("style");
+    setBorderOrBgStyle(img, canvas, 0, 0, 16, 16, style, "mc-background", {
+        originalImgW: 16,
+        sizeW: 128, sizeH: 128,
+        background: true,
+        bgRepeat: "repeat", size: "auto",
+    });
+    setBorderOrBgStyle(img, canvas, 0, 0, 16, 16, style, "mc-background[darken]", {
+        originalImgW: 16,
+        sizeW: 128, sizeH: 128,
+        background: true,
+        bgRepeat: "repeat", size: "auto",
+        bgImg: "linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5))",
+    });
+    document.head.prepend(style);
+});
+asyncLoadResByUrl("texture/panorama.png")
+.then(img => {
+    const exponent = i => { for (var j = 1; i; i >>= 1) j <<= 1; return j; };
+    const {width, height} = img;
+    const canvas = new Canvas2D(exponent(width), height);
+    canvas.drawImage(img, 0, 0);
+    canvas.toImage(function() {
+        setResource("start_game_page/texture", this);
+    });
 });
 
 import { Render } from "./Render.js";

@@ -1,12 +1,18 @@
 import {preloaded} from "./loadResources.js";
 import Block from "./Block.js";
-import World from "./World.js";
-import { WorldRender } from "./WorldRender.js";
+import spa from "./spa.js";
+// load resources
+import "./processingPictures.js";
+spa.addPageByDefault();
 
-window.onload = async function() {
-    await preloaded.loadend();
+spa.addPage("about", "");
+spa.addEventListener("about", "load", (lastID) => {
+    alert("Dev by qinshou2017.");
+    spa.openPage(lastID);
+});
+
+preloaded.onloadend(async _ => {
     Block.initBlocksByDefault();
-    let world = new World(),
-        render = new WorldRender(document.getElementById("canvas"), world);
-    render.play();
-};
+    // Page-driven
+    spa.openPage("start_game_page");
+});
