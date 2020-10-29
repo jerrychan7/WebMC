@@ -8,6 +8,11 @@
         "pageType": "float",
         "filePath": "/src/pages/how_to_play.html"
     },
+    "options_page": {
+        "pageType": "float",
+        "filePath": "/src/pages/options_page.html",
+        "include":  "/src/options_page.js"
+    },
     "play_game_page": {
         "pageType": "jump",
         "filePath": "/src/pages/play_game_page.html",

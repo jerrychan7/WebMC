@@ -6,11 +6,20 @@ import Inventory from "./Inventory.js";
 import { vec3 } from "./gmath.js";
 import { PerlinNoise } from "./noise.js";
 import { ChunksLightCalculation } from "./WorldLight.js";
+import { asyncLoadResByUrl } from "./loadResources.js";
+
+let worldDefaultConfig = {};
+asyncLoadResByUrl("src/worldDefaultConfig.json")
+.then(cfg => {
+    worldDefaultConfig = cfg;
+});
 
 class World {
+    static get config() { return worldDefaultConfig; };
+
     constructor({
         worldName = "My World",
-        worldType = "pre-classic",
+        worldType = World.config.terrain,
         renderer = null,
         seed = Date.now(),
     } = {}) {
