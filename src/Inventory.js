@@ -18,12 +18,20 @@ class Inventory {
             div.onclick = this.onInventoryItemClick.bind(this, div);
             document.getElementsByClassName("mc-inventory-items")[0].append(div);
         }
+        let closeBtns = this.inventoryPage.getElementsByClassName("mc-close-btn");
+        for (let btn of closeBtns) {
+            btn.onclick = this.closeInventoryPage.bind(this);
+        }
     };
     getOnHands() {
         return this.hotbar[this.hotbar.selectOn];
     };
     showInventoryPage() {
         this.inventoryPage.style.display = "";
+    };
+    closeInventoryPage() {
+        this.inventoryPage.style.display = "none";
+        this.player.controller?.input?.requestPointerLock?.();
     };
     onInventoryItemClick(div) {
         this.hotbar[this.hotbar.selectOn] = div.block;

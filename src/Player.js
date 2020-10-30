@@ -18,7 +18,7 @@ class Player extends Entity {
         this.flyMoveSpeed = 11;
         this.flyRunMoveSpeed = 22;
         this.moveSpeed = this.normalMoveSpeed;     // block / s
-        super.gravityAcceleration = 20; // block / s ^ 2
+        super.gravityAcceleration = 30; // block / s ^ 2
         // h = v^2 / 2g = 1.25 -> v = √2gh
         this.jumpSpeed = Math.sqrt(2 * this.gravityAcceleration * 1.25);
         this.normalJumpSpeed = this.jumpSpeed;

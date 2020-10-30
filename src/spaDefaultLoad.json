@@ -18,6 +18,10 @@
         "filePath": "/src/pages/play_game_page.html",
         "include":  "/src/playGame.js"
     },
+    "stop_game_page": {
+        "pageType": "float",
+        "filePath": "/src/pages/stop_game_page.html"
+    },
     "loading_terrain_page": {
         "pageType": "float",
         "filePath": "/src/pages/loading_terrain_page.html",

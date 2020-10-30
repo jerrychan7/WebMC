@@ -3,7 +3,7 @@ class Input {
     constructor(canvas) {
         this.canvas = canvas;
         this.doc = canvas.ownerDocument;
-        this[Symbol.for("callbacks")] = ("keydown,keyup,mousedown,mouseup,mousemove,mousewheel,wheelup,wheeldown").split(",")
+        this[Symbol.for("callbacks")] = ("keydown,keyup,mousedown,mouseup,mousemove,mousewheel,wheelup,wheeldown,pointerlockchange").split(",")
             .reduce((obj, event) => {
                 obj[event] = [];
                 return obj;
@@ -15,7 +15,10 @@ class Input {
         this.autoLock = false;
         this.locked = false;
         this.doc.addEventListener("pointerlockchange", (e) => {
-            this.locked = document.pointerLockElement === this.canvas;
+            let locked = document.pointerLockElement === this.canvas;
+            if (this.locked !== locked)
+                this[Symbol.for("onPointerLockChange")](e, locked);
+            this.locked = locked;
         });
         this.doc.addEventListener("keydown", this[Symbol.for("onKeyDown")].bind(this), false);
         this.doc.addEventListener("keyup", this[Symbol.for("onKeyUp")].bind(this), false);
@@ -40,7 +43,7 @@ class Input {
             }
         });
         Object.entries(this[Symbol.for("callbacks")]).forEach(([event, cbs]) => {
-            if (event === "mousedown") return;
+            if (event === "mousedown" || event === "pointerlockchange") return;
             cbs.unshift((_, locked) => locked);
         });
         this.autoLock = true;
@@ -49,6 +52,9 @@ class Input {
         if (this.autoLock === false) return;
         Object.values(this[Symbol.for("callbacks")]).forEach(cbs => cbs.shift());
         this.autoLock = false;
+    };
+    requestPointerLock() {
+        this.canvas.requestPointerLock();
     };
     exitPointerLock() {
         this.doc.exitPointerLock();
@@ -78,6 +84,10 @@ class Input {
     };
     [Symbol.for("onMouseWheel")](e) {
         this[Symbol.for("targetEvent")]("mousewheel", e, this.locked);
+        return true;
+    };
+    [Symbol.for("onPointerLockChange")](e, locked) {
+        this[Symbol.for("targetEvent")]("pointerlockchange", e, locked);
         return true;
     };
 

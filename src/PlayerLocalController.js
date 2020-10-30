@@ -1,21 +1,29 @@
 import EntityController from "./EntityController.js";
 import Intup from "./Input.js";
 import { vec3 } from "./gmath.js";
+import spa from "./spa.js";
 
 class PlayerLocalController extends EntityController {
     constructor(player, canvas, {
-        mousemoveSensitivity = 360,
+        mousemoveSensitivity = 200,
     } = {}) {
         super(player);
         this.mousemoveSensitivity = mousemoveSensitivity;
         this.input = new Intup(canvas);
-        this.input.enableAutoPointerLock();
+        // this.input.enableAutoPointerLock();
         this.input.addEventListener("mousemove", this.mousemove.bind(this));
         this.input.addEventListener("mousedown", this.mousedown.bind(this));
         this.input.addEventListener("keydown", this.keydown.bind(this));
         this.input.addEventListener("keyup", this.keyup.bind(this));
         this.input.addEventListener("wheelup", this.wheelup.bind(this));
         this.input.addEventListener("wheeldown", this.wheeldown.bind(this));
+        this.input.addEventListener("pointerlockchange", (e, locked) => {
+            if (!locked && this.showStopPage) {
+                spa.openPage("stop_game_page");
+            }
+            else if (locked) this.input.requestPointerLock();
+            this.showStopPage = true;
+        });
         this.keys = this.input.keys;
     };
     mousemove(e, locked) {
@@ -30,7 +38,10 @@ class PlayerLocalController extends EntityController {
             this.entity.pitch = -Math.PI / 2;
     };
     mousedown(e, locked) {
-        if (!locked) return;
+        if (!locked) {
+            this.input.requestPointerLock();
+            return;
+        }
         if (e.button !== 0 && e.button !== 2) return;
         let entity = this.entity,
             world = entity.world,
@@ -60,10 +71,15 @@ class PlayerLocalController extends EntityController {
     keydown(e, locked) {
         if (this.entity.inventory) {
             if (String.fromCharCode(e.keyCode) === 'E') {
-                this.input.exitPointerLock();
-                this.entity.inventory.showInventoryPage();
+                if (locked) {
+                    this.showStopPage = false;
+                    this.input.exitPointerLock();
+                    this.entity.inventory.showInventoryPage();
+                }
+                else this.entity.inventory.closeInventoryPage();
             }
         }
+        if (!locked) return;
         if (String.fromCharCode(e.keyCode) === ' ') {
             let {spaceDownTime, spaceUpTime} = this;
             let now = new Date();
@@ -88,19 +104,22 @@ class PlayerLocalController extends EntityController {
         }
     };
     keyup(e, locked) {
+        if (!locked) return;
         if (!this.keys[" "]) this.spaceUpTime = new Date();
         if (!this.keys.W) {
             this.moveUpTime = new Date();
             this.entity.toRunMode?.(false);
         }
     };
-    wheelup() {
+    wheelup(e, locked) {
+        if (!locked) return;
         const t = new Date();
         if (t - this.lastWeelTime < 100) return;
         this.entity.inventory?.hotbarSelectNext();
         this.lastWeelTime = t;
     };
-    wheeldown() {
+    wheeldown(e, locked) {
+        if (!locked) return;
         const t = new Date();
         if (t - this.lastWeelTime < 100) return;
         this.entity.inventory?.hotbarSelectPrev();

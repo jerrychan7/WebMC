@@ -110,6 +110,7 @@ a { text-decoration: none; }
     position: absolute;
     width: 100%;
     text-align: center;
+    z-index: 200;
 }
 #options_page > div.mc-background {
     height: 100vh;
@@ -139,6 +140,27 @@ a { text-decoration: none; }
     width: 50%;
     border-width: calc(3px * var(--mc-button-border-img-top));
     max-width: 400px;
+}
+
+#stop_game_page {
+    position: absolute;
+    width: 100%; height: 100vh;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 100;
+}
+#stop_game_page div {
+    position: relative;
+    top: 50%;
+    transform: translateY(-50%);
+}
+#stop_game_page .mc-button {
+    text-align: center;
+    display: block;
+    padding: 1.2vh 0;
+    width: 50%;
+    border-width: calc(3px * var(--mc-button-border-img-top));
+    max-width: 400px;
+    margin: 0 auto 10px;
 }
 
 #loading_terrain_page {

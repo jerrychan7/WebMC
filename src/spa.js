@@ -17,11 +17,13 @@ const spa = {
     addPage(id, content, type = "float") {
         if (id in allPage)
             throw `SPA: The page with ID ${id} already exists.`;
-        let page = document.createElement("div");
-        page.id = id;
-        page.innerHTML = content;
         allPage[id] = {
-            page, type,
+            get page() {
+                let page = document.createElement("div");
+                page.id = id;
+                page.innerHTML = content;
+                return page;
+            }, type,
             callback: { load:[], unload:[], overlap:[], unoverlap:[], },
         };
         return this;
@@ -74,8 +76,7 @@ const spa = {
             nextPage.callback.load.forEach(f => f(nowID, data));
         }
 
-        if (window.location.hash.replace("#", "") !== nextID)
-            window.location.hash = nextID;
+        window.location.hash = "";
     },
 
     back() {
