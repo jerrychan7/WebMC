@@ -95,7 +95,7 @@ class PlayerLocalController extends EntityController {
                 else this.entity.inventory.closeInventoryPage();
             }
         }
-        // if (!locked) return;
+        if (!locked) return;
         if (String.fromCharCode(e.keyCode) === ' ') {
             let {spaceDownTime, spaceUpTime} = this;
             let now = new Date();
@@ -131,7 +131,7 @@ class PlayerLocalController extends EntityController {
         }
     };
     keyup(e, locked) {
-        // if (!locked) return;
+        if (!locked) return;
         if (!this.keys[" "]) this.spaceUpTime = new Date();
         if (!this.keys.W) {
             this.moveUpTime = new Date();

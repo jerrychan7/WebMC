@@ -13,7 +13,7 @@ class Input {
                                     canvas.mozRequestPointerLock ||
                                     canvas.webkitRequestPointerLock;
         this.autoLock = false;
-        this.locked = false;
+        this.locked = window.isTouchDevice;
         this.doc.addEventListener("pointerlockchange", (e) => {
             let locked = document.pointerLockElement === this.canvas;
             if (this.locked !== locked)
@@ -199,6 +199,35 @@ class Input {
             activeMoveBtn(ele, e);
             if (lastMoveBtn !== ele) inactiveMoveBtn(lastMoveBtn, e);
             lastMoveBtn = ele;
+        });
+
+        let canvasLastTouchPos = null;
+        canvas.addEventListener("touchstart", function(e) {
+            e.preventDefault();
+            canvasLastTouchPos = e;
+        });
+        function canvasTouchend(e) {
+            e.preventDefault();
+            canvasLastTouchPos = null;
+        }
+        canvas.addEventListener("touchend", canvasTouchend);
+        canvas.addEventListener("touchcancel", canvasTouchend);
+        canvas.addEventListener("touchmove", function(e) {
+            e.preventDefault();
+            let nowPos = e;
+            if (!canvasLastTouchPos) {
+                canvasLastTouchPos = nowPos;
+                return;
+            }
+            const evt = new MouseEvent("mousemove", {
+                bubbles: true, cancelable: true, relatedTarget: canvas,
+                screenX: e.targetTouches[0].screenX, screenY: e.targetTouches[0].screenY,
+                clientX: e.targetTouches[0].clientX, clientY: e.targetTouches[0].clientY,
+                movementX: e.targetTouches[0].screenX - canvasLastTouchPos.targetTouches[0].screenX,
+                movementY: e.targetTouches[0].screenY - canvasLastTouchPos.targetTouches[0].screenY,
+            });
+            canvas.dispatchEvent(evt);
+            canvasLastTouchPos = nowPos;
         });
     };
     // 鼠标点击第一次锁定，同时让注册的回调函数只有在鼠标锁定的情况下才回调
