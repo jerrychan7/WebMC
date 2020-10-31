@@ -236,6 +236,13 @@ a { text-decoration: none; }
     height: 100vh;
 }
 
+#play_game_page .mc-button.full-screen-btn {
+    position: absolute;
+    right: 10px; top: 10px;
+    z-index: 10000;
+    padding: 10px;
+}
+
 .mc-crosshairs {
     background-image: url(texture/icons.png);
     background-size: 100% 100%;
