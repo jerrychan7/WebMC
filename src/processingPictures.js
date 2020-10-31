@@ -16,6 +16,12 @@ class Canvas2D {
                     return typeof tar.ctx[key] === "function"
                         ? tar.ctx[key].bind(tar.ctx)
                         : tar.ctx[key];
+            },
+            set(tar, key, value) {
+                if (key in tar) tar[key] = value;
+                if (key in tar.canvas) tar.canvas[key] = value;
+                if (key in tar.ctx) tar.ctx[key] = value;
+                return true;
             }
         });
     };
@@ -192,6 +198,35 @@ asyncLoadResByUrl("texture/gui.png")
     setBorderOrBgStyle(img, canvas, 0, 86, 200, 20, style, "mc-button:hover", {border: true, slice: [3]});
     setBorderOrBgStyle(img, canvas, 0, 46, 200, 20, style, "mc-button:active", {border: true, slice: [3]});
     setBorderOrBgStyle(img, canvas, 0, 46, 200, 20, style, "mc-button[disabled]", {border: true, slice: [3]});
+    const darkenBtn = (selector) => {
+        canvas.globalCompositeOperation = "source-atop";
+        canvas.fillStyle = "rgba(0, 0, 0, .5)";
+        canvas.fillRect(0, 0, canvas.width, canvas.height);
+        style.innerHTML += `${selector} { background-image: url(${canvas.toDataURL()}); }`;
+        canvas.globalCompositeOperation = "source-over";
+    };
+    setBorderOrBgStyle(img, canvas, 0, 107, 26, 26, style, "mc-move-btn-up", {background: true});
+    darkenBtn(".mc-move-btn-up:active, .mc-move-btn-up[active]");
+    setBorderOrBgStyle(img, canvas, 26, 107, 26, 26, style, "mc-move-btn-left", {background: true});
+    darkenBtn(".mc-move-btn-left:active, .mc-move-btn-left[active]");
+    setBorderOrBgStyle(img, canvas, 52, 107, 26, 26, style, "mc-move-btn-down", {background: true});
+    darkenBtn(".mc-move-btn-down:active, .mc-move-btn-down[active]");
+    setBorderOrBgStyle(img, canvas, 78, 107, 26, 26, style, "mc-move-btn-right", {background: true});
+    darkenBtn(".mc-move-btn-right:active, .mc-move-btn-right[active]");
+    setBorderOrBgStyle(img, canvas, 104, 107, 26, 26, style, "mc-move-btn-jump", {background: true});
+    darkenBtn(".mc-move-btn-jump:active, .mc-move-btn-jump[active]");
+    setBorderOrBgStyle(img, canvas, 0, 133, 26, 26, style, "mc-move-btn-upleft", {background: true});
+    darkenBtn(".mc-move-btn-upleft:active, .mc-move-btn-upleft[active]");
+    setBorderOrBgStyle(img, canvas, 26, 133, 26, 26, style, "mc-move-btn-upright", {background: true});
+    darkenBtn(".mc-move-btn-upright:active, .mc-move-btn-upright[active]");
+    setBorderOrBgStyle(img, canvas, 52, 133, 26, 26, style, "mc-move-btn-flyup", {background: true});
+    darkenBtn(".mc-move-btn-flyup:active, .mc-move-btn-flyup[active]");
+    setBorderOrBgStyle(img, canvas, 78, 133, 26, 26, style, "mc-move-btn-flydown", {background: true});
+    darkenBtn(".mc-move-btn-flydown:active, .mc-move-btn-flydown[active]");
+    setBorderOrBgStyle(img, canvas, 104, 133, 26, 26, style, "mc-move-btn-fly", {background: true});
+    darkenBtn(".mc-move-btn-fly:active, .mc-move-btn-fly[active]");
+    setBorderOrBgStyle(img, canvas, 218, 82, 18, 18, style, "mc-move-btn-sneak", {background: true});
+    setBorderOrBgStyle(img, canvas, 218, 64, 18, 18, style, "mc-move-btn-sneak[active]", {background: true});
     document.head.prepend(style);
 });
 asyncLoadResByUrl("texture/spritesheet.png")

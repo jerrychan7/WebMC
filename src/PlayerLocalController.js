@@ -25,6 +25,22 @@ class PlayerLocalController extends EntityController {
             this.showStopPage = true;
         });
         this.keys = this.input.keys;
+        this.input.onFlyBtnClick = () => {
+            let {lastFlyBtnClick} = this, now = new Date();
+            if (lastFlyBtnClick - now < 0 && now - lastFlyBtnClick < 250) {
+                this.entity.toFlyMode?.(false);
+                let moveBtns = this.input.moveBtns;
+                if (this.entity.isFly) {
+                    moveBtns.querySelector(".mc-move-btn-jump").style.display = "none";
+                    moveBtns.querySelector(".mc-move-btn-fly").style.display = "";
+                }
+                else {
+                    moveBtns.querySelector(".mc-move-btn-jump").style.display = "";
+                    moveBtns.querySelector(".mc-move-btn-fly").style.display = "none";
+                }
+            }
+            this.lastFlyBtnClick = now;
+        };
     };
     mousemove(e, locked) {
         if (!locked) return;
@@ -79,7 +95,7 @@ class PlayerLocalController extends EntityController {
                 else this.entity.inventory.closeInventoryPage();
             }
         }
-        if (!locked) return;
+        // if (!locked) return;
         if (String.fromCharCode(e.keyCode) === ' ') {
             let {spaceDownTime, spaceUpTime} = this;
             let now = new Date();
@@ -88,6 +104,17 @@ class PlayerLocalController extends EntityController {
             else this.doubleClickSpace = false;
             if (this.doubleClickSpace) {
                 this.entity.toFlyMode?.(!this.entity.isFly);
+                let moveBtns = this.input.moveBtns;
+                try {
+                    if (this.entity.isFly) {
+                        moveBtns.querySelector(".mc-move-btn-jump").style.display = "none";
+                        moveBtns.querySelector(".mc-move-btn-fly").style.display = "";
+                    }
+                    else {
+                        moveBtns.querySelector(".mc-move-btn-jump").style.display = "";
+                        moveBtns.querySelector(".mc-move-btn-fly").style.display = "none";
+                    }
+                } catch {}
             }
             this.spaceDownTime = now;
         }
@@ -104,7 +131,7 @@ class PlayerLocalController extends EntityController {
         }
     };
     keyup(e, locked) {
-        if (!locked) return;
+        // if (!locked) return;
         if (!this.keys[" "]) this.spaceUpTime = new Date();
         if (!this.keys.W) {
             this.moveUpTime = new Date();

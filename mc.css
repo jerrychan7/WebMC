@@ -20,7 +20,57 @@ a { text-decoration: none; }
 }
 .mc-button[disabled] {
     color: #979797;
-    cursor: default;
+    cursor: not-allowed;
+}
+
+[class*="mc-move-btn"] {
+    display: block;
+}
+
+.mc-move-buttons {
+    --slice: 3;
+    --size: calc(1px * var(--slice) * var(--mc-move-btn-up-img-width));
+    position: absolute;
+    z-index: 1;
+    width: calc(3 * var(--size));
+    height: calc(3 * var(--size));
+    bottom: 0;
+    opacity: 0.75;
+}
+.mc-move-buttons [class*="mc-move-btn-"] {
+    width: var(--size); height: var(--size);
+    position: absolute;
+}
+.mc-move-buttons .mc-move-btn-upleft {
+    left: calc(0 * var(--size));
+    top: calc(0 * var(--size));
+}
+.mc-move-buttons .mc-move-btn-up,
+.mc-move-buttons .mc-move-btn-flyup {
+    left: calc(1 * var(--size));
+    top: calc(0 * var(--size));
+}
+.mc-move-buttons .mc-move-btn-upright {
+    left: calc(2 * var(--size));
+    top: calc(0 * var(--size));
+}
+.mc-move-buttons .mc-move-btn-left {
+    left: calc(0 * var(--size));
+    top: calc(1 * var(--size));
+}
+.mc-move-buttons .mc-move-btn-jump,
+.mc-move-buttons .mc-move-btn-fly {
+    left: calc(1 * var(--size));
+    top: calc(1 * var(--size));
+}
+.mc-move-buttons .mc-move-btn-right {
+    left: calc(2 * var(--size));
+    top: calc(1 * var(--size));
+}
+.mc-move-buttons .mc-move-btn-down,
+.mc-move-buttons .mc-move-btn-flydown {
+    left: calc(1 * var(--size));
+    top: calc(2 * var(--size));
 }
 
 #start_game_page {
