@@ -206,21 +206,46 @@ class Input {
             e.preventDefault();
             canvasLastTouchPos = canvasBeginTouch = e;
             touchMoveLen = 0; destroying = false;
-            if (timer !== null) window.clearInterval(timer);
-            timer = null;
+            if (timer !== null) window.clearTimeout(timer);
+            timer = window.setTimeout(() => {
+                if (touchMoveLen < 10) {
+                    destroying = true;
+                    let e = canvasLastTouchPos;
+                    canvas.dispatchEvent(new MouseEvent("mousedown", {
+                        bubbles: true, cancelable: true, relatedTarget: canvas,
+                        screenX: e.targetTouches[0].screenX, screenY: e.targetTouches[0].screenY,
+                        clientX: e.targetTouches[0].clientX, clientY: e.targetTouches[0].clientY,
+                        button: 0, buttons: 0,
+                    }));
+                }
+                timer = null;
+            }, 300);
         });
         function canvasTouchend(e) {
             e.preventDefault();
             if (e.timeStamp - canvasBeginTouch.timeStamp < 150) {
-                const evt = new MouseEvent("mousedown", {
+                canvas.dispatchEvent(new MouseEvent("mousedown", {
                     bubbles: true, cancelable: true, relatedTarget: canvas,
                     screenX: e.changedTouches[0].screenX, screenY: e.changedTouches[0].screenY,
                     clientX: e.changedTouches[0].clientX, clientY: e.changedTouches[0].clientY,
                     button: 2, buttons: 2,
-                });
-                canvas.dispatchEvent(evt);
+                }));
+                canvas.dispatchEvent(new MouseEvent("mouseup", {
+                    bubbles: true, cancelable: true, relatedTarget: canvas,
+                    screenX: e.changedTouches[0].screenX, screenY: e.changedTouches[0].screenY,
+                    clientX: e.changedTouches[0].clientX, clientY: e.changedTouches[0].clientY,
+                    button: 2, buttons: 2,
+                }));
             }
-            if (timer !== null) window.clearInterval(timer);
+            else if (destroying) {
+                canvas.dispatchEvent(new MouseEvent("mouseup", {
+                    bubbles: true, cancelable: true, relatedTarget: canvas,
+                    screenX: e.changedTouches[0].screenX, screenY: e.changedTouches[0].screenY,
+                    clientX: e.changedTouches[0].clientX, clientY: e.changedTouches[0].clientY,
+                    button: 0, buttons: 0,
+                }));
+            }
+            if (timer !== null) window.clearTimeout(timer);
             timer = null;
             canvasLastTouchPos = null;
         }
@@ -232,22 +257,6 @@ class Input {
             if (!canvasLastTouchPos) {
                 canvasLastTouchPos = nowPos;
                 return;
-            }
-            if (e.timeStamp - canvasBeginTouch.timeStamp > 300 && destroying && timer === null) {
-                function destroy() {
-                    canvas.dispatchEvent(new MouseEvent("mousedown", {
-                        bubbles: true, cancelable: true, relatedTarget: canvas,
-                        screenX: e.targetTouches[0].screenX, screenY: e.targetTouches[0].screenY,
-                        clientX: e.targetTouches[0].clientX, clientY: e.targetTouches[0].clientY,
-                        button: 0, buttons: 0,
-                    }));
-                }
-                destroy();
-                timer = setInterval(destroy, 500);
-            }
-            else if (timer === null) {
-                if (e.timeStamp - canvasBeginTouch.timeStamp > 300 && touchMoveLen < 10)
-                    destroying = true;
             }
             let movementX = e.targetTouches[0].screenX - canvasLastTouchPos.targetTouches[0].screenX,
                 movementY = e.targetTouches[0].screenY - canvasLastTouchPos.targetTouches[0].screenY;

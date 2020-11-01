@@ -32,7 +32,7 @@ a { text-decoration: none; }
 }
 
 .mc-move-buttons {
-    --slice: 3;
+    --slice: 2.5;
     --size: calc(1px * var(--slice) * var(--mc-move-btn-up-img-width));
     position: absolute;
     z-index: 1;

@@ -12,6 +12,7 @@ class PlayerLocalController extends EntityController {
         this.input = new Intup(canvas);
         // this.input.enableAutoPointerLock();
         this.input.addEventListener("mousemove", this.mousemove.bind(this));
+        this.input.addEventListener("mouseup", this.mouseup.bind(this));
         this.input.addEventListener("mousedown", this.mousedown.bind(this));
         this.input.addEventListener("keydown", this.keydown.bind(this));
         this.input.addEventListener("keyup", this.keyup.bind(this));
@@ -41,6 +42,9 @@ class PlayerLocalController extends EntityController {
             }
             this.lastFlyBtnClick = now;
         };
+        this.mouseRightBtnDown = false;
+        this.mouseLeftBtnDown = false;
+        this.destroyOrPlaceBlockTimer = null;
     };
     mousemove(e, locked) {
         if (!locked) return;
@@ -59,29 +63,43 @@ class PlayerLocalController extends EntityController {
             return;
         }
         if (e.button !== 0 && e.button !== 2) return;
-        let entity = this.entity,
-            world = entity.world,
-            //start = entity.position,
-            start = entity.getEyePosition(),
-            end = entity.getDirection(20);
-        vec3.add(start, end, end);
-        // 当实体有碰撞箱时 这里需要按碰撞箱检测
-        let hit = world.rayTraceBlock(start, end, (x, y, z) => {
-            let b = world.getTile(x, y, z);
-            return b && b.name !== "air";
-        });
-        if (hit === null || hit.axis === "") return;
-        let pos = hit.blockPos;
-        // left button
-        if (e.button === 2) {
-            pos["xyz".indexOf(hit.axis[0])] += hit.axis[1] === '-'? -1: 1;
-            if (vec3.exactEquals(pos, start.map(Math.floor))) return;
-            let blockName = this.entity.inventory.getOnHands().name;
-            if (blockName !== "air") world.setTile(...pos, blockName);
-        }
-        // right button
-        else if (e.button === 0) {
-            world.setTile(...pos, "air");
+        if (e.button === 0) this.mouseRightBtnDown = true;
+        if (e.button === 2) this.mouseLeftBtnDown = true;
+        const destroyOrPlaceBlock = () => {
+            let entity = this.entity,
+                world = entity.world,
+                start = entity.getEyePosition(),
+                end = entity.getDirection(20);
+            vec3.add(start, end, end);
+            // 当实体有碰撞箱时 这里需要按碰撞箱检测
+            let hit = world.rayTraceBlock(start, end, (x, y, z) => {
+                let b = world.getTile(x, y, z);
+                return b && b.name !== "air";
+            });
+            if (hit === null || hit.axis === "") return;
+            let pos = hit.blockPos;
+            if (this.mouseLeftBtnDown) {
+                pos["xyz".indexOf(hit.axis[0])] += hit.axis[1] === '-'? -1: 1;
+                if (vec3.exactEquals(pos, start.map(Math.floor))) return;
+                let blockName = this.entity.inventory.getOnHands().name;
+                if (blockName !== "air") world.setTile(...pos, blockName);
+            }
+            else if (this.mouseRightBtnDown) {
+                world.setTile(...pos, "air");
+            }
+        };
+        destroyOrPlaceBlock();
+        if (this.destroyOrPlaceBlockTimer !== null)
+            window.clearInterval(this.destroyOrPlaceBlockTimer);
+        this.destroyOrPlaceBlockTimer = window.setInterval(destroyOrPlaceBlock, 300);
+    };
+    mouseup(e, locked) {
+        if (!locked) return;
+        if (e.button === 0) this.mouseRightBtnDown = false;
+        if (e.button === 2) this.mouseLeftBtnDown = false;
+        if (!(this.mouseRightBtnDown || this.mouseLeftBtnDown) && this.destroyOrPlaceBlockTimer !== null) {
+            window.clearInterval(this.destroyOrPlaceBlockTimer);
+            this.destroyOrPlaceBlockTimer = null;
         }
     };
     keydown(e, locked) {
