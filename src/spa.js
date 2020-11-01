@@ -32,13 +32,13 @@ const spa = {
     addEventListener(id, eventType, callback = (nextPageId) => {}) {
         const p = allPage[id];
         if (!p) throw `SPA: The page with ID ${id} does not exist.`;
-        if (p[eventType]) p.callback[eventType].push(callback);
+        if (p.callback[eventType]) p.callback[eventType].push(callback);
         else p.callback[eventType] = [callback];
     },
     targetEvent(id, eventType, ...args) {
         const p = allPage[id];
         if (!p) throw `SPA: The page with ID ${id} does not exist.`;
-        p.callback[eventType]?.forEach(cb => cb(...args));
+        if (p.callback[eventType]) p.callback[eventType].forEach(cb => cb(...args));
     },
 
     // data: The data that needs to be passed when the callback function of other page elements is triggered.

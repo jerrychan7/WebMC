@@ -58,9 +58,11 @@ class Chunk {
         return handle;
     };
     dispatchEvent(callbackType, ...args) {
-        this.callbacks[callbackType]?.forEach(async cb => await cb(...args));
-        this.callbacks[callbackType]?.filter(cb => cb._once).forEach(cb => {
-            let cbs = this.callbacks[callbackType], handle = cb._handle;
+        let cbs = this.callbacks[callbackType];
+        if (!cbs) return;
+        cbs.forEach(async cb => await cb(...args));
+        cbs.filter(cb => cb._once).forEach(cb => {
+            let handle = cb._handle;
             if (!cbs || !cbs[handle]) return false;
             let i = cbs.indexOf(cbs[handle].callback);
             if (i == -1) return false;

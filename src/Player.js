@@ -61,7 +61,7 @@ class Player extends Entity {
         let dv = vec3.scale(this.velocity, dt);
         let chunkFn = (x, y, z) => {
             let b = this.world.getTile(x, y, z);
-            return b?.name !== "air" && b?.renderType !== Block.renderType.FLOWER;
+            return b && b.name !== "air" && b.renderType !== Block.renderType.FLOWER;
         };
         vec3.create(0, 0, 0, this.rest);
         for (let i = 0, dvel = vec3.create(); i < 3; dvel[i++] = 0) {
@@ -112,7 +112,7 @@ class Player extends Entity {
                 vec3.rotateY(dirvec, Math.PI, dirvec);
 
             let block = this.world.getTile(...this.position),
-                blockFriction = block?.friction || 1,
+                blockFriction = block? block.friction || 1: 1,
                 fp = vec3.create(), // motive power
                 ff = vec3.create(), // friction (resistance)
                 nowXZspeed = Math.sqrt(this.velocity[0] ** 2 + this.velocity[2] ** 2);
@@ -135,7 +135,7 @@ class Player extends Entity {
             let nowXZspeed = Math.sqrt(this.velocity[0] ** 2 + this.velocity[2] ** 2);
             if (nowXZspeed > 0.000001) {
                 let block = this.world.getTile(...this.position),
-                    blockFriction = block?.friction || 1,
+                    blockFriction = block? block.friction || 1: 1,
                     ff = vec3.create(); // friction (resistance)
                 ff = vec3.scale(vec3.normalize([this.velocity[0], 0, this.velocity[2]], ff), -blockFriction * 20, ff);
                 let nextv = vec3.scaleAndAdd([this.velocity[0], 0, this.velocity[2]], dt, [this.acceleration[0], 0, this.acceleration[2]]);
@@ -155,7 +155,7 @@ class Player extends Entity {
             }
         }
         this.move(dt);
-        this.inventory?.update();
+        this.inventory && this.inventory.update();
     };
 };
 

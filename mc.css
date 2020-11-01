@@ -6,6 +6,11 @@ body {
     overflow: hidden;
     background: #1D1F21;
     color: #DDD;
+    -webkit-touch-callout:none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
 }
 a { text-decoration: none; }
 

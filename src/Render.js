@@ -85,7 +85,8 @@ class Render {
     };
 
     _getImageName(img) {
-        return img.outerHTML.match(/src="([^"]*)"/)?.[1] || String(Math.random());
+        let uri = img.outerHTML.match(/src="([^"]*)"/);
+        return uri? uri[1]: String(Math.random());
     };
     createTexture(img, name = this._getImageName(img), doYFlip = false) {
         const {ctx} = this,

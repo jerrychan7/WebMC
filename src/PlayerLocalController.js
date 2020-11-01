@@ -29,7 +29,7 @@ class PlayerLocalController extends EntityController {
         this.input.onFlyBtnClick = () => {
             let {lastFlyBtnClick} = this, now = new Date();
             if (lastFlyBtnClick - now < 0 && now - lastFlyBtnClick < 250) {
-                this.entity.toFlyMode?.(false);
+                this.entity.toFlyMode && this.entity.toFlyMode(false);
                 let moveBtns = this.input.moveBtns;
                 if (this.entity.isFly) {
                     moveBtns.querySelector(".mc-move-btn-jump").style.display = "none";
@@ -121,7 +121,7 @@ class PlayerLocalController extends EntityController {
                 this.doubleClickSpace = true;
             else this.doubleClickSpace = false;
             if (this.doubleClickSpace) {
-                this.entity.toFlyMode?.(!this.entity.isFly);
+                this.entity.toFlyMode && this.entity.toFlyMode(!this.entity.isFly);
                 let moveBtns = this.input.moveBtns;
                 try {
                     if (this.entity.isFly) {
@@ -143,7 +143,7 @@ class PlayerLocalController extends EntityController {
                 this.doubleClickMove = true;
             else this.doubleClickMove = false;
             if (this.doubleClickMove) {
-                this.entity.toRunMode?.(!this.entity.isRun);
+                this.entity.toRunMode && this.entity.toRunMode(!this.entity.isRun);
             }
             this.moveDownTime = now;
         }
@@ -153,21 +153,21 @@ class PlayerLocalController extends EntityController {
         if (!this.keys[" "]) this.spaceUpTime = new Date();
         if (!this.keys.W) {
             this.moveUpTime = new Date();
-            this.entity.toRunMode?.(false);
+            this.entity.toRunMode && this.entity.toRunMode(false);
         }
     };
     wheelup(e, locked) {
         if (!locked) return;
         const t = new Date();
         if (t - this.lastWeelTime < 100) return;
-        this.entity.inventory?.hotbarSelectNext();
+        this.entity.inventory && this.entity.inventory.hotbarSelectNext();
         this.lastWeelTime = t;
     };
     wheeldown(e, locked) {
         if (!locked) return;
         const t = new Date();
         if (t - this.lastWeelTime < 100) return;
-        this.entity.inventory?.hotbarSelectPrev();
+        this.entity.inventory && this.entity.inventory.hotbarSelectPrev();
         this.lastWeelTime = t;
     };
 };

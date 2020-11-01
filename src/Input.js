@@ -27,7 +27,7 @@ class Input {
         canvas.addEventListener("mousemove", this[Symbol.for("onMouseMove")].bind(this), false);
         canvas.addEventListener("mousewheel", this[Symbol.for("onMouseWheel")].bind(this), false);
         canvas.addEventListener("DOMMouseScroll", this[Symbol.for("onMouseWheel")].bind(this), false);
-        canvas.addEventListener("contextmenu", e => {e.preventDefault();}, false);
+        canvas.addEventListener("contextmenu", e => {if (e.cancelable) e.preventDefault();}, false);
         this.addEventListener("mousewheel", (e) => {
             if (e.deltaY < 0) this[Symbol.for("targetEvent")]("wheelup", e, this.locked);
             else if (e.deltaY > 0) this[Symbol.for("targetEvent")]("wheeldown", e, this.locked);
@@ -180,21 +180,21 @@ class Input {
             }
         };
         moveBtns.addEventListener("touchstart", function(e) {
-            e.preventDefault();
+            if (e.cancelable) e.preventDefault();
             let ele = document.elementFromPoint(e.targetTouches[0].clientX, e.targetTouches[0].clientY);
             activeMoveBtn(ele, e);
             if (lastMoveBtn !== ele) inactiveMoveBtn(lastMoveBtn, e);
             lastMoveBtn = ele;
         });
         function touchend(e) {
-            e.preventDefault();
+            if (e.cancelable) e.preventDefault();
             inactiveMoveBtn(lastMoveBtn, e);
             lastMoveBtn = null;
         }
         moveBtns.addEventListener("touchend", touchend);
         moveBtns.addEventListener("touchcancel", touchend);
         moveBtns.addEventListener("touchmove", function(e) {
-            e.preventDefault();
+            if (e.cancelable) e.preventDefault();
             let ele = document.elementFromPoint(e.targetTouches[0].clientX, e.targetTouches[0].clientY);
             activeMoveBtn(ele, e);
             if (lastMoveBtn !== ele) inactiveMoveBtn(lastMoveBtn, e);
@@ -203,7 +203,7 @@ class Input {
 
         let canvasLastTouchPos = null, canvasBeginTouch = null, touchMoveLen = 0, destroying = false, timer = null;
         canvas.addEventListener("touchstart", function(e) {
-            e.preventDefault();
+            if (e.cancelable) e.preventDefault();
             canvasLastTouchPos = canvasBeginTouch = e;
             touchMoveLen = 0; destroying = false;
             if (timer !== null) window.clearTimeout(timer);
@@ -222,7 +222,7 @@ class Input {
             }, 300);
         });
         function canvasTouchend(e) {
-            e.preventDefault();
+            if (e.cancelable) e.preventDefault();
             if (e.timeStamp - canvasBeginTouch.timeStamp < 150) {
                 canvas.dispatchEvent(new MouseEvent("mousedown", {
                     bubbles: true, cancelable: true, relatedTarget: canvas,
@@ -252,7 +252,7 @@ class Input {
         canvas.addEventListener("touchend", canvasTouchend);
         canvas.addEventListener("touchcancel", canvasTouchend);
         canvas.addEventListener("touchmove", function(e) {
-            e.preventDefault();
+            if (e.cancelable) e.preventDefault();
             let nowPos = e;
             if (!canvasLastTouchPos) {
                 canvasLastTouchPos = nowPos;

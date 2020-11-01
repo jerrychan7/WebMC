@@ -1,4 +1,4 @@
-// 计算光照 处理方块颜色用于渲染
+// 计算光照
 import { 
     Chunk,
     CHUNK_X_SIZE as X_SIZE,
@@ -39,7 +39,7 @@ class ChunksLightCalculation {
         this.world = world;
         let chunks = Object.values(world.chunkMap);
         let topChunks = chunks.sort(({y: y1, y: y2}) => y2 - y1).reduce((arr, chunk) => {
-            if (chunk.y === chunks[0]?.y) arr.push(chunk);
+            if (chunk.y === chunks[0].y) arr.push(chunk);
             return arr;
         }, []);
         let queue = [];
@@ -257,8 +257,9 @@ class ChunksLightCalculation {
             c.lightMap.setSkylight(...rxyz, l);
             queue.push([...rxyz, c]);
         };
-        while ((oblock = world.getTile(blockX, ++obstructed, blockZ))?.opacity === 0);
-        for (let y = obstructed - 1; world.getTile(blockX, y, blockZ)?.opacity === 0; --y) {
+        while (oblock = world.getTile(blockX, ++obstructed, blockZ)) if (oblock.opacity === 0) break;
+        for (let y = obstructed - 1, b; true; --y) {
+            b = world.getTile(blockX, y, blockZ); if (b === null || b.opacity === 0) break;
             if (oblock !== null)
                 setSkylight(blockX, y, blockZ, 0);
             // If there is no obstruction directly above

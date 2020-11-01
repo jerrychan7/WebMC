@@ -17,7 +17,7 @@ spa.addEventListener("play_game_page", "load", (pageID, data) => {
 spa.addEventListener("play_game_page", "unload", (pageID, data) => {
     if (!worldRender) return;
     worldRender.stop();
-    world?.mainPlayer?.controller?.input?.exitPointerLock?.();
+    try { world.mainPlayer.controller.input.exitPointerLock(); } catch {}
     worldRender = world = null;
 });
 spa.addEventListener("play_game_page", "overlap", (pageID, data) => {
@@ -41,6 +41,6 @@ spa.addEventListener("play_game_page", "unoverlap", (pageID, {world: w, render})
 spa.addEventListener("stop_game_page", "unload", (pageID) => {
     // wait before play_game_page unload callback called
     setTimeout(_ => {
-        world?.mainPlayer?.controller?.input?.requestPointerLock?.();
+        try { world.mainPlayer.controller.input.requestPointerLock(); } catch {}
     }, 0);
 });
