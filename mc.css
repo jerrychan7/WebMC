@@ -13,14 +13,18 @@ a { text-decoration: none; }
     color: #E0E0E0;
     cursor: pointer;
     text-shadow: 1px 1px 1px #383838;
+    --mc-button-border-width: calc(3px * var(--mc-button-border-img-top));
+    border-width: var(--mc-button-border-width);
 }
 .mc-button:hover {
     color: #FFFFA0;
     text-shadow: 1px 1px 1px #3F3F28;
+    border-width: var(--mc-button-border-width);
 }
 .mc-button[disabled] {
     color: #979797;
     cursor: not-allowed;
+    border-width: var(--mc-button-border-width);
 }
 
 [class*="mc-move-btn"] {
@@ -101,11 +105,9 @@ a { text-decoration: none; }
     text-align:center;
 }
 #start_game_page ul li a {
-    --border-width: calc(3px * var(--mc-button-border-img-top));
-    width: calc(100% - 2 * var(--border-width));
+    width: calc(100% - 2 * var(--mc-button-border-width));
     display: inline-block;
     padding: 13px 0;
-    border-width: var(--border-width);
 }
 
 #how_to_play {
@@ -152,7 +154,6 @@ a { text-decoration: none; }
     display: inline-block;
     padding: 1.2vh 0;
     width: 50%;
-    border-width: calc(3px * var(--mc-button-border-img-top));
     max-width: 400px;
 }
 
@@ -169,27 +170,12 @@ a { text-decoration: none; }
     margin: 0;
     padding: 20px 0 0;
 }
-#options_page div + div {
-    margin-bottom: 1.2vh;
-}
-#options_page div > div {
-    padding: 10px 25%;
-}
-#options_page div > div a {
-    width: 100%;
-}
-#options_page div > div a,
-#options_page div > div input,
-#options_page div > div p {
-    margin: 5px 0;
-}
-#options_page a {
-    text-align: center;
+#options_page a.mc-button {
     display: inline-block;
     padding: 1.2vh 0;
     width: 50%;
-    border-width: calc(3px * var(--mc-button-border-img-top));
     max-width: 400px;
+    margin-bottom: 10px;
 }
 
 #stop_game_page {
@@ -208,7 +194,6 @@ a { text-decoration: none; }
     display: block;
     padding: 1.2vh 0;
     width: 50%;
-    border-width: calc(3px * var(--mc-button-border-img-top));
     max-width: 400px;
     margin: 0 auto 10px;
 }
