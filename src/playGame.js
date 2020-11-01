@@ -8,8 +8,10 @@ spa.addEventListener("full-screen-btn", "onfullscreenchange", (full) => {
 });
 
 spa.addEventListener("play_game_page", "load", (pageID, data) => {
-    if (!window.isTouchDevice)
+    if (!window.isTouchDevice) {
         document.getElementsByClassName("mc-move-buttons")[0].style.display = "none";
+        document.getElementsByClassName("mc-inventory-btn")[0].style.display = "none";
+    }
     if (worldRender === null) spa.openPage("loading_terrain_page");
 });
 spa.addEventListener("play_game_page", "unload", (pageID, data) => {

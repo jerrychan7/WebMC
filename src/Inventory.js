@@ -22,15 +22,25 @@ class Inventory {
         for (let btn of closeBtns) {
             btn.onclick = this.closeInventoryPage.bind(this);
         }
+        document.getElementsByClassName("mc-hotbar-inventory-btn")[0]
+        .onclick = () => {
+            if (this.inventoryPage.style.display === "none")
+                this.showInventoryPage();
+            else this.closeInventoryPage();
+        };
     };
     getOnHands() {
         return this.hotbar[this.hotbar.selectOn];
     };
     showInventoryPage() {
         this.inventoryPage.style.display = "";
+        document.getElementsByClassName("mc-hotbar-inventory-btn-bg")[0]
+        .setAttribute("active", "true");
     };
     closeInventoryPage() {
         this.inventoryPage.style.display = "none";
+        document.getElementsByClassName("mc-hotbar-inventory-btn-bg")[0]
+        .removeAttribute("active");
         this.player.controller?.input?.requestPointerLock?.();
     };
     onInventoryItemClick(div) {

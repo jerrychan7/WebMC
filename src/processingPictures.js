@@ -227,6 +227,7 @@ asyncLoadResByUrl("texture/gui.png")
     darkenBtn(".mc-move-btn-fly:active, .mc-move-btn-fly[active]");
     setBorderOrBgStyle(img, canvas, 218, 82, 18, 18, style, "mc-move-btn-sneak", {background: true});
     setBorderOrBgStyle(img, canvas, 218, 64, 18, 18, style, "mc-move-btn-sneak[active]", {background: true});
+    setBorderOrBgStyle(img, canvas, 228, 248, 28, 8, style, "mc-hotbar-inventory-btn", {background: true});
     document.head.prepend(style);
 });
 asyncLoadResByUrl("texture/spritesheet.png")
@@ -237,6 +238,8 @@ asyncLoadResByUrl("texture/spritesheet.png")
     setBorderOrBgStyle(img, canvas, 34, 43, 14, 14, style, "mc-inventory-items", {border: true, slice: [3]});
     setBorderOrBgStyle(img, canvas, 49, 43, 13, 14, style, "mc-inventory-tab-background-left", {border: true, slice: [3]});
     setBorderOrBgStyle(img, canvas, 65, 55, 14, 14, style, "mc-inventory-tab-background-right", {border: true, slice: [3]});
+    setBorderOrBgStyle(img, canvas, 8, 32, 8, 8, style, "mc-hotbar-inventory-btn-bg", {border: true, slice: [1]});
+    setBorderOrBgStyle(img, canvas, 0, 32, 8, 8, style, "mc-hotbar-inventory-btn-bg[active]", {border: true, slice: [1]});
     document.head.prepend(style);
 });
 asyncLoadResByUrl("texture/background.png")
