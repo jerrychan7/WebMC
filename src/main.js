@@ -35,7 +35,17 @@ spa.addEventListener("full-screen-btn", "load", (lastID) => {
         spa.targetEvent("full-screen-btn", "onfullscreenchange", full);
         fullBtn.style.display = full? "none": "";
     };
-    fullBtn.onclick = requestFullscreen.bind(document.body);
+    fullBtn.onclick = () =>
+        requestFullscreen.call(document.body).then(async _ => {
+            try {
+                await screen.orientation.lock("landscape");
+            } catch (e) {
+                console.warn(e);
+                let lockOrientation = screen.lockOrientation || screen.mozLockOrientation || screen.msLockOrientation;
+                if (!lockOrientation) return;
+                lockOrientation.call(screen, "landscape");
+            }
+        });
 });
 
 preloaded.onloadend(async _ => {
