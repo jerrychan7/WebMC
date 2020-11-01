@@ -35,6 +35,11 @@ const spa = {
         if (p[eventType]) p.callback[eventType].push(callback);
         else p.callback[eventType] = [callback];
     },
+    targetEvent(id, eventType, ...args) {
+        const p = allPage[id];
+        if (!p) throw `SPA: The page with ID ${id} does not exist.`;
+        p.callback[eventType]?.forEach(cb => cb(...args));
+    },
 
     // data: The data that needs to be passed when the callback function of other page elements is triggered.
     openPage(nextID = "", data = {}) {
@@ -49,14 +54,14 @@ const spa = {
                        : "");
         //float -> last jump/float   pop
         if (nextID === lastID) {
-            allPage[nowID].callback.unload.forEach(f => f(nextID, data));
+            spa.targetEvent(nowID, "unload", nextID, data);
             document.body.removeChild(document.body.lastChild);
+            nowPageRoute.reduceRight((_, id) => spa.targetEvent(id, "unoverlap", nowID, data));
             nowPageRoute.pop();
-            nextPage.callback.unoverlap.forEach(f => f(nowID, data));
         }
         //jump/float -> new float   push
         else if (nextPage.type === "float") {
-            if (nowID) allPage[nowID].callback.overlap.forEach(f => f(nextID, data));
+            if (nowID) spa.targetEvent(nowID, "overlap", nextID, data);
             document.body.appendChild(nextPage.page);
             window.setTimeout(e => {
                 nowPageRoute.push(nextID);
@@ -68,7 +73,7 @@ const spa = {
             nowPageRoute.reverse();
             nowPageRoute.forEach(ID => {
                 if (ID in allPage)
-                    allPage[ID].callback.unload.forEach(f => f(nextID, data));
+                    spa.targetEvent(ID, "unload", nextID, data);
             });
             document.body.innerHTML = "";
             document.body.appendChild(nextPage.page);

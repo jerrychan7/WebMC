@@ -78,6 +78,7 @@ let render = null;
 
 spa.addEventListener("start_game_page", "load", pageID => {
     if (render) return;
+    spa.openPage("full-screen-btn");
     render = new StartGamePageRender(document.getElementById("start-game-canvas"));
     render.play();
 });
