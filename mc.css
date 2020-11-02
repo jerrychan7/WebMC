@@ -248,39 +248,36 @@ a { text-decoration: none; }
     z-index: 1;
 }
 
-.mc-hotbar {
-    position: fixed;
-    bottom: 0;
-    width: 100vw;
-}
 :root {
     --mc-hotbar-background-width: 45vw;
     --mc-hotbar-scale-factor-per-pixel: calc(var(--mc-hotbar-background-width) / var(--mc-hotbar-background-img-width));
 }
+.mc-hotbar {
+    position: fixed;
+    bottom: 0;
+    margin-left: calc((100vw - var(--mc-hotbar-background-width)) / 2);
+}
 .mc-hotbar-background {
     opacity: 0.75;
     width: var(--mc-hotbar-background-width);
-    padding-top: calc(var(--mc-hotbar-scale-factor-per-pixel) * var(--img-height));
-    margin: auto;
+    height: calc(var(--mc-hotbar-scale-factor-per-pixel) * var(--img-height));
 }
 .mc-hotbar-selector-background {
     position: absolute;
     --width-one-pixel: var(--mc-hotbar-scale-factor-per-pixel);
     --height-one-pixel: calc(100% / var(--mc-hotbar-background-img-height));
-    width: calc(var(--width-one-pixel) * var(--img-height));
-    padding-top: calc(var(--width-one-pixel) * var(--img-height));
+    width: calc(var(--width-one-pixel) * var(--img-width));
+    height: calc(var(--width-one-pixel) * var(--img-height));
     top: calc(-1 * var(--height-one-pixel));
 
     --offset: 0;
-    left: calc(var(--offset) * var(--mc-hotbar-item-cell-width) * var(--width-one-pixel)
-        + (100vw - var(--mc-hotbar-background-width)) / 2 - var(--width-one-pixel));
+    left: calc(var(--offset) * var(--mc-hotbar-item-cell-width) * var(--width-one-pixel) - var(--width-one-pixel));
 }
 #mc-hotbar-items {
     position: absolute;
     top: 0;
     width: var(--mc-hotbar-background-width);
     height: 100%;
-    padding-left: calc((100vw - var(--mc-hotbar-background-width)) / 2);
 }
 #mc-hotbar-items > img {
     width: calc(15 * var(--mc-hotbar-scale-factor-per-pixel));
@@ -309,9 +306,7 @@ a { text-decoration: none; }
     position: absolute;
     top: 0;
     width: calc(var(--width-one-pixel) * (var(--mc-hotbar-background-img-height) - 1));
-    padding-top: calc(var(--width-one-pixel) * var(--mc-hotbar-background-img-height));
-    left: calc(9 * var(--mc-hotbar-item-cell-width) * var(--width-one-pixel)
-        + (100vw - var(--mc-hotbar-background-width)) / 2 + var(--width-one-pixel));
+    left: calc(9 * var(--mc-hotbar-item-cell-width) * var(--width-one-pixel) + var(--width-one-pixel));
 }
 .mc-hotbar .mc-inventory-btn.mc-hotbar-background {
     background-position: 100%;
@@ -326,7 +321,7 @@ a { text-decoration: none; }
 .mc-hotbar .mc-inventory-btn .mc-hotbar-inventory-btn-bg {
     width: calc(14 * var(--mc-hotbar-scale-factor-per-pixel));
     height: calc(14 * var(--mc-hotbar-scale-factor-per-pixel));
-    border-width: var(--width-one-pixel);
+    border-width: var(--mc-hotbar-scale-factor-per-pixel);
 }
 .mc-hotbar .mc-hotbar-inventory-btn {
     z-index: 5;
