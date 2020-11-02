@@ -30,7 +30,9 @@ class Render {
         this.lastFrameTime = timestamp;
     };
     play() {
-        if (this.timer === null) this.frame();
+        if (this.timer !== null) return;
+        this.lastFrameTime = window.performance.now();
+        this.frame();
     };
     stop() {
         if (this.timer === null) return;
