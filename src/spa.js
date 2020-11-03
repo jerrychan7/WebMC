@@ -17,11 +17,23 @@ const spa = {
     addPage(id, content, type = "float") {
         if (id in allPage)
             throw `SPA: The page with ID ${id} already exists.`;
+        function onAClick(e) {
+            let href = this.getAttribute("href").trim();
+            if (href[0] !== '#') return true;
+            href = href.replace("#", "");
+            if (allPage[href] && allPage[href].type === "jump")
+                return true;
+            if (href == "__pop") spa.back();
+            else spa.openPage(href);
+            return false;
+        }
         allPage[id] = {
             get page() {
                 let page = document.createElement("div");
                 page.id = id;
                 page.innerHTML = content;
+                for (let a of page.getElementsByTagName("a"))
+                    a.onclick = onAClick;
                 return page;
             }, type,
             callback: { load:[], unload:[], overlap:[], unoverlap:[], },
@@ -38,7 +50,8 @@ const spa = {
     targetEvent(id, eventType, ...args) {
         const p = allPage[id];
         if (!p) throw `SPA: The page with ID ${id} does not exist.`;
-        if (p.callback[eventType]) p.callback[eventType].forEach(cb => cb(...args));
+        if (p.callback[eventType])
+            return p.callback[eventType].map(cb => cb(...args));
     },
 
     // data: The data that needs to be passed when the callback function of other page elements is triggered.
@@ -81,7 +94,10 @@ const spa = {
             nextPage.callback.load.forEach(f => f(nowID, data));
         }
 
-        window.location.hash = "";
+        if (nextPage.type === "jump" && window.location.hash !== "#" + nextID) {
+            if (window.location.hash) window.location.hash = "#" + nextID;
+            else window.history.replaceState(null, null, "#" + nextID);
+        }
     },
 
     back() {
