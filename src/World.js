@@ -152,7 +152,7 @@ class World {
         for (let ck in this.chunkMap) {
             this.chunkMap[ck].setRenderer(renderer);
         }
-        this.mainPlayer.setController(new PlayerLocalController(this.mainPlayer, renderer.ctx.canvas));
+        this.mainPlayer.setController(new PlayerLocalController(this.mainPlayer, {canvas: renderer.ctx.canvas}));
         this.mainPlayer.setInventory(new Inventory(this.mainPlayer));
     };
     getChunkByChunkKey(chunkKey) {

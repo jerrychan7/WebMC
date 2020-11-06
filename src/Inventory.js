@@ -41,7 +41,7 @@ class Inventory {
         this.inventoryPage.style.display = "none";
         document.getElementsByClassName("mc-hotbar-inventory-btn-bg")[0]
         .removeAttribute("active");
-        this.player.controller.input.requestPointerLock();
+        this.player.controller.requestPointerLock();
     };
     onInventoryItemClick(div) {
         this.hotbar[this.hotbar.selectOn] = div.block;

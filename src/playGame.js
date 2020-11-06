@@ -17,7 +17,7 @@ spa.addEventListener("play_game_page", "load", (pageID, data) => {
 spa.addEventListener("play_game_page", "unload", (pageID, data) => {
     if (!worldRender) return;
     worldRender.stop();
-    try { world.mainPlayer.controller.input.exitPointerLock(); } catch {}
+    try { world.mainPlayer.controller.exitPointerLock(); } catch {}
     worldRender = world = null;
 });
 spa.addEventListener("play_game_page", "overlap", (pageID, data) => {
@@ -29,6 +29,7 @@ spa.addEventListener("play_game_page", "unoverlap", (pageID, {world: w, render})
         if (window.isTouchDevice) spa.openPage("full-screen-btn");
         worldRender = render;
         world = w;
+        world.mainPlayer.controller.setMoveBtns(document.getElementsByClassName("mc-move-buttons")[0]);
         render.play();
         spa.openPage("stop_game_page");
         render.stop();
@@ -41,6 +42,6 @@ spa.addEventListener("play_game_page", "unoverlap", (pageID, {world: w, render})
 spa.addEventListener("stop_game_page", "unload", (pageID) => {
     // wait before play_game_page unload callback called
     setTimeout(_ => {
-        try { world.mainPlayer.controller.input.requestPointerLock(); } catch {}
+        try { world.mainPlayer.controller.requestPointerLock(); } catch {}
     }, 0);
 });

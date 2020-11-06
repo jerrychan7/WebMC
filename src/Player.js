@@ -85,20 +85,20 @@ class Player extends Entity {
         let dirvec = this.getForward(this.moveSpeed);
 
         if (this.isFly) {
-            if (keys[" "]) this.velocity[1] = this.flyJumpSpeed;
-            else if (keys[16] || keys.X) this.velocity[1] = -this.flyJumpSpeed;
+            if (keys.Space) this.velocity[1] = this.flyJumpSpeed;
+            else if (keys.Shift || keys.KeyX) this.velocity[1] = -this.flyJumpSpeed;
             else this.velocity[1] = 0;
         }
         else {
-            if (keys[" "] && this.onGround)
+            if (keys.Space && this.onGround)
                 this.velocity[1] += this.jumpSpeed;
-            if ((keys[16] || keys.X) && !this.onGround)
+            if ((keys.Shift || keys.KeyX) && !this.onGround)
                 this.velocity[1] -= this.jumpSpeed;
         }
-        let up = keys.W || keys[38],
-            down = keys.S || keys[40],
-            left = keys.A || keys[37],
-            right = keys.D || keys[39];
+        let up = keys.KeyW,
+            down = keys.KeyS,
+            left = keys.KeyA,
+            right = keys.KeyD;
         if (up && down) up = down = false;
         if (left && right) left = right = false;
         if (up || down || left || right) {
