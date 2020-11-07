@@ -39,6 +39,10 @@ spa.addEventListener("play_game_page", "unoverlap", (pageID, {world: w, render})
     worldRender.play();
 });
 
+spa.addEventListener("stop_game_page", "load", (pageID) => {
+    if (worldRender) worldRender.stop();
+});
+
 spa.addEventListener("stop_game_page", "unload", (pageID) => {
     // wait before play_game_page unload callback called
     setTimeout(_ => {
