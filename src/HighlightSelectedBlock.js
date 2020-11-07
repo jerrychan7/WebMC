@@ -46,14 +46,14 @@ class HighlightSelectedBlock {
             end = mainPlayer.getDirection(20);
         vec3.add(start, end, end);
         let hit = world.rayTraceBlock(start, end, (x, y, z) => {
-            let b = world.getTile(x, y, z);
+            let b = world.getBlock(x, y, z);
             return b && b.name !== "air";
         });
         if (hit === null) return;
 
         const {renderer} = this, {ctx} = renderer;
         let [bx, by, bz] = hit.blockPos,
-            block = world.getTile(bx, by, bz),
+            block = world.getBlock(bx, by, bz),
             selector = renderer.getProgram("selector").use(),
             linecol = [], surfaceCol = [];
         mat4.identity(this.mvp);

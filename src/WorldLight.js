@@ -46,7 +46,7 @@ class ChunksLightCalculation {
         topChunks.forEach(chunk => {
             for (let rx = 0; rx < X_SIZE; ++rx)
             for (let rz = 0; rz < Z_SIZE; ++rz) {
-                let cblock = chunk.getTile(rx, Y_SIZE - 1, rz);
+                let cblock = chunk.getBlock(rx, Y_SIZE - 1, rz);
                 if (cblock.isOpaque) continue;
                 let abl = 15;
                 let cbl = cblock.opacity === 0 && abl === 15? 15: abl - cblock.opacity - 1;
@@ -59,7 +59,7 @@ class ChunksLightCalculation {
             for (let rx = 0; rx < X_SIZE; ++rx)
             for (let ry = 0; ry < Y_SIZE; ++ry)
             for (let rz = 0; rz < Z_SIZE; ++rz) {
-                let b = chunk.getTile(rx, ry, rz);
+                let b = chunk.getBlock(rx, ry, rz);
                 if (b.luminance) {
                     chunk.lightMap.setTorchlight(rx, ry, rz, b.luminance);
                     queue.push([rx, ry, rz, chunk]);
@@ -81,7 +81,7 @@ class ChunksLightCalculation {
         while (queue.length) {
             let [crx, cry, crz, chunk] = queue.shift(),
                 csl = chunk.lightMap.getSkylight(crx, cry, crz),
-                cblock = chunk.getTile(crx, cry, crz);
+                cblock = chunk.getBlock(crx, cry, crz);
             chunk.updatedLightMap = true;
             for (let [dx, dy, dz] of [[1,0,0], [-1,0,0], [0,1,0], [0,-1,0], [0,0,1], [0,0,-1]]) {
                 let arx = crx + dx, ary = cry + dy, arz = crz + dz, achunk = chunk;
@@ -90,7 +90,7 @@ class ChunksLightCalculation {
                     achunk = world.getChunkByChunkXYZ(chunk.x + dx, chunk.y + dy, chunk.z + dz);
                     if (achunk === null) continue;
                 }
-                let ablock = achunk.getTile(arx, ary, arz);
+                let ablock = achunk.getBlock(arx, ary, arz);
                 if (ablock.isOpaque) continue;
                 // 向下无衰减传播
                 if (csl === 15 && dy === -1 && ablock.opacity === 0) {
@@ -117,7 +117,7 @@ class ChunksLightCalculation {
         while (queue.length) {
             let [crx, cry, crz, chunk] = queue.shift(),
                 ctl = chunk.lightMap.getTorchlight(crx, cry, crz),
-                cblock = chunk.getTile(crx, cry, crz);
+                cblock = chunk.getBlock(crx, cry, crz);
             chunk.updatedLightMap = true;
             if (ctl <= 1) continue;
             for (let [dx, dy, dz] of [[1,0,0], [-1,0,0], [0,1,0], [0,-1,0], [0,0,1], [0,0,-1]]) {
@@ -127,7 +127,7 @@ class ChunksLightCalculation {
                     achunk = world.getChunkByChunkXYZ(chunk.x + dx, chunk.y + dy, chunk.z + dz);
                     if (achunk === null) continue;
                 }
-                let ablock = achunk.getTile(arx, ary, arz);
+                let ablock = achunk.getBlock(arx, ary, arz);
                 if (ablock.isOpaque) continue;
                 let atl = achunk.lightMap.getTorchlight(arx, ary, arz);
                 // 中间比旁边亮 向旁边传播
@@ -158,7 +158,7 @@ class ChunksLightCalculation {
                     achunk = world.getChunkByChunkXYZ(chunk.x + dx, chunk.y + dy, chunk.z + dz);
                     if (achunk === null) continue;
                 }
-                let ablock = achunk.getTile(arx, ary, arz),
+                let ablock = achunk.getBlock(arx, ary, arz),
                     asl = achunk.lightMap.getSkylight(arx, ary, arz);
                 if (asl === 15 && dy === -1 && ablock.opacity === 0) {
                     achunk.lightMap.setSkylight(arx, ary, arz, 0);
@@ -190,7 +190,7 @@ class ChunksLightCalculation {
                     achunk = world.getChunkByChunkXYZ(chunk.x + dx, chunk.y + dy, chunk.z + dz);
                     if (achunk === null) continue;
                 }
-                let ablock = achunk.getTile(arx, ary, arz),
+                let ablock = achunk.getBlock(arx, ary, arz),
                     atl = achunk.lightMap.getTorchlight(arx, ary, arz);
                 if (atl !== 0 && atl < ctl && ablock.luminance === 0) {
                     achunk.lightMap.setTorchlight(arx, ary, arz, 0);
@@ -211,7 +211,7 @@ class ChunksLightCalculation {
         for (let j = 0; j < Y_SIZE; ++j)
         for (let k = 0; k < Z_SIZE; ++k)
         for (let i = 0; i < X_SIZE; ++i) {
-            let b = chunk.getTile(i, j, k);
+            let b = chunk.getBlock(i, j, k);
             lightMap.setSkylight(i, j, k, 0);
             let tl = b.luminance;
             lightMap.setTorchlight(i, j, k, tl);
@@ -229,7 +229,7 @@ class ChunksLightCalculation {
             for (let rx = sx; rx <= ex; ++rx)
             for (let ry = sy; ry <= ey; ++ry)
             for (let rz = sz; rz <= ez; ++rz) {
-                let b = chunk.getTile(rx, ry, rz);
+                let b = chunk.getBlock(rx, ry, rz);
                 if (b.isOpaque) continue;
                 let asl = world.getSkylight(...chunk.blockRXYZ2BlockXYZ(rx + dx, ry + dy, rz + dz));
                 if (asl === null && dy !== 1) return;
@@ -247,7 +247,7 @@ class ChunksLightCalculation {
         const world = this.world;
         const cchunk = world.getChunkByBlockXYZ(blockX, blockY, blockZ);
         if (cchunk === null) return;
-        const cblock = world.getTile(blockX, blockY, blockZ);
+        const cblock = world.getBlock(blockX, blockY, blockZ);
         // calculate sky light
         let obstructed = blockY, oblock = null, queue = [];
         const setSkylight = (x, y, z, l) => {
@@ -257,9 +257,9 @@ class ChunksLightCalculation {
             c.lightMap.setSkylight(...rxyz, l);
             queue.push([...rxyz, c]);
         };
-        while (oblock = world.getTile(blockX, ++obstructed, blockZ)) if (oblock.opacity === 0) break;
+        while (oblock = world.getBlock(blockX, ++obstructed, blockZ)) if (oblock.opacity === 0) break;
         for (let y = obstructed - 1, b; true; --y) {
-            b = world.getTile(blockX, y, blockZ); if (b === null || b.opacity === 0) break;
+            b = world.getBlock(blockX, y, blockZ); if (b === null || b.opacity === 0) break;
             if (oblock !== null)
                 setSkylight(blockX, y, blockZ, 0);
             // If there is no obstruction directly above

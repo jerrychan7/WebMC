@@ -94,6 +94,7 @@ class Block {
     };
 
     get isOpaque() { return this.opacity === 15; };
+    get idAndBd() { let t = [this.id, this.bd]; t.id = t[0]; t.bd = t[1]; return t; };
 
     initTexUV(texCoord = this.texture.textureCoord) {
         for (let texture of texCoord) {

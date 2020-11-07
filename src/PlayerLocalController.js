@@ -138,7 +138,7 @@ class PlayerLocalController extends EntityController {
                 end = entity.getDirection(20);
             vec3.add(start, end, end);
             let hit = world.rayTraceBlock(start, end, (x, y, z) => {
-                let b = world.getTile(x, y, z);
+                let b = world.getBlock(x, y, z);
                 return b && b.name !== "air";
             });
             if (hit === null || hit.axis === "") return;

@@ -72,7 +72,7 @@ class ChunksModule {
         for (let j = 0; j < Y_SIZE; ++j)
         for (let k = 0; k < Z_SIZE; ++k)
         for (let i = 0; i < X_SIZE; ++i) {
-            let cblock = chunk.getTile(i, j, k);
+            let cblock = chunk.getBlock(i, j, k);
             if (cblock.name === "air") continue;
             let [wx, wy, wz] = chunk.blockRXYZ2BlockXYZ(i, j, k),
                 bf = blockFace[i][j][k];
@@ -85,8 +85,8 @@ class ChunksModule {
                     let rx = i + dx, ry = j + dy, rz = k + dz,
                         inOtherChunk = chunk.inOtherChunk(rx, ry, rz),
                         b = inOtherChunk
-                            ? world.getTile(wx + dx, wy + dy, wz + dz)
-                            : chunk.getTile(rx, ry, rz);
+                            ? world.getBlock(wx + dx, wy + dy, wz + dz)
+                            : chunk.getBlock(rx, ry, rz);
                     if (b && b.isOpaque) return delete bf[face];
                     if (cblock.isGlass && b && b.isGlass) return delete bf[face];
                     let verNum = cblock.vertexs[face].length / 3,
@@ -109,8 +109,8 @@ class ChunksModule {
                 for (let [dx, dy, dz] of [[1,0,0], [-1,0,0], [0,1,0], [0,-1,0], [0,0,1], [0,0,-1]]) {
                     let rx = i + dx, ry = j + dy, rz = k + dz,
                         b = chunk.inOtherChunk(rx, ry, rz)
-                            ? world.getTile(wx + dx, wy + dy, wz + dz)
-                            : chunk.getTile(rx, ry, rz);
+                            ? world.getBlock(wx + dx, wy + dy, wz + dz)
+                            : chunk.getBlock(rx, ry, rz);
                     if (b && b.isOpaque) ++aroundOpaque;
                 }
                 if (aroundOpaque === 6) {
@@ -133,7 +133,7 @@ class ChunksModule {
         this.needUpdateMeshChunks.add(chunkKey);
     };
     updateTile(blockX, blockY, blockZ) {
-        const world = this.world, cblock = world.getTile(blockX, blockY, blockZ);
+        const world = this.world, cblock = world.getBlock(blockX, blockY, blockZ);
         if (cblock === null) return;
         let bf = {};
         // handle center
@@ -143,7 +143,7 @@ class ChunksModule {
                 [[1,0,0,"x+"], [-1,0,0,"x-"], [0,1,0,"y+"], [0,-1,0,"y-"], [0,0,1,"z+"], [0,0,-1,"z-"]]
                 .forEach(([dx, dy, dz, face]) => {
                     let wx = blockX + dx, wy = blockY + dy, wz = blockZ + dz,
-                        b = world.getTile(wx, wy, wz);
+                        b = world.getBlock(wx, wy, wz);
                     if (b && b.isOpaque) return;
                     if (cblock.isGlass && b && b.isGlass) return delete bf[face];
                     let bl = world.getLight(wx, wy, wz),
@@ -163,7 +163,7 @@ class ChunksModule {
                 let aroundOpaque = 0;
                 for (let [dx, dy, dz] of [[1,0,0], [-1,0,0], [0,1,0], [0,-1,0], [0,0,1], [0,0,-1]]) {
                     let wx = blockX + dx, wy = blockY + dy, wz = blockZ + dz,
-                        b = world.getTile(wx, wy, wz);
+                        b = world.getBlock(wx, wy, wz);
                     if (b && b.isOpaque) ++aroundOpaque;
                 }
                 if (aroundOpaque === 6) break;
@@ -187,7 +187,7 @@ class ChunksModule {
         [[1,0,0,"x-"], [-1,0,0,"x+"], [0,1,0,"y-"], [0,-1,0,"y+"], [0,0,1,"z-"], [0,0,-1,"z+"]]
         .forEach(([dx, dy, dz, inverseFace]) => {
             let awx = blockX + dx, awy = blockY + dy, awz = blockZ + dz,
-                ablock = world.getTile(awx, awy, awz);
+                ablock = world.getBlock(awx, awy, awz);
             if (ablock === null || ablock.name === "air") return;
             let achunkKey = Chunk.chunkKeyByBlockXYZ(awx, awy, awz),
                 [arx, ary, arz] = Chunk.getRelativeBlockXYZ(awx, awy, awz),
@@ -220,7 +220,7 @@ class ChunksModule {
         for (let j = 0; j < Y_SIZE; ++j)
         for (let k = 0; k < Z_SIZE; ++k)
         for (let i = 0; i < X_SIZE; ++i) {
-            let cblock = chunk.getTile(i, j, k);
+            let cblock = chunk.getBlock(i, j, k);
             if (cblock.name === "air") continue;
             let [wx, wy, wz] = chunk.blockRXYZ2BlockXYZ(i, j, k),
                 bf = blockFace[i][j][k];

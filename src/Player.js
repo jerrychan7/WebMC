@@ -66,7 +66,7 @@ class Player extends Entity {
         vec3.scaleAndAdd(this.velocity, dt, this.acceleration, this.velocity);
         let dv = vec3.scale(this.velocity, dt);
         let chunkFn = (x, y, z) => {
-            let b = this.world.getTile(x, y, z);
+            let b = this.world.getBlock(x, y, z);
             return b && b.name !== "air" && b.renderType !== Block.renderType.FLOWER;
         };
         vec3.create(0, 0, 0, this.rest);
@@ -118,7 +118,7 @@ class Player extends Entity {
             else if (down)
                 vec3.rotateY(dirvec, Math.PI, dirvec);
 
-            let block = this.world.getTile(...this.position),
+            let block = this.world.getBlock(...this.position),
                 blockFriction = block? block.friction || 1: 1,
                 fp = vec3.create(), // motive power
                 ff = vec3.create(), // friction (resistance)
@@ -141,7 +141,7 @@ class Player extends Entity {
         else {
             let nowXZspeed = Math.sqrt(this.velocity[0] ** 2 + this.velocity[2] ** 2);
             if (nowXZspeed > 0.000001) {
-                let block = this.world.getTile(...this.position),
+                let block = this.world.getBlock(...this.position),
                     blockFriction = block? block.friction || 1: 1,
                     ff = vec3.create(); // friction (resistance)
                 ff = vec3.scale(vec3.normalize([this.velocity[0], 0, this.velocity[2]], ff), -blockFriction * 20, ff);

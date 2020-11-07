@@ -47,7 +47,7 @@ class World {
                 chunkX%2? chunkZ%2? "grass": "stone"
                 : chunkZ%2? "stone": "grass");
             for (let i = 0; i < tileMap.length; ++i)
-                tileMap[i] = block;
+                tileMap[i] = block.idAndBd;
             break;
         case "pre-classic": {
             const {X_SIZE, Y_SIZE, Z_SIZE} = Chunk;
@@ -78,11 +78,11 @@ class World {
                         let n33 = (fn3(i/256,j/256,k/256) +fn3(i/128,j/128,k/128)/2 + fn3(i/64, j/64, k/64) / 4+fn3(i/25,j/25,k/25)/8);
                         let vein = (fn3(i / 5, j / 5, k / 5) + 1) / 2;
                         tileMap[Chunk.getLinearBlockIndex(x, y, z)] =
-                            vein < 0.18? air: n33 > 0 && n3 < -0.1? air: stone;
+                            (vein < 0.18? air: n33 > 0 && n3 < -0.1? air: stone).idAndBd;
                     }
                     else {
                         elevations.haveSurface = elevations.haveSurface || j === elevation;
-                        tileMap[Chunk.getLinearBlockIndex(x, y, z)] = air;
+                        tileMap[Chunk.getLinearBlockIndex(x, y, z)] = air.idAndBd;
                     }
                 }
             }
@@ -111,7 +111,7 @@ class World {
                 afterEle[x] = afterEle[x] || [];
                 if (elevations[x][z] >= chunkY * Y_SIZE && elevations[x][z] < (chunkY + 1) * Y_SIZE) {
                     for (y = Chunk.getRelativeBlockXYZ(0, elevations[x][z], 0)[1]; y > 0; --y)
-                        if (tileMap[Chunk.getLinearBlockIndex(x, y - 1, z)].name !== "air") {
+                        if (Block.getBlockByBlockIDandData(...tileMap[Chunk.getLinearBlockIndex(x, y - 1, z)]).name !== "air") {
                             elevations[x][z] = chunkY * Y_SIZE + y;
                             break;
                         }
@@ -131,17 +131,18 @@ class World {
             for (let x = 0; x < X_SIZE; ++x)
             for (let z = 0; z < Z_SIZE; ++z)
             for (let y = Y_SIZE - 1; y >= 0; --y) {
-                if (tileMap[Chunk.getLinearBlockIndex(x, y, z)].name !== "air")
+                if (Block.getBlockByBlockIDandData(...tileMap[Chunk.getLinearBlockIndex(x, y, z)]).name !== "air")
                     break;
                 let elevation = elevations[x][z];
                 let j = chunkY * Y_SIZE + y;
                 let flowerPlacement = treeNoise[x][z] < 0.15;
                 if (treePlacement[x][z] && j - elevation < 5 && elevations.haveSurface)
-                    tileMap[Chunk.getLinearBlockIndex(x, y, z)] = Block.getBlockByBlockName("oak_log");
+                    tileMap[Chunk.getLinearBlockIndex(x, y, z)] = Block.getBlockByBlockName("oak_log").idAndBd;
                 else if (j - elevation < 7 && j - elevation > 3 && haveTreeAround[x][z] !== false)
-                    tileMap[Chunk.getLinearBlockIndex(x, y, z)] = Block.getBlockByBlockName("oak_leaves");
-                else if (flowerPlacement && j <= elevation && y > 0 && elevations.haveSurface && tileMap[Chunk.getLinearBlockIndex(x, y - 1, z)].name !== "air")
-                    tileMap[Chunk.getLinearBlockIndex(x, y, z)] = Block.getBlockByBlockName("dandelion");
+                    tileMap[Chunk.getLinearBlockIndex(x, y, z)] = Block.getBlockByBlockName("oak_leaves").idAndBd;
+                else if (flowerPlacement && j <= elevation && y > 0 && elevations.haveSurface
+                && Block.getBlockByBlockIDandData(...tileMap[Chunk.getLinearBlockIndex(x, y - 1, z)]).name !== "air")
+                    tileMap[Chunk.getLinearBlockIndex(x, y, z)] = Block.getBlockByBlockName("dandelion").idAndBd;
             }
             break;}
         }
@@ -211,11 +212,27 @@ class World {
         if (c) return c.getTile(...Chunk.getRelativeBlockXYZ(blockX, blockY, blockZ));
         return null;
     };
-    setTile(blockX, blockY, blockZ, blockName) {
+    setTile(blockX, blockY, blockZ, id, bd) {
         [blockX, blockY, blockZ] = [blockX, blockY, blockZ].map(Math.floor);
         let c = this.chunkMap[Chunk.chunkKeyByBlockXYZ(blockX, blockY, blockZ)];
         if (c) {
-            let t = c.setTile(...Chunk.getRelativeBlockXYZ(blockX, blockY, blockZ), blockName);
+            let t = c.setTile(...Chunk.getRelativeBlockXYZ(blockX, blockY, blockZ), id, bd);
+            this.dispatchEvent("onTileChanges", blockX, blockY, blockZ);
+            return t;
+        }
+        return null;
+    };
+    getBlock(blockX, blockY, blockZ) {
+        [blockX, blockY, blockZ] = [blockX, blockY, blockZ].map(Math.floor);
+        let c = this.chunkMap[Chunk.chunkKeyByBlockXYZ(blockX, blockY, blockZ)];
+        if (c) return c.getBlock(...Chunk.getRelativeBlockXYZ(blockX, blockY, blockZ));
+        return null;
+    };
+    setBlock(blockX, blockY, blockZ, blockName) {
+        [blockX, blockY, blockZ] = [blockX, blockY, blockZ].map(Math.floor);
+        let c = this.chunkMap[Chunk.chunkKeyByBlockXYZ(blockX, blockY, blockZ)];
+        if (c) {
+            let t = c.setBlock(...Chunk.getRelativeBlockXYZ(blockX, blockY, blockZ), blockName);
             this.dispatchEvent("onTileChanges", blockX, blockY, blockZ);
             return t;
         }

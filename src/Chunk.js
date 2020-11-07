@@ -74,9 +74,17 @@ class Chunk {
     getTile(blockRX, blockRY, blockRZ) {
         return this.tileMap[Chunk.getLinearBlockIndex(blockRX, blockRY, blockRZ)];
     };
-    setTile(blockRX, blockRY, blockRZ, blockName) {
-        this.tileMap[Chunk.getLinearBlockIndex(blockRX, blockRY, blockRZ)] = Block.getBlockByBlockName(blockName);
+    setTile(blockRX, blockRY, blockRZ, id, bd) {
+        this.tileMap[Chunk.getLinearBlockIndex(blockRX, blockRY, blockRZ)] = [id, bd];
         this.dispatchEvent("onTileChanges", blockRX, blockRY, blockRZ);
+    };
+    getBlock(blockRX, blockRY, blockRZ) {
+        return Block.getBlockByBlockIDandData(...this.getTile(blockRX, blockRY, blockRZ));
+    };
+    setBlock(blockRX, blockRY, blockRZ, blockName) {
+        let b = Block.getBlockByBlockName(blockName);
+        if (b) this.setTile(blockRX, blockRY, blockRZ, ...b.idAndBd);
+        return b;
     };
     getLight(blockRX, blockRY, blockRZ) {
         return this.lightMap.getMax(blockRX, blockRY, blockRZ);
