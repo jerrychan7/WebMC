@@ -62,7 +62,7 @@ class StartGamePageRender extends Render {
     };
     onRender() {
         const {ctx, prg, mM, vpM, mvpM, bos} = this;
-        mat4.rotate(mM, d2r(1 / 15), [0, 1, 0], mM);
+        mat4.rotate(mM, d2r(1 / 70), [0, 1, 0], mM);
         mat4.multiply(vpM, mM, mvpM);
         prg.use()
         .setUni("mvpMatrix", mvpM)
