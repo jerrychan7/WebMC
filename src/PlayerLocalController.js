@@ -184,9 +184,15 @@ class PlayerLocalController extends EntityController {
             }
         }
         if (!this.locked) return;
-        if (e.repeat !== true) {
-            if (e.keyCode) this.keys[e.keyCode] = (this.keys[e.keyCode] || 0) + 1;
-            this.keys[e.key] = this.keys[e.code] = (this.keys[e.key] || 0) + 1;
+        if (window.isTouchDevice) {
+            if (e.repeat !== true) {
+                if (e.keyCode) this.keys[e.keyCode] = (this.keys[e.keyCode] || 0) + 1;
+                this.keys[e.key] = this.keys[e.code] = (this.keys[e.key] || 0) + 1;
+            }
+        }
+        else {
+            if (e.keyCode) this.keys[e.keyCode] = true;
+            this.keys[e.key] = this.keys[e.code] = true;
         }
         if (e.key == ' ') {
             let {spaceDownTime, spaceUpTime} = this;
@@ -224,8 +230,14 @@ class PlayerLocalController extends EntityController {
     };
     keyup(e) {
         if (!this.locked) return;
-        if (e.keyCode) this.keys[e.keyCode] = (this.keys[e.keyCode] || 1) - 1;
-        this.keys[e.key] = this.keys[e.code] = (this.keys[e.key] || 1) - 1;
+        if (window.isTouchDevice) {
+            if (e.keyCode) this.keys[e.keyCode] = (this.keys[e.keyCode] || 1) - 1;
+            this.keys[e.key] = this.keys[e.code] = (this.keys[e.key] || 1) - 1;
+        }
+        else {
+            if (e.keyCode) this.keys[e.keyCode] = false;
+            this.keys[e.key] = this.keys[e.code] = false;
+        }
         if (!this.keys.Space) this.spaceUpTime = new Date();
         if (!this.keys.KeyW) {
             this.moveUpTime = new Date();
