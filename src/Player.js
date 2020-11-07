@@ -78,6 +78,7 @@ class Player extends Entity {
                     ? this.hitboxes.max[hit.axis]: this.hitboxes.min[hit.axis]);
                 this.rest[hit.axis] = hit.step;
                 this.velocity[hit.axis] = dv[hit.axis] = dvel[hit.axis] = 0;
+                if (hit.axis !== 1) this.toRunMode(false);
                 hit = this.world.hitboxesCollision(this.getGloBox(), dvel, chunkFn);
             }
         }
