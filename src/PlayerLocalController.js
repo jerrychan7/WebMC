@@ -184,8 +184,10 @@ class PlayerLocalController extends EntityController {
             }
         }
         if (!this.locked) return;
-        if (e.keyCode) this.keys[e.keyCode] = true;
-        this.keys[e.key] = this.keys[e.code] = true;
+        if (e.repeat !== true) {
+            if (e.keyCode) this.keys[e.keyCode] = (this.keys[e.keyCode] || 0) + 1;
+            this.keys[e.key] = this.keys[e.code] = (this.keys[e.key] || 0) + 1;
+        }
         if (e.key == ' ') {
             let {spaceDownTime, spaceUpTime} = this;
             let now = new Date();
@@ -222,8 +224,8 @@ class PlayerLocalController extends EntityController {
     };
     keyup(e) {
         if (!this.locked) return;
-        if (e.keyCode) this.keys[e.keyCode] = false;
-        this.keys[e.key] = this.keys[e.code] = false;
+        if (e.keyCode) this.keys[e.keyCode] = (this.keys[e.keyCode] || 1) - 1;
+        this.keys[e.key] = this.keys[e.code] = (this.keys[e.key] || 1) - 1;
         if (!this.keys.Space) this.spaceUpTime = new Date();
         if (!this.keys.KeyW) {
             this.moveUpTime = new Date();
@@ -303,7 +305,7 @@ class PlayerLocalController extends EntityController {
         this.dispatchMouseEventByTouchEvt("move", e, {movementX: movementX * 2, movementY});
         this.canvasLastTouchPos = e;
     };
-    dispatchKeyEvent(type, key, code = "Key" + key.toUpperCase(), keyCode = key.toUpperCase().charCodeAt(0), repeat = true) {
+    dispatchKeyEvent(type, key, code = "Key" + key.toUpperCase(), keyCode = key.toUpperCase().charCodeAt(0), repeat = false) {
         this.doc.dispatchEvent(new KeyboardEvent("key" + type, {
             bubbles: true, cancelable: true,
             key, code, keyCode, repeat, which: keyCode,
@@ -395,25 +397,21 @@ class PlayerLocalController extends EntityController {
                 this.onFlyBtnClick();
         }
     };
-    moveBtnsTouchstart(e) {
+    get moveBtnsTouchstart() {return this.moveBtnsTouchmove; };
+    moveBtnsTouchmove(e) {
         if (e.cancelable) e.preventDefault();
         let ele = document.elementFromPoint(e.targetTouches[0].clientX, e.targetTouches[0].clientY);
-        this.activeMoveBtn(ele, e);
-        if (this.lastMoveBtn !== ele) this.inactiveMoveBtn(this.lastMoveBtn, e);
-        this.lastMoveBtn = ele;
+        if (this.lastMoveBtn !== ele) {
+            this.activeMoveBtn(ele, e);
+            this.inactiveMoveBtn(this.lastMoveBtn, e);
+            this.lastMoveBtn = ele;
+        }
     };
     get moveBtnsTouchcancel() { return this.moveBtnsTouchend; };
     moveBtnsTouchend(e) {
         if (e.cancelable) e.preventDefault();
         this.inactiveMoveBtn(this.lastMoveBtn, e);
         this.lastMoveBtn = null;
-    };
-    moveBtnsTouchmove(e) {
-        if (e.cancelable) e.preventDefault();
-        let ele = document.elementFromPoint(e.targetTouches[0].clientX, e.targetTouches[0].clientY);
-        this.activeMoveBtn(ele, e);
-        if (this.lastMoveBtn !== ele) this.inactiveMoveBtn(this.lastMoveBtn, e);
-        this.lastMoveBtn = ele;
     };
     onFlyBtnClick() {
         let {lastFlyBtnClick} = this, now = new Date();
