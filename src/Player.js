@@ -44,9 +44,15 @@ class Player extends Entity {
         this.isRun = run;
         if (run) {
             this.moveSpeed = this.isFly? this.flyRunMoveSpeed: this.runMoveSpeed;
+            if (this.camera) {
+                this.camera.changeFovyWithAnimation(10);
+            }
         }
         else {
             this.moveSpeed = this.isFly? this.flyMoveSpeed: this.normalMoveSpeed;
+            if (this.camera) {
+                this.camera.changeFovyWithAnimation(0);
+            }
         }
     };
     setController(controller) {
@@ -156,6 +162,7 @@ class Player extends Entity {
         }
         this.move(dt);
         this.inventory && this.inventory.update();
+        this.camera && this.camera
     };
 };
 

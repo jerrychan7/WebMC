@@ -24,7 +24,7 @@ class Camera {
         this.projectionType = projectionType;
         this.viewType = viewType;
         this.aspectRatio = aspectRatio;
-        this.fovy = fovy; this.near = near; this.far = far;
+        this.fovy = this.nowFovy = fovy; this.near = near; this.far = far;
         this.left = left; this.right = right; this.bottom = bottom; this.top = top;
         this.position = vec3.create(...position);
         this.pitch = pitch; this.yaw = yaw; this.rollZ = rollZ;
@@ -60,7 +60,7 @@ class Camera {
     setTarget(target) { this.target = target; this.vChange = true; return this; }
     setUp(up) { this.up = up; this.vChange = true; return this; };
 
-    setFovy(fovy) { this.fovy = fovy; this.pChange = true; return this; };
+    setFovy(fovy) { if (fovy == this.fovy) return this; this.fovy = this.nowFovy = fovy; this.pChange = true; return this; };
     setNear(near) { this.near = near; this.pChange = true; return this; };
     setFar(far) { this.far = far; this.pChange = true; return this; };
     setAspectRatio(aspectRatio) { this.aspectRatio = aspectRatio; this.pChange = true; return this; };
@@ -69,11 +69,44 @@ class Camera {
     setBottom(bottom) { this.bottom = bottom; this.pChange = true; return this; };
     setTop(top) { this.top = top; this.pChange = true; return this; };
 
+    _linearGradient(sx, ex, sy, ey, x) {
+        x = Math.max(0, Math.min((x - sx) / (ex - sx), 1));
+        return sy > ey
+            ? sy - (sy - ey) * x
+            : sy + (ey - sy) * x;
+    };
+    _powerGradient(sx, ex, sy, ey, x) {
+        x = Math.max(0, Math.min((x - sx) / (ex - sx), 1));
+        return sy > ey
+            ? ey + (sy - ey) * ((-x + 1) ** 2)
+            : sy + (ey - sy) * (x ** 0.5);
+    };
+    changeFovyWithAnimation(deltaFovy = 0, deltaTime = 250) {
+        if (deltaTime == 0) return this.setFovy(this.fovy + deltaFovy);
+        if (this.fovy + deltaFovy === this.endFovy) return this;
+        let now = this.nowTime = (new Date()).getTime();
+        if (!("beginFovy" in this)) {
+            this.endFovy = this.nowFovy = this.fovy;
+            this.fovyAnimationEndTime = now;
+        }
+        if (this.fovyAnimationEndTime <= now) {
+            this.fovyAnimationBeginTime = now;
+            this.fovyAnimationEndTime = now + deltaTime;
+        }
+        else {
+            this.fovyAnimationEndTime = now + (now - this.fovyAnimationBeginTime);
+            this.fovyAnimationBeginTime = this.fovyAnimationEndTime - deltaTime;
+        }
+        this.beginFovy = this.endFovy;
+        this.endFovy = this.fovy + deltaFovy;
+        return this;
+    };
+
     get projection() {
         if (this.pChange) {
             this.pChange = false;
             return this.projectionType === Camera.projectionType.perspective
-                ? mat4.perspective(this.fovy, this.aspectRatio, this.near, this.far, this.pM)
+                ? mat4.perspective(this.nowFovy, this.aspectRatio, this.near, this.far, this.pM)
                 : mat4.ortho(this.left, this.right, this.bottom, this.top, this.near, this.far, this.pM);
         }
         return this.pM;
@@ -97,6 +130,15 @@ class Camera {
         return this.vM;
     };
     get projview() {
+        let now = (new Date()).getTime();
+        // 60fps -> 0.0166spf -> 16 mspf
+        if (this.nowFovy != this.endFovy && now - this.nowTime > 16) {
+            this.nowTime = now;
+            this.pChange = true;
+            this.nowFovy = this._powerGradient(
+                this.fovyAnimationBeginTime, this.fovyAnimationEndTime,
+                this.beginFovy, this.endFovy, now);
+        }
         if (this.entity || this.pChange || this.vChange)
             return mat4.multiply(this.projection, this.view, this.pvM);
         return this.pvM;
