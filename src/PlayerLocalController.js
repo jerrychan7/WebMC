@@ -152,10 +152,10 @@ class PlayerLocalController extends EntityController {
                 && pos[0] < box.max[0] && pos[1] < box.max[1] && pos[2] < box.max[2])
                     return;
                 let blockName = this.entity.inventory.getOnHands().name;
-                if (blockName !== "air") world.setTile(...pos, blockName);
+                if (blockName !== "air") world.setBlock(...pos, blockName);
             }
             else if (this.mouseRightBtnDown) {
-                world.setTile(...pos, "air");
+                world.setBlock(...pos, "air");
             }
         };
         destroyOrPlaceBlock();
