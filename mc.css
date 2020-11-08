@@ -17,13 +17,13 @@ a { text-decoration: none; }
 .mc-button {
     color: #E0E0E0;
     cursor: pointer;
-    text-shadow: 1px 1px 1px #383838;
+    text-shadow: 0.13rem 0.13rem 0 #383838;
     --mc-button-border-width: calc(3px * var(--mc-button-border-img-top));
     border-width: var(--mc-button-border-width);
 }
 .mc-button:hover {
     color: #FFFFA0;
-    text-shadow: 1px 1px 1px #3F3F28;
+    text-shadow: 0.13rem 0.13rem 0 #3F3F28;
     border-width: var(--mc-button-border-width);
 }
 .mc-button[disabled] {
@@ -95,16 +95,17 @@ a { text-decoration: none; }
     filter: blur(5px);
 }
 #start_game_page img {
-    width: 75%;
-    margin: 15vh 12.5% 10vh 12.5%;
+    width: 100%;
+    height: auto;
+    margin: 10vh 0 10vh;
 }
 #start_game_page ul {
     list-style-type: none;
-    padding: 0 30%;
-    margin: 0;
+    padding: 0;
+    margin: 0 30%;
 }
 #start_game_page ul li {
-    margin: 10px 0;
+    margin: 0 0 2vh;
     width: 100%;
     background-color: #888;
     text-align:center;
@@ -112,7 +113,27 @@ a { text-decoration: none; }
 #start_game_page ul li a {
     width: calc(100% - 2 * var(--mc-button-border-width));
     display: inline-block;
-    padding: 13px 0;
+    padding: 2vh 0;
+}
+#start_game_page .mc-bouncing-text {
+    color: yellow;
+    font-size: 1.2rem;
+    text-shadow: 0.16rem 0.16rem 0 #404000;
+    position: absolute;
+    right: 24vw;
+    top: calc(100vw / 512 * 50 + 10vh);
+    transform: rotate(-25deg);
+    animation: mc-bouncing-text-bounce 0.4s infinite;
+}
+#start_game_page a.mc-bouncing-text {
+    text-decoration: underline;
+}
+@media (min-width: 767px) { #start_game_page .mc-bouncing-text { font-size: 1.5rem; text-shadow: 0.2rem 0.2rem 0 #404000; } }
+@media (min-width: 1024px) { #start_game_page .mc-bouncing-text { font-size: 2rem; text-shadow: 0.26rem 0.26rem 0 #404000; } }
+@media (min-width: 1440px) { #start_game_page .mc-bouncing-text { font-size: 2.5rem; text-shadow: 0.33rem 0.33rem 0 #404000; } }
+@media (min-width: 2560px) { #start_game_page .mc-bouncing-text { font-size: 3rem; text-shadow: 0.4rem 0.4rem 0 #404000; } }
+@keyframes mc-bouncing-text-bounce {
+    50% { transform: rotate(-25deg) scale(1.1); }
 }
 
 #how_to_play {
