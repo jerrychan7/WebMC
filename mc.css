@@ -329,6 +329,20 @@ a { text-decoration: none; }
     background-size: 75%;
     background-position: center;
 }
+.mc-hotbar .mc-hotbar-showname {
+    pointer-events: none;
+    position: absolute;
+    left: 0; right: 0;
+    top: -40px;
+    text-align: center;
+    color: #fff;
+    text-shadow: 1px 1px 1px #000;
+    opacity: 1;
+}
+.mc-hotbar .mc-hotbar-showname.fadeout {
+    transition: opacity 0.5s 2s;
+    opacity: 0;
+}
 
 .mc-inventory {
     overflow: hidden;

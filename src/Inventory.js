@@ -46,8 +46,9 @@ class Inventory {
     onInventoryItemClick(div) {
         this.hotbar[this.hotbar.selectOn] = div.block;
         this.hotbar.updated = true;
+        this.showName();
     };
-    OnHotbarItemClick(img) {
+    onHotbarItemClick(img) {
         this.updateHotbarSelector(img.index);
     };
     hotbarSelectPrev() {
@@ -62,6 +63,14 @@ class Inventory {
         this.hotbar.selectOn = i;
         let div = document.getElementsByClassName("mc-hotbar-selector-background")[0];
         div.style.setProperty("--offset", i);
+        this.showName();
+    };
+    showName(index = this.hotbar.selectOn) {
+        if (this.hotbar[index].name == "air") return;
+        let shownameBox = document.getElementsByClassName("mc-hotbar-showname")[0];
+        shownameBox.innerHTML = this.hotbar[index].showName;
+        shownameBox.classList.remove("fadeout");
+        setTimeout(() => {shownameBox.classList.add("fadeout");}, 10);
     };
     update() {
         if (this.hotbar.updated) {
@@ -72,7 +81,7 @@ class Inventory {
                     let block = this.hotbar[i];
                     let img = block.texture.inventory.cloneNode();
                     img.block = block; img.index = i;
-                    img.onclick = this.OnHotbarItemClick.bind(this, img);
+                    img.onclick = this.onHotbarItemClick.bind(this, img);
                     div.append(img);
                 }
             }
