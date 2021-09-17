@@ -7,49 +7,14 @@ window.isTouchDevice = [
     "midp", "symbianos", "blackberry", "hpwos", "rv:1.2.3.4",
 ].some(s => sUserAgent.includes(s));
 
-import {preloaded} from "./loadResources.js";
-import Block from "./Block.js";
-import spa from "./spa.js";
-// load resources
-import "./processingPictures.js";
-spa.addPageByDefault();
+window.addEventListener("contextmenu", e => { if (e.cancelable) e.preventDefault(); }, true);
 
-spa.addPage("about", "");
-spa.addEventListener("about", "load", (lastID) => {
-    alert("Dev by qinshou2017.");
-    spa.openPage(lastID);
-});
-spa.addPage("full-screen-btn", '<div class="mc-button full-screen-btn" style="display: none;">full screen</div>');
-spa.addEventListener("full-screen-btn", "load", (lastID) => {
-    if (!window.isTouchDevice) return;
-    let requestFullscreen = document.body.requestFullscreen || document.body.mozRequestFullScreen || document.body.webkitRequestFullScreen || document.body.msRequestFullscreen;
-    const isFullscreen = () => document.body === (document.fullscreenElement || document.mozFullScreenElement || document.webkitFullscreenElement || document.msFullscreenElement);
-    let fullBtn = document.getElementsByClassName("full-screen-btn")[0];
-    if (!isFullscreen()) fullBtn.style.display = "";
-    document.body.onfullscreenchange =
-    document.body.onmozfullscreenchange =
-    document.body.onwebkitfullscreenchange =
-    document.body.MSFullscreenChange = function(e) {
-        if (e.target === null) return;
-        const full = isFullscreen();
-        spa.targetEvent("full-screen-btn", "onfullscreenchange", full);
-        fullBtn.style.display = full? "none": "";
-    };
-    fullBtn.onclick = () =>
-        requestFullscreen.call(document.body).then(async _ => {
-            try {
-                await screen.orientation.lock("landscape");
-            } catch (e) {
-                console.warn(e);
-                let lockOrientation = screen.lockOrientation || screen.mozLockOrientation || screen.msLockOrientation;
-                if (!lockOrientation) return;
-                lockOrientation.call(screen, "landscape");
-            }
-        });
-});
-
-preloaded.onloadend(async _ => {
+import { edm } from "./utils/EventDispatcher.js";
+edm.getOrNewEventDispatcher("mc.preload")
+.addEventListener("done", async _ => {
+    const {Block} = await import("./World/Block.js");
     Block.initBlocksByDefault();
-    // Page-driven
-    spa.openPage("start_game_page");
-});
+}, { once: true, });
+
+import {} from "./UI/index.js";
+import {} from "./processingPictures.js";

@@ -4,10 +4,64 @@
     <meta charset="utf-8"/>
     <meta name="viewport" Content ="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no" />
     <title>WebMC</title>
+    <link id="favicon" rel="icon" href="#" type="image/x-icon" />
     <link rel="stylesheet" type="text/css" href="./mc.css" />
     <script src="./src/main.js" type="module"></script>
+    <style id="mcpage-preload">
+        mcpage-preload {
+            position: absolute; top: 0;
+            width: 100vw;
+            text-align: center;
+            height: 100vh;
+            overflow: hidden;
+            background: #1D1F21;
+            transition: opacity 1s ease;
+            z-index: 100000;
+        }
+        mcpage-preload p {
+            padding-top: calc(40vh + 1em);
+            margin-top: 0;
+            animation: loading-blink 1.3s infinite ease-out;
+        }
+        @keyframes loading-blink {
+            50% { color: transparent; }
+        }
+        mcpage-preload img {
+            position: fixed;
+            bottom: 60%; left: 50%;
+            transform: translateX(-50%);
+        }
+        mcpage-preload slot > ul, ::slotted(ul) {
+            list-style: none;
+            margin: 20px;
+            padding: 0;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            overflow: hidden;
+            line-height: 1.2em;
+        }
+        mcpage-preload .left {
+            text-align: start;
+            direction: rtl;
+            width: 50%;
+            float: left;
+        }
+        mcpage-preload .right {
+            text-align: start;
+            width: 50%;
+            float: right;
+        }
+    </style>
 </head>
 <body>
-    <p>Loading...</p>
+    <mcpage-preload>
+        <img src="./texture/jumpingBlock.gif" />
+        <p>Loading...</p>
+        <div><progress value="0" max="0"></progress>&emsp;<span class="loadingCount">0</span> / <span class="loadedCount">0</span></div>
+        <div class="left"><slot name="loading"><ul></ul></slot></div>
+        <div class="right"><slot name="loaded"><ul></ul></slot></div>
+        <ul slot="loading"></ul>
+        <ul slot="loaded"></ul>
+    </mcpage-preload>
 </body>
 </html>

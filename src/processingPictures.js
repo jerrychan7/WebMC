@@ -5,7 +5,7 @@ class Canvas2D {
         this.ctx = this.canvas.getContext("2d");
         if (width > 0 && height > 0)
             this.setSize(width, height);
-        return new Proxy(this, {
+        return this.wrapper = new Proxy(this, {
             get(tar, key) {
                 if (key in tar) return tar[key];
                 if (key in tar.canvas)
@@ -31,6 +31,7 @@ class Canvas2D {
         this.setImgSmoothingEnabled(smoothing);
         if (smoothing)
             this.setImgSmoothingQuality(smoothingQuality);
+        return this.wrapper;
     };
     setImgSmoothingEnabled(tf) {
         this.ctx.mozImageSmoothingEnabled    = tf;
@@ -38,9 +39,11 @@ class Canvas2D {
         this.ctx.msImageSmoothingEnabled     = tf;
         this.ctx.imageSmoothingEnabled       = tf;
         this.ctx.oImageSmoothingEnabled      = tf;
+        return this.wrapper;
     };
     setImgSmoothingQuality(level = 2) {
         this.ctx.imageSmoothingQuality = (["low", "medium", "high"])[level];
+        return this.wrapper;
     };
     toImage(onload = function() {}, onerror = function() {}) {
         let img = new Image(this.canvas.width, this.canvas.height);
@@ -51,11 +54,31 @@ class Canvas2D {
     };
     clear() {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        return this.wrapper;
+    };
+    cropAndZoom(img, sx, sy, sw, sh, coordZoomFactor = 1, {
+        finalZoom = 1,
+        canvasW = sw * coordZoomFactor * finalZoom,
+        canvasH = sh * coordZoomFactor * finalZoom,
+    } = {}) {
+        sx *= coordZoomFactor; sy *= coordZoomFactor;
+        sw *= coordZoomFactor; sh *= coordZoomFactor;
+        this.setSize(canvasW, canvasH);
+        this.ctx.drawImage(img, sx, sy, sw, sh, 0, 0, canvasW, canvasH);
+        return this.wrapper;
+    };
+    darken(ratio = 0.5) {
+        const {canvas: {width, height}, ctx} = this;
+        ctx.globalCompositeOperation = "source-atop";
+        ctx.fillStyle = `rgba(0, 0, 0, ${ratio})`;
+        ctx.fillRect(0, 0, width, height);
+        ctx.globalCompositeOperation = "source-over";
+        return this.wrapper;
     };
 }
 
 // if mipLevel == 0  gen all mip level
-export function textureMipmapByTile(img, mipLevel = 1, tileCount = [32, 16]) {
+function textureMipmapByTile(img, mipLevel = 1, tileCount = [32, 16]) {
     let canvas = new Canvas2D(),
         w = img.width, h = img.height, mipmap = [],
         [wTileCount, hTileCount] = tileCount,
@@ -139,126 +162,95 @@ export function textureMipmapByTile(img, mipLevel = 1, tileCount = [32, 16]) {
     // mipmap.pad = pad;
 }
 
-import { asyncLoadResByUrl, setResource } from "./loadResources.js";
-function setBorderOrBgStyle(img, canvas, sx, sy, sw, sh, styleDOM, classSelector, {
-    originalImgW = 256, originalImgH = originalImgW,
-    zoomW = 1, zoomH = zoomW,
-    sizeW = sw * zoomW, sizeH = sh * zoomH,
-    cssVarName = classSelector.replace(/[:\[\]]/g, c => c === ']'? '': '-'),
-    border = false,
-        slice, // array
-        keepCenter = true,
-        color = "transparent",
-        style = "solid",
-        repeat = "stretch",
-    background = false,
-        bgImg = "",
-        size = "cover",
-        bgRepeat = "no-repeat",
-        clip
+import { asyncLoadResByUrl, setResource } from "./utils/loadResources.js";
+
+const rootStyle = document.createElement("style");
+rootStyle.id = "mc-root-style";
+document.head.prepend(rootStyle);
+
+function setBorderOrBgStyle(name, img, {
+    slice = [],
+    isBorder = slice.length !== 0,
+    url = img.src,
+    width = img.width, height = img.height,
 } = {}) {
-    const {width, height} = img;
-    const cr = (w, h) => [w / originalImgW * width, h / originalImgH * height];
-    const imgWidth = sizeW, imgHeight = sizeH;
-    canvas.setSize(imgWidth, imgHeight);
-    canvas.drawImage(img, ...cr(sx, sy), ...cr(sw, sh), 0, 0, imgWidth, imgHeight);
-    if (border) {
-        if (slice === undefined) return canvas.toImage();
-        if (slice.length === 1) slice = [slice[0], slice[0], slice[0], slice[0]];
-        if (slice.length === 2) slice = [slice[0], slice[1], slice[0], slice[1]];
-        if (slice.length === 3) slice = [slice[0], slice[1], slice[2], slice[1]];
-    }
-    let url = canvas.toDataURL();
-    styleDOM.innerHTML += `:root { --${cssVarName}-img-width: ${imgWidth}; --${cssVarName}-img-height: ${imgHeight}; ${
-                border? `--${cssVarName}-border-img-top: ${slice[0]}; --${cssVarName}-border-img-right: ${slice[1]}; --${cssVarName}-border-img-bottom: ${slice[2]}; --${cssVarName}-border-img-left: ${slice[3]};`
-                : ""
-            }}\n`
-        + `.${classSelector} {\n`
-        + `    --img-width: var(--${cssVarName}-img-width);\n`
-        + `    --img-height: var(--${cssVarName}-img-height);\n`
-        + (background?
-              `    background-image: ${bgImg + (bgImg? ",": "")} url(${url});\n`
-            + `    background-size: ${size};\n`
-            + (clip? `    background-clip: ${clip};\n`: "")
-            + (bgRepeat? `    background-repeat: ${bgRepeat};\n`: ""): "")
-        + (border? 
-              `    border: ${color} ${style};\n`
-            + `    border-image: url(${url}) ${slice.join(" ")} ${keepCenter? "fill": ""} ${repeat};\n`: "")
-        + `}\n`;
-    return canvas.toImage();
+    if (slice.length === 1) slice = [slice[0], slice[0], slice[0], slice[0]];
+    if (slice.length === 2) slice = [slice[0], slice[1], slice[0], slice[1]];
+    if (slice.length === 3) slice = [slice[0], slice[1], slice[2], slice[1]];
+    rootStyle.sheet.insertRule(`:root {
+        --mc-ui-${name}-img: url("${url}");
+        --mc-ui-${name}-img-width: ${width};
+        --mc-ui-${name}-img-height: ${height};`
+    + (!isBorder? "": `
+        --mc-ui-${name}-img-border-top: ${slice[0]};
+        --mc-ui-${name}-img-border-right: ${slice[1]};
+        --mc-ui-${name}-img-border-bottom: ${slice[2]};
+        --mc-ui-${name}-img-border-left: ${slice[3]};`)
+    + `
+    }`, 0);
+    setResource(`mc-ui-${name}-img`, img);
+    return img;
 }
+
+const genDrawAndSet = (img, canvas, coordZoomFactor) => (sx, sy, sw, sh, name, styleOption, drawOption) =>
+    setBorderOrBgStyle(name, canvas.cropAndZoom(img, sx, sy, sw, sh, coordZoomFactor, drawOption).toImage(), styleOption);
+
 asyncLoadResByUrl("texture/gui.png")
 .then(img => {
-    const canvas = new Canvas2D(), style = document.createElement("style");
-    setBorderOrBgStyle(img, canvas, 0, 0, 182, 22, style, "mc-hotbar-background", {background: true});
-    style.innerHTML += ":root { --mc-hotbar-item-cell-width: 20; --mc-hotbar-item-cell-height: 20; }\n";
-    setBorderOrBgStyle(img, canvas, 0, 22, 24, 24, style, "mc-hotbar-selector-background", {background: true});
-    setBorderOrBgStyle(img, canvas, 200, 46, 16, 16, style, "mc-inventory-item-background", {background: true});
-    setBorderOrBgStyle(img, canvas, 0, 66, 200, 20, style, "mc-button", {border: true, slice: [3]});
-    setBorderOrBgStyle(img, canvas, 0, 86, 200, 20, style, "mc-button:hover", {border: true, slice: [3]});
-    setBorderOrBgStyle(img, canvas, 0, 46, 200, 20, style, "mc-button:active", {border: true, slice: [3]});
-    setBorderOrBgStyle(img, canvas, 0, 46, 200, 20, style, "mc-button[disabled]", {border: true, slice: [3]});
-    const darkenBtn = (selector) => {
-        canvas.globalCompositeOperation = "source-atop";
-        canvas.fillStyle = "rgba(0, 0, 0, .5)";
-        canvas.fillRect(0, 0, canvas.width, canvas.height);
-        style.innerHTML += `${selector} { background-image: url(${canvas.toDataURL()}); }`;
-        canvas.globalCompositeOperation = "source-over";
-    };
-    setBorderOrBgStyle(img, canvas, 0, 107, 26, 26, style, "mc-move-btn-up", {background: true});
-    darkenBtn(".mc-move-btn-up:active, .mc-move-btn-up[active]");
-    setBorderOrBgStyle(img, canvas, 26, 107, 26, 26, style, "mc-move-btn-left", {background: true});
-    darkenBtn(".mc-move-btn-left:active, .mc-move-btn-left[active]");
-    setBorderOrBgStyle(img, canvas, 52, 107, 26, 26, style, "mc-move-btn-down", {background: true});
-    darkenBtn(".mc-move-btn-down:active, .mc-move-btn-down[active]");
-    setBorderOrBgStyle(img, canvas, 78, 107, 26, 26, style, "mc-move-btn-right", {background: true});
-    darkenBtn(".mc-move-btn-right:active, .mc-move-btn-right[active]");
-    setBorderOrBgStyle(img, canvas, 104, 107, 26, 26, style, "mc-move-btn-jump", {background: true});
-    darkenBtn(".mc-move-btn-jump:active, .mc-move-btn-jump[active]");
-    setBorderOrBgStyle(img, canvas, 0, 133, 26, 26, style, "mc-move-btn-upleft", {background: true});
-    darkenBtn(".mc-move-btn-upleft:active, .mc-move-btn-upleft[active]");
-    setBorderOrBgStyle(img, canvas, 26, 133, 26, 26, style, "mc-move-btn-upright", {background: true});
-    darkenBtn(".mc-move-btn-upright:active, .mc-move-btn-upright[active]");
-    setBorderOrBgStyle(img, canvas, 52, 133, 26, 26, style, "mc-move-btn-flyup", {background: true});
-    darkenBtn(".mc-move-btn-flyup:active, .mc-move-btn-flyup[active]");
-    setBorderOrBgStyle(img, canvas, 78, 133, 26, 26, style, "mc-move-btn-flydown", {background: true});
-    darkenBtn(".mc-move-btn-flydown:active, .mc-move-btn-flydown[active]");
-    setBorderOrBgStyle(img, canvas, 104, 133, 26, 26, style, "mc-move-btn-fly", {background: true});
-    darkenBtn(".mc-move-btn-fly:active, .mc-move-btn-fly[active]");
-    setBorderOrBgStyle(img, canvas, 218, 82, 18, 18, style, "mc-move-btn-sneak", {background: true});
-    setBorderOrBgStyle(img, canvas, 218, 64, 18, 18, style, "mc-move-btn-sneak[active]", {background: true});
-    setBorderOrBgStyle(img, canvas, 228, 248, 28, 8, style, "mc-hotbar-inventory-btn", {background: true});
-    document.head.prepend(style);
+    const coordZoomFactor = img.width / 256;
+    const canvas = new Canvas2D();
+    const drawAndSet = genDrawAndSet(img, canvas, coordZoomFactor);
+
+    drawAndSet(0, 66, 200, 20, "button", {slice: [3]});
+    drawAndSet(0, 86, 200, 20, "button-hover", {slice: [3]});
+    drawAndSet(0, 46, 200, 20, "button-active", {slice: [3]});
+    setBorderOrBgStyle("button-disabled", canvas.toImage(), {slice: [3]});
+
+    drawAndSet(0, 0, 182, 22, "hotbar-background");
+    rootStyle.sheet.insertRule(":root { --mc-ui-hotbar-item-cell-width: 20; --mc-ui-hotbar-item-cell-height: 20; }", 0);
+    drawAndSet(0, 22, 24, 24, "hotbar-selector-background");
+
+    drawAndSet(200, 46, 16, 16, "inventory-item-background");
+    drawAndSet(228, 248, 28, 8, "hotbar-inventory-btn-foreground");
+
+    // move buttons
+    for (let [name, coord] of Object.entries({
+        up: [0, 107, 26, 26],
+        left: [26, 107, 26, 26],
+        down: [52, 107, 26, 26],
+        right: [78, 107, 26, 26],
+        jump: [104, 107, 26, 26],
+        upleft: [0, 133, 26, 26],
+        upright: [26, 133, 26, 26],
+        flyup: [52, 133, 26, 26],
+        flydown: [78, 133, 26, 26],
+        fly: [104, 133, 26, 26],
+        sneak: [218, 82, 18, 18],
+    })) {
+        drawAndSet(...coord, "move-btn-" + name);
+        setBorderOrBgStyle(`move-btn-${name}-active`, canvas.darken().toImage());
+    }
 });
 asyncLoadResByUrl("texture/spritesheet.png")
 .then(img => {
-    const canvas = new Canvas2D(), style = document.createElement("style");
-    setBorderOrBgStyle(img, canvas, 60, 0, 18, 18, style, "mc-close-btn", {background: true});
-    setBorderOrBgStyle(img, canvas, 78, 0, 18, 18, style, "mc-close-btn:active", {background: true});
-    setBorderOrBgStyle(img, canvas, 34, 43, 14, 14, style, "mc-inventory-items", {border: true, slice: [3]});
-    setBorderOrBgStyle(img, canvas, 49, 43, 13, 14, style, "mc-inventory-tab-background-left", {border: true, slice: [3]});
-    setBorderOrBgStyle(img, canvas, 65, 55, 14, 14, style, "mc-inventory-tab-background-right", {border: true, slice: [3]});
-    setBorderOrBgStyle(img, canvas, 8, 32, 8, 8, style, "mc-hotbar-inventory-btn-bg", {border: true, slice: [1]});
-    setBorderOrBgStyle(img, canvas, 0, 32, 8, 8, style, "mc-hotbar-inventory-btn-bg[active]", {border: true, slice: [1]});
-    document.head.prepend(style);
+    const coordZoomFactor = img.width / 256;
+    const canvas = new Canvas2D();
+    const drawAndSet = genDrawAndSet(img, canvas, coordZoomFactor);
+    drawAndSet(60, 0, 18, 18, "close-btn");
+    drawAndSet(78, 0, 18, 18, "close-btn-active");
+    drawAndSet(34, 43, 14, 14, "inventory-items", {slice: [3]});
+    drawAndSet(49, 43, 13, 14, "inventory-tab-background-left", {slice: [3]});
+    drawAndSet(65, 55, 14, 14, "inventory-tab-background-right", {slice: [3]});
+    drawAndSet(8, 32, 8, 8, "hotbar-inventory-btn-bg", {slice: [1]});
+    drawAndSet(0, 32, 8, 8, "hotbar-inventory-btn-bg-active", {slice: [1]});
 });
 asyncLoadResByUrl("texture/background.png")
 .then(img => {
-    const canvas = new Canvas2D(), style = document.createElement("style");
-    setBorderOrBgStyle(img, canvas, 0, 0, 16, 16, style, "mc-background", {
-        originalImgW: 16,
-        sizeW: 128, sizeH: 128,
-        background: true,
-        bgRepeat: "repeat", size: "auto",
-    });
-    setBorderOrBgStyle(img, canvas, 0, 0, 16, 16, style, "mc-background[darken]", {
-        originalImgW: 16,
-        sizeW: 128, sizeH: 128,
-        background: true,
-        bgRepeat: "repeat", size: "auto",
-        bgImg: "linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5))",
-    });
-    document.head.prepend(style);
+    const coordZoomFactor = img.width / 16;
+    const canvas = new Canvas2D();
+    canvas.cropAndZoom(img, 0, 0, 16, 16, coordZoomFactor, { canvasW: 128, canvasH: 128, });
+    setBorderOrBgStyle("background", canvas.toImage());
+    setBorderOrBgStyle("background-darken", canvas.darken().toImage());
 });
 asyncLoadResByUrl("texture/panorama.png")
 .then(img => {
@@ -267,15 +259,16 @@ asyncLoadResByUrl("texture/panorama.png")
     const canvas = new Canvas2D(exponent(width), height);
     canvas.drawImage(img, 0, 0);
     canvas.toImage(function() {
-        setResource("start_game_page/texture", this);
+        setResource("welcomePage/texture", this);
     });
 });
+asyncLoadResByUrl("texture/title.png");
 
-import { Render } from "./Render.js";
-import { Camera } from "./Camera.js";
-import * as glsl from "./glsl.js";
-import { mat4, vec3 } from "./gmath.js";
-import { Block } from "./Block.js";
+import { Render } from "./Renderer/Render.js";
+import { Camera } from "./Renderer/Camera.js";
+import * as glsl from "./Renderer/glsl.js";
+import { mat4, vec3 } from "./utils/gmath.js";
+import { Block } from "./World/Block.js";
 class BlockInventoryTexRender extends Render {
     constructor() {
         let canvas = document.createElement("canvas");
@@ -377,6 +370,12 @@ class BlockInventoryTexRender extends Render {
     };
 }
 const blockInventoryTexRender = new BlockInventoryTexRender();
-export function blockInventoryTexture(block) {
+function blockInventoryTexture(block) {
     return blockInventoryTexRender.gen(block);
 }
+
+
+export {
+    textureMipmapByTile,
+    blockInventoryTexture,
+};

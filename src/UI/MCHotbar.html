@@ -1,0 +1,119 @@
+
+<!-- mc-hotbar -->
+<style>
+    :host {
+        --hotbar-width: 45vw;
+        --mc-ui-hotbar-scale-factor-per-pixel: calc(var(--hotbar-width) / var(--mc-ui-hotbar-background-img-width));
+
+        --bg-img-width: var(--mc-ui-hotbar-background-img-width);
+        --bg-img-height: var(--mc-ui-hotbar-background-img-height);
+        --selector-bg-img-width: var(--mc-ui-hotbar-selector-background-img-width);
+        --selector-bg-img-height: var(--mc-ui-hotbar-selector-background-img-height);
+        --offset: 0;
+
+        position: fixed;
+        bottom: 0; left: 0;
+        margin-left: calc((100vw - var(--hotbar-width)) / 2);
+    }
+    .showname {
+        pointer-events: none;
+        position: absolute;
+        left: 0; right: 0;
+        top: -2.5em;
+        text-align: center;
+        color: #fff;
+        text-shadow: 1px 1px 1px #000;
+        opacity: 1;
+    }
+    .showname.fadeout {
+        transition: opacity 0.5s 2s;
+        opacity: 0;
+    }
+    .hotbar-background {
+        opacity: 0.75;
+        width: var(--hotbar-width);
+        height: calc(var(--mc-ui-hotbar-scale-factor-per-pixel) * var(--bg-img-height));
+    }
+    .selector-background {
+        position: absolute;
+        --width-one-pixel: var(--mc-ui-hotbar-scale-factor-per-pixel);
+        --height-one-pixel: calc(100% / var(--bg-img-height));
+        width: calc(var(--width-one-pixel) * var(--selector-bg-img-width));
+        height: calc(var(--width-one-pixel) * var(--selector-bg-img-height));
+        top: calc(-1 * var(--height-one-pixel));
+
+        left: calc(var(--offset) * var(--mc-ui-hotbar-item-cell-width) * var(--width-one-pixel) - var(--width-one-pixel));
+    }
+    #items {
+        position: absolute;
+        top: 0;
+        width: var(--hotbar-width);
+        height: 100%;
+    }
+    #items img {
+        -webkit-user-drag: none;
+        user-drag: none;
+        width: calc(15 * var(--mc-ui-hotbar-scale-factor-per-pixel));
+        height: auto;
+        cursor: pointer;
+        padding:
+            calc(4 * var(--mc-ui-hotbar-scale-factor-per-pixel))
+            calc(2 * var(--mc-ui-hotbar-scale-factor-per-pixel))
+            calc(3 * var(--mc-ui-hotbar-scale-factor-per-pixel))
+            calc(3 * var(--mc-ui-hotbar-scale-factor-per-pixel));
+    }
+    #items img:first-child {
+        margin-left: calc(1 * var(--mc-ui-hotbar-scale-factor-per-pixel));
+    }
+    #items img:hover {
+        filter: brightness(1.5);
+    }
+    #items img:active {
+        filter: brightness(0.7);
+    }
+    #items img:not([src]) {
+        height: 100%;
+        padding-top: 0; padding-bottom: 0;
+        opacity: 0;
+    }
+    :host, #items { z-index: 5; }
+    .selector-background { z-index: 4; }
+
+    .inventory-btn {
+        --width-one-pixel: var(--mc-ui-hotbar-scale-factor-per-pixel);
+        z-index: 4;
+        position: absolute;
+        top: 0;
+        width: calc(var(--width-one-pixel) * (var(--mc-ui-hotbar-background-img-height) - 1));
+        left: calc(9 * var(--mc-ui-hotbar-item-cell-width) * var(--width-one-pixel) + var(--width-one-pixel));
+    }
+    .inventory-btn.hotbar-background {
+        background-position: 100%;
+    }
+    .inventory-btn > * {
+        width: calc(16 * var(--mc-ui-hotbar-scale-factor-per-pixel));
+        height: calc(16 * var(--mc-ui-hotbar-scale-factor-per-pixel));
+        position: absolute;
+        top: calc(3 * var(--mc-ui-hotbar-scale-factor-per-pixel));
+        left: calc(2 * var(--mc-ui-hotbar-scale-factor-per-pixel));
+    }
+    .inventory-btn > .background {
+        width: calc(14 * var(--mc-ui-hotbar-scale-factor-per-pixel));
+        height: calc(14 * var(--mc-ui-hotbar-scale-factor-per-pixel));
+        border-width: var(--mc-ui-hotbar-scale-factor-per-pixel);
+    }
+    .inventory-btn > .foreground {
+        z-index: 5;
+        cursor: pointer;
+        background-size: 75%;
+        background-position: center;
+    }
+</style>
+<div class="showname"></div>
+<div class="hotbar-background"></div>
+<div id="items"></div>
+<div class="inventory-btn hotbar-background" style="display: none;">
+    <div class="background"></div>
+    <div class="foreground"></div>
+</div>
+<div class="selector-background"></div>

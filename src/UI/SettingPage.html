@@ -1,0 +1,34 @@
+
+<!-- mcpage-setting (old: options_page) -->
+<style>
+    :host {
+        text-align: center;
+        z-index: 200;
+    }
+    div.mc-background {
+        height: 100vh;
+        background-image: var(--mc-ui-background-img);
+        background-repeat: repeat;
+        background-size: auto;
+    }
+    div.mc-background[darken] {
+        background-image: var(--mc-ui-background-darken-img);
+    }
+    h1 {
+        margin: 0;
+        padding: 20px 0 0;
+    }
+    mc-button {
+        padding: 1.2vh 0;
+        width: 50%;
+        max-width: 400px;
+        margin-bottom: 10px;
+    }
+</style>
+<div class="mc-background" darken>
+    <h1>Options</h1>
+    <h2>Terrain type:</h2>
+    <mc-button class="world-terrain">flat</mc-button><br />
+    <mc-button class="world-terrain">pre-classic</mc-button><br />
+    <mc-button gotoPage="*pop">Back</mc-button>
+</div>

@@ -1,0 +1,65 @@
+
+<!-- mcpage-how-to-play -->
+<style>
+    :host {
+        text-align: center;
+    }
+    div.mc-background {
+        height: 100vh;
+        background-image: var(--mc-ui-background-img);
+        background-repeat: repeat;
+        background-size: auto;
+    }
+    div.mc-background[darken] {
+        background-image: var(--mc-ui-background-darken-img);
+    }
+    div.mc-background > div {
+        position: relative;
+        top: 50%;
+        transform: translateY(-50%);
+    }
+    h1 {
+        margin: 0;
+        padding: 20px 0 0;
+    }
+    table {
+        margin: 20px auto;
+        background-color: rgba(0, 0, 0, .5);
+    }
+    tr {
+        font-size: 1rem;
+        vertical-align: top;
+        text-align: left;
+    }
+    tr:first-child {
+        vertical-align: top;
+    }
+    tr b {
+        float: right;
+        text-align: end;
+    }
+    td:first-child { padding-right: 10px; }
+    td:not(:first-child) {
+        padding-bottom: 5px;
+        padding-left: 10px;
+        width: 50%;
+    }
+    mc-button {
+        padding: 1.2vh 0;
+        width: 50%;
+        max-width: 400px;
+    }
+</style>
+<div class="mc-background" darken><div>
+    <h1>How to play</h1>
+    <table>
+        <tr><td><b>WASD</b></td>                   <td>Move; Double-click W to Sprint</td></tr>
+        <tr><td><b>Spacebar</b></td>               <td>Jump; Double-click to switch Fly Mode</td></tr>
+        <tr><td><b>Shift/X</b></td>                <td>When Fly Mode is on, causes the player to lose altitude (descend)</td></tr>
+        <tr><td><b>ESC</b></td>                    <td>Gives back cursor control</td></tr>
+        <tr><td><b>E</b></td>                      <td>Open inventory</td></tr>
+        <tr><td><b>Left/Right button</b></td>      <td>Destroy/Place blocks</td></tr>
+        <tr><td><b>Scroll</b></td>                 <td>Scrolls through the Hotbar</td></tr>
+    </table>
+    <mc-button gotoPage="*pop">Back</mc-button>
+</div></div>

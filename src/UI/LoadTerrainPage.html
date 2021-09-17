@@ -1,0 +1,25 @@
+
+<!-- mcpage-load-terrain -->
+<style>
+    :host {
+        text-align: center;
+        z-index: 100;
+    }
+    div.mc-background {
+        height: 100vh;
+        background-image: var(--mc-ui-background-img);
+        background-repeat: repeat;
+        background-size: auto;
+    }
+    div.mc-background[darken] {
+        background-image: var(--mc-ui-background-darken-img);
+    }
+    p {
+        margin: 0;
+        padding: 45vh 0 20px;
+    }
+</style>
+<div class="mc-background" darken>
+    <p id="gen-out"></p>
+    <progress></progress>
+</div>

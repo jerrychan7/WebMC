@@ -1,0 +1,91 @@
+
+<!-- mc-incentory -->
+<style>
+    :host {
+        overflow: hidden;
+        position: absolute;
+        background-color: rgba(0, 0, 0, 0.5);
+        width: 100%; height: 100vh;
+        font-size: 0;
+        text-align: center;
+        display: table;
+    }
+    :host > div {
+        display: table-cell;
+        vertical-align: middle;
+    }
+    [class*="mc-inventory-tabs"],
+    .mc-inventory-items {
+        display: inline-block;
+        vertical-align: top;
+        position: relative;
+    }
+    .mc-inventory-items {
+        width: 50%; max-height: 65vh;
+        overflow-y: overlay;
+        text-align: left;
+        padding: 10px 30px;
+    }
+    .mc-inventory-item-background {
+        display: inline-block;
+        width: 11.111111%;
+        padding-top: 11.111111%;
+        /* width: 64px; height: 64px; */
+        position: relative;
+    }
+    .mc-inventory-item-background:hover {
+        filter: brightness(1.5);
+    }
+    .mc-inventory-item-background:active {
+        filter: brightness(0.7);
+    }
+    .mc-inventory-item-background img {
+        -webkit-user-drag: none;
+        user-drag: none;
+        width: 75%; height: 75%;
+        position: absolute;
+        top: 0; bottom: 0;
+        left: 0; right: 0;
+        margin: auto;
+    }
+    .mc-inventory-tab {
+        position: relative;
+    }
+    .mc-inventory-tab-item {
+        position: absolute;
+        top: 0;
+        width: 100%; height: 100%;
+    }
+    [class*="mc-inventory-tab-background"] {
+        width: 64px; height: 64px;
+        position: relative;
+    }
+    [class*="mc-inventory-tab-background"],
+    .mc-inventory-items { border-width: calc(4px * var(--mc-ui-inventory-items-img-border-top)); }
+    [class*="mc-inventory-tabs"] { width: calc(64px + 4px * var(--mc-ui-inventory-items-img-border-top) * 2); }
+    /* Overlap 2 pixels */
+    .mc-inventory-tabs-left  { left: calc(4px * 2); }
+    .mc-inventory-tabs-right { right: calc(4px * 2); }
+    .mc-inventory-tab-item * {
+        position: absolute;
+        top: 0; bottom: 0; left: 0; right: 0;
+        width: 60%; height: 60%;
+        margin: auto;
+    }
+
+    :host { z-index: 5; }
+    .mc-inventory-items { z-index: 6; }
+    [class*="mc-inventory-tab-background"] { z-index: 5; }
+    [class*="mc-inventory-tab-background"][active] { z-index: 7; }
+    .mc-inventory-tab-item>* { z-index: 8; }
+</style>
+<div>
+    <div class="mc-inventory-tabs-left"></div>
+    <div class="mc-inventory-items"></div>
+    <div class="mc-inventory-tabs-right">
+        <div class="mc-inventory-tab">
+            <div class="mc-inventory-tab-background-right" active></div>
+            <div class="mc-inventory-tab-item"><div class="mc-close-btn"></div></div>
+        </div>
+    </div>
+</div>

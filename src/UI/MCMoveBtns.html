@@ -1,0 +1,56 @@
+
+<!-- mc-move-buttons -->
+<style>
+    :host {
+        --slice: 2.5;
+        --size: calc(1px * var(--slice) * var(--mc-ui-move-btn-up-img-width));
+        position: absolute;
+        bottom: 0;
+        width: calc(3 * var(--size));
+        height: calc(3 * var(--size));
+        opacity: 0.75;
+        display: block;
+    }
+    div {
+        width: var(--size); height: var(--size);
+        position: absolute;
+    }
+    #upleft {
+        left: calc(0 * var(--size));
+        top: calc(0 * var(--size));
+    }
+    #up, #flyup {
+        left: calc(1 * var(--size));
+        top: calc(0 * var(--size));
+    }
+    #upright {
+        left: calc(2 * var(--size));
+        top: calc(0 * var(--size));
+    }
+    #left {
+        left: calc(0 * var(--size));
+        top: calc(1 * var(--size));
+    }
+    #jump, #fly {
+        left: calc(1 * var(--size));
+        top: calc(1 * var(--size));
+    }
+    #right {
+        left: calc(2 * var(--size));
+        top: calc(1 * var(--size));
+    }
+    #down, #flydown {
+        left: calc(1 * var(--size));
+        top: calc(2 * var(--size));
+    }
+</style>
+<div id="upleft" style="display: none;"></div>
+<div id="up"></div>
+<div id="flyup" style="display: none;"></div>
+<div id="upright" style="display: none;"></div>
+<div id="left"></div>
+<div id="jump"></div>
+<div id="fly" style="display: none;"></div>
+<div id="right"></div>
+<div id="down"></div>
+<div id="flydown" style="display: none;"></div>

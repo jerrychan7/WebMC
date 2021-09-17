@@ -1,0 +1,60 @@
+
+<!-- mcpage-welcome (old: start_game_page) -->
+<style>
+    canvas {
+        position: absolute;
+        z-index: -1;
+        height: 100vh;
+        width: 100%;
+        filter: blur(3px);
+    }
+    img {
+        width: 100%;
+        height: auto;
+        margin: 10vh 0 10vh;
+    }
+    ul {
+        list-style-type: none;
+        padding: 0;
+        margin: 0 30%;
+    }
+    ul li {
+        margin: 0 0 2vh;
+        width: 100%;
+        background-color: #888;
+        text-align:center;
+    }
+    ul li mc-button {
+        width: calc(100% - 2 * var(--mc-ui-button-border-width));
+        display: inline-block;
+        padding: 2vh 0;
+    }
+    .mc-bouncing-text {
+        color: yellow;
+        font-size: 1.2rem;
+        text-shadow: 0.16rem 0.16rem 0 #404000;
+        position: absolute;
+        right: 24vw;
+        top: calc(100vw / 512 * 50 + 10vh);
+        transform: rotate(-25deg);
+        animation: mc-bouncing-text-bounce 0.4s infinite;
+    }
+    a.mc-bouncing-text {
+        text-decoration: underline;
+    }
+    @media (min-width: 767px) { .mc-bouncing-text { font-size: 1.5rem; text-shadow: 0.2rem 0.2rem 0 #404000; } }
+    @media (min-width: 1024px) { .mc-bouncing-text { font-size: 2rem; text-shadow: 0.26rem 0.26rem 0 #404000; } }
+    @media (min-width: 1440px) { .mc-bouncing-text { font-size: 2.5rem; text-shadow: 0.33rem 0.33rem 0 #404000; } }
+    @media (min-width: 2560px) { .mc-bouncing-text { font-size: 3rem; text-shadow: 0.4rem 0.4rem 0 #404000; } }
+    @keyframes mc-bouncing-text-bounce {
+        50% { transform: rotate(-25deg) scale(1.1); }
+    }
+</style>
+<canvas id="background-canvas">Your browser does not support canvas. Please upgrade your browser.</canvas>
+<img width="512" height="64" src="./texture/title.png" />
+<a class="mc-bouncing-text" href="https://github.com/jerrychan7/WebMC">View in Github</a>
+<ul>
+    <li><mc-button gotoPage="play">Start</mc-button></li>
+    <li><mc-button gotoPage="how-to-play">How to play</mc-button></li>
+    <li><mc-button gotoPage="setting">Setting</mc-button></li>
+</ul>
