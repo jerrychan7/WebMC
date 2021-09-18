@@ -1,19 +1,22 @@
 import { vec3 } from "../utils/gmath.js";
 
 class Entity {
-    constructor(hitboxes,
+    constructor(hitboxes, {
         eyePos = [
             (hitboxes.max[0] - hitboxes.min[0] / 2),
             (hitboxes.max[1] - hitboxes.min[1] / 2),
             (hitboxes.max[2] - hitboxes.min[2] / 2)
         ],
-        world = null) {
+        pitch = 0, yaw = 0,
+        position = [0, 0, 0],
+        world = null,
+    } = {}) {
         this.world = world;
         this.moveSpeed = 0;
         this.gravityAcceleration = 0;
-        this.position = [0, 0, 0];
-        this.pitch = 0; // 垂直角 y+为正方向 始于xz平面 弧度制
-        this.yaw = 0;   // 水平角 x-为正方向 始于z- 弧度制
+        this.position = vec3.create(...position);
+        this.pitch = pitch; // 垂直角 始于xz平面 以y+为正方向 弧度制
+        this.yaw = yaw;   // 水平角 始于z- 以x-为正方向 弧度制
         this.hitboxes = hitboxes;
         this.eyePos = eyePos;
         this.forward = vec3.create();
@@ -30,11 +33,6 @@ class Entity {
             max: vec3.add(this.hitboxes.max, this.position)
         };
     };
-    getForward(scale = 1) {
-        vec3.create(0, 0, -scale, this.forward);
-        vec3.rotateY(this.forward, this.yaw, this.forward);
-        return this.forward;
-    };
     getDirection(scale = 1) {
         vec3.create(0, 0, -scale, this.direction);
         vec3.rotateX(this.direction, this.pitch, this.direction);
@@ -45,7 +43,6 @@ class Entity {
         this.camera = camera;
     };
     update(dt) {};
-    draw() {};
 };
 
 export {

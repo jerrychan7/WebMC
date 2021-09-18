@@ -298,7 +298,7 @@ const vec3 = {
         dest.set([v[0] * s, v[1] * s, v[2] * s]);
         return dest;
     },
-    scaleAndAdd(src, s, v, dest = new Vec3Type(3)) {
+    scaleAndAdd(src, v, s, dest = new Vec3Type(3)) {
         dest.set([src[0] + v[0] * s, src[1] + v[1] * s, src[2] + v[2] * s]);
         return dest;
     },
@@ -368,13 +368,13 @@ const vec3 = {
         ]);
         return dest;
     },
-    move_toward(v, to, delta, dest = new Vec2Type(2)) {
-        let vd = vec3.subtract(to, v, dest), len = vec3.length(vd);
+    move_toward(v, to, delta, dest = new Vec3Type(3)) {
+        let vd = vec3.subtract(to, v), len = vec3.length(vd);
         if (len <= delta || len <= EPSILON)
             dest.set(to);
         else
             // dest = v + (vd / len * delta);
-            vec3.add(v, vec3.scale(vd, delta / len, dest), dest);
+            vec3.scaleAndAdd(v, vd, delta / len, dest);
         return dest;
     },
 };
@@ -415,7 +415,7 @@ const vec2 = {
         dest.set([v[0] * s, v[1] * s]);
         return dest;
     },
-    scaleAndAdd(src, s, v, dest = new Vec2Type(2)) {
+    scaleAndAdd(src, v, s, dest = new Vec2Type(2)) {
         dest.set([src[0] + v[0] * s, src[1] + v[1] * s]);
         return dest;
     },
@@ -451,14 +451,10 @@ const vec2 = {
         ]);
         return dest;
     },
+    // angle of a relative to b
     angle(a, b) {
-        let [x1, y1] = a, [x2, y2] = b,
-            // mag is the product of the magnitudes of a and b
-            mag = Math.sqrt(x1 * x1 + y1 * y1) * Math.sqrt(x2 * x2 + y2 * y2),
-            // mag &&.. short circuits if mag == 0
-            cosine = mag && (x1 * x2 + y1 * y2) / mag;
-        // Math.min(Math.max(cosine, -1), 1) clamps the cosine between -1 and 1
-        return Math.acos(Math.min(Math.max(cosine, -1), 1));
+        let [x1, y1] = a, [x2, y2] = b, { atan2 } = Math;
+        return atan2(y2, x2) - atan2(y1, x1);
     },
     inverse(v, dest = new Vec2Type(2)) {
         dest.set([1 / v[0], 1 / v[1]]);
@@ -474,12 +470,12 @@ const vec2 = {
                 abs(y - v) <= EPSILON * max(1.0, abs(y), abs(v)));
     },
     move_toward(v, to, delta, dest = new Vec2Type(2)) {
-        let vd = vec2.subtract(to, v, dest), len = vec2.length(vd);
+        let vd = vec2.subtract(to, v), len = vec2.length(vd);
         if (len <= delta || len <= EPSILON)
             dest.set(to);
         else
             // dest = v + (vd / len * delta);
-            vec2.add(v, vec2.scale(vd, delta / len, dest), dest);
+            vec2.scaleAndAdd(v, vd, delta / len, dest);
         return dest;
     },
 };

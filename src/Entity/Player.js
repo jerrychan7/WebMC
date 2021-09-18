@@ -1,5 +1,5 @@
 import Entity from "./Entity.js";
-import { vec3 } from "../utils/gmath.js";
+import { vec3, vec2, EPSILON } from "../utils/gmath.js";
 import Block from "../World/Block.js";
 
 class Player extends Entity {
@@ -10,9 +10,8 @@ class Player extends Entity {
         super({
             min: [-0.25, 0, -0.25],
             max: [0.25, 1.8, 0.25]
-        }, [0, 1.65, 0], world);
-        super.position = vec3.create(...position);
-        super.pitch = pitch; super.yaw = yaw;
+        }, {eyePos: [0, 1.65, 0], position, pitch, yaw, world});
+
         this.normalMoveSpeed = 4.317;
         this.runMoveSpeed = 5.612;
         this.flyMoveSpeed = 11;
@@ -23,21 +22,48 @@ class Player extends Entity {
         this.jumpSpeed = Math.sqrt(2 * this.gravityAcceleration * 1.25);
         this.normalJumpSpeed = this.jumpSpeed;
         this.flyJumpSpeed = 20;
-        this.velocity = vec3.create();
+
+        this._horiMoveDir = vec2.create();
+        this.horiVelocity = vec2.create();
+        this.horiAcceleration = 0;
+        this.vertMoveDir = 0;
+        this.vertVelocity = 0;
+        this.vertAcceleration = -this.gravityAcceleration;
+
         this.rest = vec3.create();
-        this.acceleration = vec3.create(0, -this.gravityAcceleration, 0);
         this.lastChunk = [];
         this.isFly = false; this.isRun = false;
-        this.onHandItem = Block.getBlockByBlockName("air");
+
+        this._onHandItem = Block.getBlockByBlockName("air");
+        this._velocity = vec3.create();
+        this._acceleration = vec3.create();
+    };
+    get onHandItem() { return this._onHandItem; };
+    set onHandItem(value) {
+        if (value instanceof Block)
+            this._onHandItem = value;
+        else if (typeof value === "string")
+            this._onHandItem = Block.getBlockByBlockName(value) || this._onHandItem;
+    };
+    get horiMoveDir() { return this._horiMoveDir; };
+    set horiMoveDir(arr) {
+        vec2.create(arr[0], arr[1], this._horiMoveDir);
+        vec2.normalize(this._horiMoveDir, this._horiMoveDir);
+    };
+    get velocity() {
+        return vec3.create(this.horiVelocity[0], this.vertVelocity, this.horiVelocity[1], this._velocity);
+    };
+    get acceleration() {
+        return vec3.create(this.horiAcceleration, this.vertAcceleration, this.horiAcceleration, this._acceleration);
     };
     toFlyMode(fly = false) {
         this.isFly = fly;
         if (fly) {
-            this.acceleration[1] = 0;
+            this.vertAcceleration = 0;
             this.moveSpeed = this.isRun? this.flyRunMoveSpeed: this.flyMoveSpeed;
         }
         else {
-            this.acceleration[1] = -this.gravityAcceleration;
+            this.vertAcceleration = -this.gravityAcceleration;
             this.moveSpeed = this.isRun? this.normalMoveSpeed: this.runMoveSpeed;
         }
     };
@@ -60,106 +86,52 @@ class Player extends Entity {
         this.controller = controller;
     };
     get onGround() { return this.rest[1] === -1; };
-    move(dt) {
-        vec3.scaleAndAdd(this.velocity, dt, this.acceleration, this.velocity);
-        let dv = vec3.scale(this.velocity, dt);
+    move_and_collide(motion, dt) {
+        let ds = vec3.scale(motion, dt);
         let chunkFn = (x, y, z) => {
             let b = this.world.getBlock(x, y, z);
             return b && b.name !== "air" && b.renderType !== Block.renderType.FLOWER;
         };
         vec3.create(0, 0, 0, this.rest);
-        for (let i = 0, dvel = vec3.create(); i < 3; dvel[i++] = 0) {
-            dvel[i] = dv[i];
-            let hit = this.world.hitboxesCollision(this.getGloBox(), dvel, chunkFn);
+        for (let i = 0, dSpatium = vec3.create(); i < 3; dSpatium[i++] = 0) {
+            dSpatium[i] = ds[i];
+            let hit = this.world.hitboxesCollision(this.getGloBox(), dSpatium, chunkFn);
             while (hit) {
                 this.position[hit.axis] = hit.pos - (hit.step > 0
                     ? this.hitboxes.max[hit.axis]: this.hitboxes.min[hit.axis]);
                 this.rest[hit.axis] = hit.step;
-                this.velocity[hit.axis] = dv[hit.axis] = dvel[hit.axis] = 0;
+                motion[hit.axis] = ds[hit.axis] = dSpatium[hit.axis] = 0;
                 if (hit.axis !== 1) this.toRunMode(false);
-                hit = this.world.hitboxesCollision(this.getGloBox(), dvel, chunkFn);
+                hit = this.world.hitboxesCollision(this.getGloBox(), dSpatium, chunkFn);
             }
         }
-        vec3.add(this.position, dv, this.position);
+        this.horiVelocity.set([motion[0], motion[2]]);
+        this.vertVelocity = motion[1];
+        vec3.add(this.position, ds, this.position);
     };
     update(dt) {
+        if (!this.world) return;
         dt /= 1000;
-        if (!this.controller)
-            return this.move(dt);
-        const {keys} = this.controller;
-        let dirvec = this.getForward(this.moveSpeed);
-
         if (this.isFly) {
-            if (keys.Space) this.velocity[1] = this.flyJumpSpeed;
-            else if (keys.Shift || keys.KeyX) this.velocity[1] = -this.flyJumpSpeed;
-            else this.velocity[1] = 0;
+            this.vertVelocity = this.vertMoveDir * this.flyJumpSpeed;
+            this.vertVelocity += this.vertAcceleration * dt;
         }
         else {
-            if (keys.Space && this.onGround)
-                this.velocity[1] += this.jumpSpeed;
-            if ((keys.Shift || keys.KeyX) && !this.onGround)
-                this.velocity[1] -= this.jumpSpeed;
+            if (this.onGround)
+                this.vertVelocity = Math.max(0, this.vertMoveDir) * this.jumpSpeed;
+            this.vertVelocity += this.vertAcceleration * dt;
         }
-        let up = keys.KeyW,
-            down = keys.KeyS,
-            left = keys.KeyA,
-            right = keys.KeyD;
-        if (up && down) up = down = false;
-        if (left && right) left = right = false;
-        if (up || down || left || right) {
-            if ((up || down) && (left || right))
-                vec3.rotateY(dirvec, ((left? 1: -1) * (up? 45: 135)) * Math.PI / 180, dirvec);
-            else if (left)
-                vec3.rotateY(dirvec, Math.PI / 2, dirvec);
-            else if (right)
-                vec3.rotateY(dirvec, -Math.PI / 2, dirvec);
-            else if (down)
-                vec3.rotateY(dirvec, Math.PI, dirvec);
-
-            let block = this.world.getBlock(...this.position),
-                blockFriction = block? block.friction || 1: 1,
-                fp = vec3.create(), // motive power
-                ff = vec3.create(), // friction (resistance)
-                nowXZspeed = Math.sqrt(this.velocity[0] ** 2 + this.velocity[2] ** 2);
-            fp = vec3.scale(vec3.normalize(dirvec, fp), blockFriction * 20, fp);
-            if (nowXZspeed <= 0.000001)
-                ff = vec3.scale(vec3.normalize(dirvec, ff), -blockFriction, ff);
-            else if (nowXZspeed >= this.moveSpeed - 0.000001) {
-                let nv = vec3.normalize([this.velocity[0], 0, this.velocity[2]], ff),
-                    t = vec3.scale(nv, this.moveSpeed);
-                this.velocity[0] = t[0]; this.velocity[2] = t[2];
-                ff = vec3.scale(nv, -blockFriction * 20, ff);
-            }
-            else
-                ff = vec3.scale(vec3.normalize([this.velocity[0], 0, this.velocity[2]], ff), -blockFriction, ff);
-            let resultantForce = vec3.add(ff, fp);
-            this.acceleration[0] = resultantForce[0];
-            this.acceleration[2] = resultantForce[2];
+        let pos = this.position,
+            block = this.world.getBlock(pos[0], pos[1] - 1, pos[2]),
+            blockFriction = block? (block.friction || 1): 1;
+        this.horiAcceleration = blockFriction * 20;
+        let horiVel = vec2.create();
+        if (vec2.length(this.horiMoveDir) > EPSILON) {
+            let deltaYaw = vec2.angle(vec2.create(0, 1, horiVel), this.horiMoveDir);
+            vec2.rotateOrigin(vec2.create(0, -this.moveSpeed, horiVel), -(this.yaw + deltaYaw), horiVel);
         }
-        else {
-            let nowXZspeed = Math.sqrt(this.velocity[0] ** 2 + this.velocity[2] ** 2);
-            if (nowXZspeed > 0.000001) {
-                let block = this.world.getBlock(...this.position),
-                    blockFriction = block? block.friction || 1: 1,
-                    ff = vec3.create(); // friction (resistance)
-                ff = vec3.scale(vec3.normalize([this.velocity[0], 0, this.velocity[2]], ff), -blockFriction * 20, ff);
-                let nextv = vec3.scaleAndAdd([this.velocity[0], 0, this.velocity[2]], dt, [this.acceleration[0], 0, this.acceleration[2]]);
-                // If next frame direction of velocity is opposite to direction of friction
-                if (vec3.dot(ff, nextv) < 0) {
-                    this.acceleration[0] = ff[0];
-                    this.acceleration[2] = ff[2];
-                }
-                else {
-                    this.acceleration[0] = this.acceleration[2] = 0;
-                    this.velocity[0] = this.velocity[2] = 0;
-                }
-            }
-            else {
-                this.acceleration[0] = this.acceleration[2] = 0;
-                this.velocity[0] = this.velocity[2] = 0;
-            }
-        }
-        this.move(dt);
+        vec2.move_toward(this.horiVelocity, horiVel, this.horiAcceleration * dt, this.horiVelocity);
+        this.move_and_collide(this.velocity, dt);
     };
 };
 

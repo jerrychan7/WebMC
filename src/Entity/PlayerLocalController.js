@@ -183,6 +183,7 @@ class PlayerLocalController extends EntityController {
         }
     };
     keydown(e) {
+        if (e.cancelable) e.preventDefault();
         if (e.key == 'E' || e.key == 'e') {
             if (this.locked) {
                 this.showStopPage = false;
@@ -227,8 +228,16 @@ class PlayerLocalController extends EntityController {
             }
             this.moveDownTime = now;
         }
+        this.entity.vertMoveDir = this.keys.Space? 1
+            : this.keys.Shift || this.keys.KeyX? -1
+            : 0;
+        this.entity.horiMoveDir = [
+            (this.keys.KeyD || 0) - (this.keys.KeyA || 0),
+            (this.keys.KeyW || 0) - (this.keys.KeyS || 0),
+        ];
     };
     keyup(e) {
+        if (e.cancelable) e.preventDefault();
         if (!this.locked) return;
         if (window.isTouchDevice) {
             if (e.keyCode) this.keys[e.keyCode] = (this.keys[e.keyCode] || 1) - 1;
@@ -243,6 +252,13 @@ class PlayerLocalController extends EntityController {
             this.moveUpTime = new Date();
             this.entity.toRunMode && this.entity.toRunMode(false);
         }
+        this.entity.vertMoveDir = this.keys.Space? 1
+            : this.keys.Shift || this.keys.KeyX? -1
+            : 0;
+        this.entity.horiMoveDir = [
+            (this.keys.KeyD || 0) - (this.keys.KeyA || 0),
+            (this.keys.KeyW || 0) - (this.keys.KeyS || 0),
+        ];
     };
     wheel(e) {
         if (!this.locked) return;
