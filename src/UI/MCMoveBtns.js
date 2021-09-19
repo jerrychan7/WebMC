@@ -6,11 +6,14 @@ class MCMoveButtons extends MCComponent {
     static get templateUrl() { return "src/UI/MCMoveBtns.html"; };
     constructor() {
         super();
-        this.lastMoveBtn = null;
         this.lastBtnPressTime = {};
+        this.isPress = {};
+        this.btns = [];
         for (let id of "up,left,down,right,jump,upleft,upright,flyup,flydown,fly,sneak".split(",")) {
-            this[id] = this.shadowRoot.getElementById(id);
+            this[id] = this.btns[id] = this.shadowRoot.getElementById(id);
             this.lastBtnPressTime[id] = 0;
+            this.isPress[id] = false;
+            this.btns.push(this[id]);
         }
         this.onTouchMove = this.onTouchMove.bind(this);
         this.onTouchEnd = this.onTouchEnd.bind(this);
@@ -23,42 +26,41 @@ class MCMoveButtons extends MCComponent {
     };
     get size() { return 1 * getComputedStyle(this).getPropertyValue("--slice"); };
     set size(v) { return this.style.setProperty("--slice", v); };
-    static get observedAttributes() { return ["fly_btn_active"]; };
-    attributeChangedCallback(name, oldValue, newValue) {
-        switch (name) {
-        case "fly_btn_active": {
-            this.activeFlyBtn(this.hasAttribute(name));
-            break; }
-        }
-    };
     activeFlyBtn(bool) {
         if (bool) {
+            if (this.jump.hasAttribute("active")) this.inactiveMoveBtn(this.jump);
             this.jump.style.display = "none";
             this.fly.style.display = "";
-            if (!this.hasAttribute("fly_btn_active")) this.setAttribute("fly_btn_active", "");
+            this.activeMoveBtn(this.fly, false);
         }
         else {
-            this.jump.style.display = "";
+            if (this.fly.hasAttribute("active")) this.inactiveMoveBtn(this.fly);
             this.fly.style.display = "none";
-            if (this.hasAttribute("fly_btn_active")) this.removeAttribute("fly_btn_active");
+            this.jump.style.display = "";
+            this.activeMoveBtn(this.jump, false);
         }
     };
     onTouchMove(e) {
         if (e.cancelable) e.preventDefault();
-        let ele = this.shadowRoot.elementFromPoint(e.targetTouches[0].clientX, e.targetTouches[0].clientY);
-        if (this.lastMoveBtn !== ele) {
-            this.activeMoveBtn(ele, e);
-            this.inactiveMoveBtn(this.lastMoveBtn, e);
-            this.lastMoveBtn = ele;
-        }
+        const pressedBtns = Object.entries(this.isPress).filter(([id, isPress]) => isPress).map(([id]) => this[id]);
+        const targetBtns = Array.from(e.touches)
+            .map(touch => this.shadowRoot.elementFromPoint(touch.clientX, touch.clientY))
+            .filter(ele => this.btns.includes(ele));
+        targetBtns.forEach(btn => this.activeMoveBtn(btn));
+        pressedBtns.forEach(btn => {
+            if (!targetBtns.includes(btn))
+                this.inactiveMoveBtn(btn);
+        });
     };
     onTouchEnd(e) {
         if (e.cancelable) e.preventDefault();
-        this.inactiveMoveBtn(this.lastMoveBtn, e);
-        this.lastMoveBtn = null;
+        const targetBtns = Array.from(e.changedTouches)
+            .map(touch => this.shadowRoot.elementFromPoint(touch.clientX, touch.clientY))
+            .filter(ele => this.btns.includes(ele));
+        targetBtns.forEach(btn => this.inactiveMoveBtn(btn));
     };
-    activeMoveBtn(btn, e) {
-        if (!btn) return;
+    activeMoveBtn(btn, fireEvent = true) {
+        if (!btn || this.isPress[btn.id]) return;
         btn.setAttribute("active", "");
         switch (btn) {
         case this.up: {
@@ -69,17 +71,19 @@ class MCMoveButtons extends MCComponent {
             this.flyup.style.display = this.flydown.style.display = "";
             break; }
         }
+        this.isPress[btn.id] = true;
+        if (!fireEvent) return;
         this.dispatchEvent(btn.id + "BtnPress", { global: true, data: btn, });
         if (this.lastBtnPressTime[btn.id] === 0)
             this.lastBtnPressTime[btn.id] = new Date();
-        else if ((new Date()) - this.lastBtnPressTime[btn.id] < 300) {
+        else if ((new Date()) - this.lastBtnPressTime[btn.id] < 250) {
             this.dispatchEvent(btn.id + "BtnDblPress", { global: true, data: btn, });
             this.lastBtnPressTime[btn.id] = 0;
         }
         else this.lastBtnPressTime[btn.id] = new Date();
     };
-    inactiveMoveBtn(btn, e) {
-        if (!btn) return;
+    inactiveMoveBtn(btn, fireEvent = true) {
+        if (!btn || !this.isPress[btn.id]) return;
         btn.removeAttribute("active");
         switch (btn) {
         case this.up: case this.upleft: case this.upright: {
@@ -94,6 +98,8 @@ class MCMoveButtons extends MCComponent {
             this.up.style.display = this.down.style.display = "";
             break; }
         }
+        this.isPress[btn.id] = false;
+        if (!fireEvent) return;
         this.dispatchEvent(btn.id + "BtnUp", { global: true, data: btn });
     };
 };

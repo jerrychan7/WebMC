@@ -19,7 +19,6 @@ class PlayerLocalController extends EntityController {
         this.eventHandler = this.eventHandler.bind(this);
         this._locked = false;
         this.showStopPage = false;
-        this.mousemoveSensitivity = mousemoveSensitivity;
         this.canvasLastTouchPos = this.canvasBeginTouch = this.canvasTouchTimer = null;
         this.canvasTouchMoveLen = 0;
         this.canvasDestroying = false;
@@ -183,6 +182,7 @@ class PlayerLocalController extends EntityController {
         }
     };
     keydown(e) {
+        if (!this.locked) return;
         if (e.cancelable) e.preventDefault();
         if (e.repeat) return;
         if (e.key == 'E' || e.key == 'e') {
@@ -192,7 +192,6 @@ class PlayerLocalController extends EntityController {
             }
             else this.playPage.closeInventory();
         }
-        if (!this.locked) return;
         if (window.isTouchDevice) {
             if (e.repeat !== true) {
                 if (e.keyCode) this.keys[e.keyCode] = (this.keys[e.keyCode] || 0) + 1;
@@ -229,8 +228,8 @@ class PlayerLocalController extends EntityController {
         ];
     };
     keyup(e) {
-        if (e.cancelable) e.preventDefault();
         if (!this.locked) return;
+        if (e.cancelable) e.preventDefault();
         if (window.isTouchDevice) {
             if (e.keyCode) this.keys[e.keyCode] = (this.keys[e.keyCode] || 1) - 1;
             this.keys[e.key] = this.keys[e.code] = (this.keys[e.key] || 1) - 1;
@@ -268,7 +267,6 @@ class PlayerLocalController extends EntityController {
         if (!locked && this.showStopPage) {
             pm.openPageByID("pause");
         }
-        // else if (locked) this.requestPointerLock();
         this.showStopPage = true;
         this._locked = locked;
     };
