@@ -364,8 +364,8 @@ class BlockInventoryTexRender extends Render {
         ctx2d.drawImage(img, w * uv[0], h * uv[1], w * (uv[4] - uv[0]), h * (uv[3] - uv[1]), 0, 0, this.canvas.width, this.canvas.height);
         return ctx2d.toImage();
     };
-    setSize(w, h) {
-        super.setSize(w, h);
+    setSize(w, h, dpr = 1) {
+        super.setSize(w, h, dpr);
         this.ctx2d.setSize(w, h);
     };
 }

@@ -9,7 +9,10 @@ class WorldRenderer extends Render {
     constructor(canvas, world = null) {
         super(canvas);
         this.fitScreen();
-        canvas.onresize = this.fitScreen.bind(this, 1, 1);
+        new ResizeObserver(async e => {
+            await new Promise(s => setTimeout(s, 0));
+            this.fitScreen();
+        }).observe(canvas);
         const {ctx} = this;
         ctx.clearColor(0.62, 0.81, 1.0, 1.0);
         ctx.clearDepth(1.0);

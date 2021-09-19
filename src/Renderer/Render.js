@@ -12,6 +12,7 @@ class Render {
         this.frame = this.frame.bind(this);
         this.timer = null;
         this.lastFrameTime = window.performance.now();
+        this.dpr = window.devicePixelRatio;
     };
     get aspectRatio() {
         return this.ctx.canvas.width / this.ctx.canvas.height;
@@ -41,8 +42,10 @@ class Render {
         this.timer = null;
     };
 
-    setSize(w, h) {
+    setSize(w, h, dpr = this.dpr) {
         const c = this.ctx.canvas;
+        this.dpr = dpr;
+        w = (w * dpr) | 0; h = (h * dpr) | 0;
         c.width = w; c.height = h;
         this.ctx.viewport(0, 0, w, h);
         this.camera.forEach(camera => camera.setAspectRatio(w / h));
@@ -112,6 +115,9 @@ class Render {
         if (doYFlip) ctx.pixelStorei(ctx.UNPACK_FLIP_Y_WEBGL, false);
         this.texCache[name] = tex;
         return tex;
+    };
+    createCubemapsTexture(img, name = this._getImageName(img), doYFlip = false) {
+        
     };
     getTexture(name) { return this.texCache[name]; };
     getOrCreateTexture(img, name = this._getImageName(img), doYFlip = false) {

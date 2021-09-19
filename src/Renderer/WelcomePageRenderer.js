@@ -12,14 +12,17 @@ class WelcomeRenderer extends Render {
     constructor(canvas) {
         super(canvas);
         this.fitScreen();
-        canvas.onresize = this.fitScreen.bind(this, 1, 1);
+        new ResizeObserver(async e => {
+            await new Promise(s => setTimeout(s, 0));
+            this.fitScreen();
+        }).observe(canvas);
         const {ctx} = this;
         ctx.disable(ctx.CULL_FACE);
         this.prg = this.createProgram("startGamePage", glsl.startGamePage.vert, glsl.startGamePage.frag)
                     .use().bindTex("texture", this.createTexture(texImg));
         ctx.texParameteri(ctx.TEXTURE_2D, ctx.TEXTURE_MAG_FILTER, ctx.LINEAR);
         ctx.texParameteri(ctx.TEXTURE_2D, ctx.TEXTURE_MIN_FILTER, ctx.LINEAR);
-        let mainCamera = new Camera(this.aspectRatio, {
+        let mainCamera = this.mainCamera = new Camera(this.aspectRatio, {
             viewType: Camera.viewType.lookAt,
             fovy: 120, position: [0, 0, 0],
             lookAt: [-1, 0, 0], up: [0, 1, 0],
@@ -55,10 +58,10 @@ class WelcomeRenderer extends Render {
             tex: this.createVbo(textureCoord),
             ele: this.createIbo(element),
         };
-        this.vpM = mainCamera.projview;
         this.mM = mat4.identity();
         this.mvpM = mat4.identity();
     };
+    get vpM() { return this.mainCamera.projview; };
     onRender() {
         const {ctx, prg, mM, vpM, mvpM, bos} = this;
         mat4.rotate(mM, d2r(1 / 70), [0, 1, 0], mM);

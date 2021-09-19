@@ -71,7 +71,8 @@ pm.addEventListener("load-terrain=>play", () => {
 pm.addEventListener("pause=>play", (pause, play) => {
     worldRenderer.play();
 });
-pm.addEventListener("play=>pause", (play, pause) => {
+pm.addEventListener("play=>pause", async (play, pause) => {
+    await new Promise(s => setTimeout(s, 0));
     worldRenderer.stop();
 });
 pm.addEventListener("pause=>welcome", () => {

@@ -330,7 +330,10 @@ class PlayerLocalController extends EntityController {
         let movementX = e.targetTouches[0].screenX - this.canvasLastTouchPos.targetTouches[0].screenX,
             movementY = e.targetTouches[0].screenY - this.canvasLastTouchPos.targetTouches[0].screenY;
         this.canvasTouchMoveLen += Math.sqrt(movementX ** 2 + movementY ** 2);
-        this.dispatchMouseEventByTouchEvt("move", e, {movementX: movementX * 2, movementY});
+        let ratio = this.canvas.width / this.canvas.height;
+        movementX *= ratio * 2.5;
+        movementY *= 2.5;
+        this.dispatchMouseEventByTouchEvt("move", e, {movementX, movementY});
         this.canvasLastTouchPos = e;
     };
     dispatchKeyEvent(type, key,
