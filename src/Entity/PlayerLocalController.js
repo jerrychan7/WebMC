@@ -184,6 +184,7 @@ class PlayerLocalController extends EntityController {
     };
     keydown(e) {
         if (e.cancelable) e.preventDefault();
+        if (e.repeat) return;
         if (e.key == 'E' || e.key == 'e') {
             if (this.locked) {
                 this.showStopPage = false;
@@ -203,34 +204,25 @@ class PlayerLocalController extends EntityController {
             this.keys[e.key] = this.keys[e.code] = true;
         }
         if (e.key == ' ') {
-            let {spaceDownTime, spaceUpTime} = this;
-            let now = new Date();
-            if (spaceDownTime - spaceUpTime < 0 && now - spaceDownTime > 90 && now - spaceDownTime < 250)
-                this.doubleClickSpace = true;
-            else this.doubleClickSpace = false;
-            if (this.doubleClickSpace) {
+            if (this.spaceDownTime === 0)
+                this.spaceDownTime = new Date();
+            else if ((new Date()) - this.spaceDownTime < 300) {
                 this.entity.toFlyMode && this.entity.toFlyMode(!this.entity.isFly);
-                const {moveBtns} = this;
-                try {
-                    moveBtns.activeFlyBtn(this.entity.isFly);
-                } catch {}
+                this.moveBtns.activeFlyBtn(this.entity.isFly);
+                this.spaceDownTime = 0;
             }
-            this.spaceDownTime = now;
+            else this.spaceDownTime = new Date();
         }
         if (e.code == "KeyW") {
-            let {moveDownTime, moveUpTime} = this;
-            let now = new Date();
-            if (moveDownTime - moveUpTime < 0 && now - moveDownTime > 90 && now - moveDownTime < 250)
-                this.doubleClickMove = true;
-            else this.doubleClickMove = false;
-            if (this.doubleClickMove) {
+            if (this.moveDownTime === 0)
+                this.moveDownTime = new Date();
+            else if ((new Date()) - this.moveDownTime < 300) {
                 this.entity.toRunMode && this.entity.toRunMode(!this.entity.isRun);
+                this.moveDownTime = 0;
             }
-            this.moveDownTime = now;
+            else this.moveDownTime = new Date();
         }
-        this.entity.vertMoveDir = this.keys.Space? 1
-            : this.keys.Shift || this.keys.KeyX? -1
-            : 0;
+        this.entity.vertMoveDir = (this.keys.Space || 0) - (this.keys.Shift || this.keys.KeyX || 0);
         this.entity.horiMoveDir = [
             (this.keys.KeyD || 0) - (this.keys.KeyA || 0),
             (this.keys.KeyW || 0) - (this.keys.KeyS || 0),
@@ -247,14 +239,10 @@ class PlayerLocalController extends EntityController {
             if (e.keyCode) this.keys[e.keyCode] = false;
             this.keys[e.key] = this.keys[e.code] = false;
         }
-        if (!this.keys.Space) this.spaceUpTime = new Date();
         if (!this.keys.KeyW) {
-            this.moveUpTime = new Date();
             this.entity.toRunMode && this.entity.toRunMode(false);
         }
-        this.entity.vertMoveDir = this.keys.Space? 1
-            : this.keys.Shift || this.keys.KeyX? -1
-            : 0;
+        this.entity.vertMoveDir = (this.keys.Space || 0) - (this.keys.Shift || this.keys.KeyX || 0);
         this.entity.horiMoveDir = [
             (this.keys.KeyD || 0) - (this.keys.KeyA || 0),
             (this.keys.KeyW || 0) - (this.keys.KeyS || 0),
@@ -263,7 +251,7 @@ class PlayerLocalController extends EntityController {
     wheel(e) {
         if (!this.locked) return;
         const t = new Date();
-        if (t - this.lastWeelTime < 100) return;
+        if (t - this.lastWeelTime < 5) return;
         if (e.deltaY < 0) {
             // wheelup
             this.hotbarUI.selectNext();

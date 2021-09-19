@@ -70,10 +70,13 @@ class MCMoveButtons extends MCComponent {
             break; }
         }
         this.dispatchEvent(btn.id + "BtnPress", { global: true, data: btn, });
-        let now = new Date(), duringTime = now - this.lastBtnPressTime[btn.id];
-        if (0 < duringTime && duringTime < 250)
+        if (this.lastBtnPressTime[btn.id] === 0)
+            this.lastBtnPressTime[btn.id] = new Date();
+        else if ((new Date()) - this.lastBtnPressTime[btn.id] < 300) {
             this.dispatchEvent(btn.id + "BtnDblPress", { global: true, data: btn, });
-        this.lastBtnPressTime[btn.id] = now;
+            this.lastBtnPressTime[btn.id] = 0;
+        }
+        else this.lastBtnPressTime[btn.id] = new Date();
     };
     inactiveMoveBtn(btn, e) {
         if (!btn) return;

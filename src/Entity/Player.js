@@ -26,7 +26,7 @@ class Player extends Entity {
         this._horiMoveDir = vec2.create();
         this.horiVelocity = vec2.create();
         this.horiAcceleration = 0;
-        this.vertMoveDir = 0;
+        this._vertMoveDir = 0;
         this.vertVelocity = 0;
         this.vertAcceleration = -this.gravityAcceleration;
 
@@ -50,6 +50,8 @@ class Player extends Entity {
         vec2.create(arr[0], arr[1], this._horiMoveDir);
         vec2.normalize(this._horiMoveDir, this._horiMoveDir);
     };
+    get vertMoveDir() { return this._vertMoveDir; };
+    set vertMoveDir(val) { this._vertMoveDir = val? val > 0? 1: -1: 0; };
     get velocity() {
         return vec3.create(this.horiVelocity[0], this.vertVelocity, this.horiVelocity[1], this._velocity);
     };
@@ -121,10 +123,15 @@ class Player extends Entity {
                 this.vertVelocity = Math.max(0, this.vertMoveDir) * this.jumpSpeed;
             this.vertVelocity += this.vertAcceleration * dt;
         }
-        let pos = this.position,
-            block = this.world.getBlock(pos[0], pos[1] - 1, pos[2]),
-            blockFriction = block? (block.friction || 1): 1;
-        this.horiAcceleration = blockFriction * 20;
+        if (this.isFly) {
+            this.horiAcceleration = 12;
+        }
+        else {
+            let pos = this.position,
+                block = this.world.getBlock(pos[0], pos[1] - 1, pos[2]),
+                blockFriction = block? (block.friction || 1): 1;
+            this.horiAcceleration = blockFriction * 20;
+        }
         let horiVel = vec2.create();
         if (vec2.length(this.horiMoveDir) > EPSILON) {
             let deltaYaw = vec2.angle(vec2.create(0, 1, horiVel), this.horiMoveDir);
