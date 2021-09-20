@@ -55,8 +55,10 @@ class PlayerLocalController extends EntityController {
     get locked() {
         return window.isTouchDevice || this._locked;
     };
+    get locked() { return window.isTouchDevice || this._locked; };
     setCanvas(canvas = null) {
         if (this.canvas) {
+            this.exitPointerLock();
             for (let eventType of ["keydown", "keyup", "pointerlockchange", ])
                 this.docOfCanvas.removeEventListener(eventType, this.eventHandler);
             for (let eventType of ["mousedown", "mouseup", "mousemove", "wheel", "touchstart", "touchend", "touchcancel", "touchmove", ])
@@ -117,7 +119,6 @@ class PlayerLocalController extends EntityController {
     };
     eventHandler(event) {
         const { type } = event;
-        // console.trace(type, event);
         if (type in this) this[type](event);
         this.dispatchEvent(type, event);
     };

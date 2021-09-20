@@ -1,5 +1,5 @@
 
-import { Page, pm } from "./Page.js";
+import { Page } from "./Page.js";
 
 import { WelcomeRenderer } from "../Renderer/WelcomePageRenderer.js";
 
@@ -21,20 +21,23 @@ class WelcomePage extends Page {
         this.renderer.stop();
         this.renderer = null;
     };
-};
-
-pm.addEventListener("transitioned", (from, to, en, [fromPage, toPage]) => {
-    if (from == "welcome") switch(to) {
+    onTransitionedFromThis(to) {
+        switch(to) {
         case "play": {
-            fromPage.close();
+            this.close();
             break; }
         case "how-to-play": case "setting": {
-            fromPage.renderer.stop();
+            this.renderer.stop();
             break; }
-    }
-    else if (to == "welcome")
-        toPage.renderer && toPage.renderer.play();
-});
+        }
+    };
+    onTransitionedToThis() {
+        if (this.renderer) this.renderer.play();
+    };
+    onHistoryBack() {
+        window.dispatchEvent(new Event("exit"));
+    };
+};
 
 WelcomePage.asyncLoadAndDefine();
 

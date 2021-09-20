@@ -3,6 +3,19 @@ import { MCComponent } from "./Component.js";
 import { edm } from "../utils/EventDispatcher.js";
 
 import { FSM } from "../utils/FiniteStateMachine.js";
+
+edm.getOrNewEventDispatcher("mc.preload")
+.addEventListener("done", () => {
+    history.pushState(null, document.title);
+    window.addEventListener("popstate", e => {
+        history.pushState(null, document.title);
+        window.dispatchEvent(new Event("back"));
+    }, false);
+    window.addEventListener("exit", e => {
+        history.go(-2);
+    });
+});
+
 class PageManager extends FSM {
     constructor() {
         super({
@@ -77,6 +90,28 @@ class Page extends MCComponent {
     static get componentName() { return this.pageID; };
     get shortPageID() { return this.constructor.shortPageID; };
     get pageID() { return this.constructor.pageID; };
+    constructor() {
+        super();
+        this.onHistoryBack = this.onHistoryBack.bind(this);
+        this._onTransitioned = (from, to, en, [fromPage, toPage]) => {
+            if (fromPage === this) {
+                this.onTransitionedFromThis(to, en, toPage);
+                window.removeEventListener("back", this.onHistoryBack);
+            }
+            else if (toPage === this) {
+                this.onTransitionedToThis(from, en, fromPage);
+                window.addEventListener("back", this.onHistoryBack);
+            }
+        };
+        pageManager.addEventListener("transitioned", this._onTransitioned);
+    };
+    onTransitionedFromThis(to, en, toPage) {};
+    onTransitionedToThis(from, en, fromPage) {};
+    onHistoryBack() {};
+    async disconnectedCallback() {
+        await super.disconnectedCallback();
+        pageManager.removeEventListener("transitioned", this._onTransitioned);
+    };
     appendTemplate(template = this.template) {
         let tmp = super.appendTemplate(template);
         if (!tmp) return;

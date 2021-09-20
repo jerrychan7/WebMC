@@ -43,7 +43,7 @@ class PlayPage extends Page {
         await super.disconnectedCallback();
         if (!worldRenderer) return;
         worldRenderer.stop();
-        try { world.mainPlayer.controller.exitPointerLock(); } catch {}
+        try { world.mainPlayer.controller.setCanvas(); } catch {}
         worldRenderer = world = null;
     };
     get isShownInventory() { return this.inventory.style.display !== "none"; };
@@ -59,9 +59,12 @@ class PlayPage extends Page {
     };
 };
 
+const onHistoryBack = e => pm.openPageByID("pause");
 pm.addEventListener("onfullscreenchange", isFull => {
-    if (window.isTouchDevice && !isFull && pm.getCurrentPage().pageID === PlayPage.pageID)
+    if (window.isTouchDevice && !isFull && pm.getCurrentPage().pageID === PlayPage.pageID) {
+        window.removeEventListener("back", onHistoryBack);
         pm.openPageByID("pause");
+    }
 });
 
 pm.addEventListener("load-terrain=>play", () => {
@@ -69,15 +72,11 @@ pm.addEventListener("load-terrain=>play", () => {
     pm.openPageByID("pause");
 });
 pm.addEventListener("pause=>play", (pause, play) => {
+    window.addEventListener("back", onHistoryBack, {once: true});
     worldRenderer.play();
 });
 pm.addEventListener("play=>pause", (play, pause) => {
     worldRenderer.stop();
-});
-pm.addEventListener("pause=>welcome", () => {
-    world.mainPlayer.controller.setCanvas();
-    world = null;
-    worldRenderer = null;
 });
 
 PlayPage.asyncLoadAndDefine();

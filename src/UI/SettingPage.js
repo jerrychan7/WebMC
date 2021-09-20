@@ -19,6 +19,7 @@ class SettingPage extends Page {
             };
         }
     };
+    onHistoryBack() { this.close(); };
 };
 
 SettingPage.asyncLoadAndDefine();
