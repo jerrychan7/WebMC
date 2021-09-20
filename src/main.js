@@ -6,6 +6,11 @@ window.isTouchDevice = [
     "windows phone os", "windows ce", "windows mobile",
     "midp", "symbianos", "blackberry", "hpwos", "rv:1.2.3.4",
 ].some(s => sUserAgent.includes(s));
+// for iPadOS
+if (!isTouchDevice && sUserAgent.includes("safari") && sUserAgent.includes("version")) {
+    if (!sUserAgent.includes("iphone") && "ontouchend" in document)
+        window.isTouchDevice = true;
+}
 
 window.addEventListener("contextmenu", e => { if (e.cancelable) e.preventDefault(); }, true);
 

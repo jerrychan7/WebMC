@@ -133,16 +133,22 @@ class PlayerLocalController extends EntityController {
         if (type in this) this[type](event);
         this.dispatchEvent(type, event);
     };
-    mousemove(e) {
-        if (!this.locked) return;
+    _setEntityPitchAndYaw(movementX, movementY) {
         let i = this.mousemoveSensitivity * (Math.PI / 180);
         // movementX left- right+    movementY up- down+
-        this.entity.yaw -= (e.movementX || e.mozMovementX || e.webkitMovementX || 0) * i / this.canvas.width;
-        this.entity.pitch -= (e.movementY || e.mozMovementY || e.webkitMovementY || 0) * i / this.canvas.height;
+        this.entity.yaw -= movementX * i / this.canvas.width;
+        this.entity.pitch -= movementY * i / this.canvas.height;
         if (this.entity.pitch > Math.PI / 2)
             this.entity.pitch = Math.PI / 2;
         else if (this.entity.pitch < -Math.PI / 2)
             this.entity.pitch = -Math.PI / 2;
+    };
+    mousemove(e) {
+        if (!this.locked) return;
+        this._setEntityPitchAndYaw(
+            (e.movementX || e.mozMovementX || e.webkitMovementX || 0),
+            (e.movementY || e.mozMovementY || e.webkitMovementY || 0)
+        );
     };
     mousedown(e) {
         if (!this.locked) {
@@ -283,7 +289,8 @@ class PlayerLocalController extends EntityController {
         this._locked = locked;
     };
     dispatchMouseEventByTouchEvt(type, touchEvt, {
-        button = 0, buttons = button, movementX = 0, movementY = 0
+        button = 0, buttons = button,
+        movementX = 0, movementY = 0
     } = {}) {
         this.canvas.dispatchEvent(new MouseEvent("mouse" + type, {
             bubbles: true, cancelable: true, relatedTarget: this.canvas,
@@ -331,7 +338,7 @@ class PlayerLocalController extends EntityController {
         let ratio = this.canvas.width / this.canvas.height;
         movementX *= ratio * 2.5;
         movementY *= 2.5;
-        this.dispatchMouseEventByTouchEvt("move", e, {movementX, movementY});
+        this._setEntityPitchAndYaw(movementX,movementY);
         this.canvasLastTouchPos = e;
     };
     dispatchKeyEvent(type, key,
