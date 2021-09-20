@@ -20,6 +20,7 @@ class Camera {
         left = -1, right = 1, bottom = -1, top = 1,
         position = [0, 0, 3], pitch = 0, yaw = 0, rollZ = 0,
         target = [0, 0, 0], up = [0, 1, 0],
+        entity = null,
     } = {}) {
         this.projectionType = projectionType;
         this.viewType = viewType;
@@ -51,7 +52,7 @@ class Camera {
         }
         this.pvM = mat4.multiply(this.pM, this.vM);
         this.pChange = this.vChange = false;
-        this.entity = null;
+        this.bindEntity(entity);
     };
     setPos(pos) { this.position = vec3.create(...pos); this.vChange = true; return this; };
     setPitch(pitch) { this.pitch = pitch; this.vChange = true; return this; };
@@ -143,10 +144,11 @@ class Camera {
             return mat4.multiply(this.projection, this.view, this.pvM);
         return this.pvM;
     };
-    bindEntity(entity) {
+    bindEntity(entity = null) {
+        if (entity === this.entity) return;
         if (this.entity) this.entity.setCamera(null);
         this.entity = entity;
-        entity.setCamera(this);
+        if (entity) entity.setCamera(this);
     };
 };
 

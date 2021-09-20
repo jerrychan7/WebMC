@@ -9,6 +9,7 @@ class EventDispatcher {
     addEventListener(type, listener, {
         once = false,
     } = {}) {
+        if (typeof listener !== "function") return console.warn("Cannot bind a non-function as an event listener!");
         const listeners = this._listeners[type] || [];
         this._listeners[type] = listeners;
         if (!listeners.find(o => o.listener === listener))

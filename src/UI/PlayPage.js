@@ -1,10 +1,12 @@
 
 import { Page, pm } from "./Page.js";
+import { PlayerLocalController } from "../Entity/PlayerLocalController.js";
 let worldRenderer = null, world = null;
 
 pm.addEventListener("load-terrain.loaded", ({world: w, renderer}) => {
     world = w;
     worldRenderer = renderer;
+    pm.getPageByID("play").playerLocalController.setEntity(world.mainPlayer);
 });
 
 class PlayPage extends Page {
@@ -37,13 +39,14 @@ class PlayPage extends Page {
         else {
             this.hotbar.setAttribute("showInventoryBtn", "");
         }
+        this.playerLocalController = new PlayerLocalController(null, { playPage: this, });
         if (worldRenderer === null) pm.openPageByID("load-terrain");
     };
     async disconnectedCallback() {
         await super.disconnectedCallback();
         if (!worldRenderer) return;
         worldRenderer.stop();
-        try { world.mainPlayer.controller.setCanvas(); } catch {}
+        this.playerLocalController.dispose();
         worldRenderer = world = null;
     };
     get isShownInventory() { return this.inventory.style.display !== "none"; };

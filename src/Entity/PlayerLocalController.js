@@ -5,7 +5,7 @@ import { vec3 } from "../utils/gmath.js";
 import { pm } from "../UI/Page.js";
 
 class PlayerLocalController extends EntityController {
-    constructor(player, {
+    constructor(player = null, {
         playPage = pm.getPageByID("play"),
         canvas = playPage? playPage.mainCanvas: null,
         moveButtons = playPage? playPage.moveButtons: null,
@@ -17,6 +17,8 @@ class PlayerLocalController extends EntityController {
         this.hotbarUI = hotbarUI;
         this.mousemoveSensitivity = mousemoveSensitivity;
         this.eventHandler = this.eventHandler.bind(this);
+        this["pause=>play"] = this.requestPointerLock.bind(this);
+        this["play=>pause"] = this.exitPointerLock.bind(this);
         this._locked = false;
         this.showStopPage = false;
         this.canvasLastTouchPos = this.canvasBeginTouch = this.canvasTouchTimer = null;
@@ -25,13 +27,6 @@ class PlayerLocalController extends EntityController {
         this.keys = [];
         this.setCanvas(canvas);
         this.setMoveBtns(moveButtons);
-
-        pm.addEventListener("pause=>play", () => {
-            this.requestPointerLock();
-        });
-        pm.addEventListener("play=>pause", () => {
-            this.exitPointerLock();
-        });
 
         this.hotbar = [];
         const listBlocks = Block.listBlocks();
@@ -52,8 +47,10 @@ class PlayerLocalController extends EntityController {
             this.exitPointerLock();
         });
     };
-    get locked() {
-        return window.isTouchDevice || this._locked;
+    dispose() {
+        this.setEntity();
+        this.setCanvas();
+        this.setMoveBtns();
     };
     get locked() { return window.isTouchDevice || this._locked; };
     setCanvas(canvas = null) {
@@ -65,6 +62,8 @@ class PlayerLocalController extends EntityController {
                 this.canvas.removeEventListener(eventType, this.eventHandler);
             if (this.canvasTouchTimer !== null) window.clearTimeout(this.canvasTouchTimer);
             this.canvasTouchTimer = null;
+            pm.removeEventListener("pause=>play", this["pause=>play"]);
+            pm.removeEventListener("play=>pause", this["play=>pause"]);
         }
         this.canvas = canvas; this.rootOfCanvas = this.docOfCanvas = null;
         if (!canvas) return;
@@ -77,9 +76,17 @@ class PlayerLocalController extends EntityController {
         if (window.isTouchDevice)
             for (let eventType of ["touchstart", "touchend", "touchcancel", "touchmove", ])
                 canvas.addEventListener(eventType, this.eventHandler);
+        pm.addEventListener("pause=>play", this["pause=>play"]);
+        pm.addEventListener("play=>pause", this["play=>pause"]);
     };
     setMoveBtns(moveBtns = null) {
-        if (this.moveBtns) {}
+        if (this.moveBtns) {
+            for (let btn of "up,left,down,right,jump,upleft,upright,flyup,flydown,fly,sneak".split(",")) {
+                this.moveBtns.removeEventListener(btn + "BtnPress", this.eventHandler);
+                this.moveBtns.removeEventListener(btn + "BtnUp", this.eventHandler);
+            }
+            this.moveBtns.removeEventListener("flyBtnDblPress", this.eventHandler);
+        }
         this.moveBtns = moveBtns;
         if (!moveBtns) return;
         for (let [btn, keys] of [
@@ -95,19 +102,22 @@ class PlayerLocalController extends EntityController {
             // ["fly"],
             // ["sneak"],
         ]) {
-            this.moveBtns.addEventListener(btn + "BtnPress", () => {
+            this[btn + "BtnPress"] = () => {
                 keys.forEach(key => this.dispatchKeyEvent("down", key));
-            });
-            this.moveBtns.addEventListener(btn + "BtnUp", () => {
+            };
+            this[btn + "BtnUp"] = () => {
                 for (let i = keys.length - 1; i >= 0; --i)
                     this.dispatchKeyEvent("up", keys[i]);
-            });
+            };
+            this.moveBtns.addEventListener(btn + "BtnPress", this.eventHandler);
+            this.moveBtns.addEventListener(btn + "BtnUp", this.eventHandler);
         }
-        this.moveBtns.addEventListener("flyBtnDblPress", () => {
+        this["flyBtnDblPress"] = () => {
             this.entity.toFlyMode && this.entity.toFlyMode(false);
             const {moveBtns} = this;
             moveBtns.activeFlyBtn(false);
-        });
+        };
+        this.moveBtns.addEventListener("flyBtnDblPress", this.eventHandler);
     };
     requestPointerLock() {
         if (!this.canvas || window.isTouchDevice) return;
@@ -118,6 +128,7 @@ class PlayerLocalController extends EntityController {
         this.docOfCanvas.exitPointerLock();
     };
     eventHandler(event) {
+        if (!this.entity) return;
         const { type } = event;
         if (type in this) this[type](event);
         this.dispatchEvent(type, event);

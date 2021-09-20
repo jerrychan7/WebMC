@@ -1,7 +1,6 @@
 import Chunk from "./Chunk.js";
 import Block from "./Block.js";
 import Player from "../Entity/Player.js";
-import PlayerLocalController from "../Entity/PlayerLocalController.js";
 import { vec3 } from "../utils/gmath.js";
 import { PerlinNoise } from "./noise.js";
 import { ChunksLightCalculation } from "./WorldLight.js";
@@ -154,7 +153,6 @@ class World extends EventDispatcher {
         for (let ck in this.chunkMap) {
             this.chunkMap[ck].setRenderer(renderer);
         }
-        this.mainPlayer.setController(new PlayerLocalController(this.mainPlayer));
     };
     getChunkByChunkKey(chunkKey) {
         return this.chunkMap[chunkKey] || null;

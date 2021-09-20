@@ -84,9 +84,6 @@ class Player extends Entity {
             }
         }
     };
-    setController(controller) {
-        this.controller = controller;
-    };
     get onGround() { return this.rest[1] === -1; };
     move_and_collide(motion, dt) {
         let ds = vec3.scale(motion, dt);
