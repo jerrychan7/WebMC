@@ -254,13 +254,18 @@ asyncLoadResByUrl("texture/background.png")
 });
 asyncLoadResByUrl("texture/panorama.png")
 .then(img => {
-    const exponent = i => { for (var j = 1; i; i >>= 1) j <<= 1; return j; };
     const {width, height} = img;
-    const canvas = new Canvas2D(exponent(width), height);
-    canvas.drawImage(img, 0, 0);
-    canvas.toImage(function() {
-        setResource("welcomePage/texture", this);
-    });
+    const canvas = new Canvas2D(height, height);
+    let ans = [];
+    for (let i = 0; i < 6; ++i) {
+        let face = "pz,px,nz,nx,py,ny".split(",")[i];
+        canvas.cropAndZoom(img, i * height, 0, height, height);
+        ans[face] = canvas.toImage();
+        setResource("welcomePage/texture_" + face, ans[face]);
+    }
+    for (let face of "px,nx,py,ny,pz,nz".split(","))
+        ans.push(ans[face]);
+    setResource("welcomePage/textures", ans);
 });
 asyncLoadResByUrl("texture/title.png");
 

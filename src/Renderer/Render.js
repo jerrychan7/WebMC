@@ -114,14 +114,35 @@ class Render {
         ctx.bindTexture(ctx.TEXTURE_2D, null);
         if (doYFlip) ctx.pixelStorei(ctx.UNPACK_FLIP_Y_WEBGL, false);
         this.texCache[name] = tex;
+        tex.name = name;
+        tex.type = ctx.TEXTURE_2D;
         return tex;
     };
-    createCubemapsTexture(img, name = this._getImageName(img), doYFlip = false) {
-        
+    createCubemapsTexture(imgs, name = Math.random(), doYFlip = false) {
+        const {ctx} = this, tex = ctx.createTexture();
+        if (doYFlip) ctx.pixelStorei(ctx.UNPACK_FLIP_Y_WEBGL, true);
+        ctx.bindTexture(ctx.TEXTURE_CUBE_MAP, tex);
+        ctx.texParameteri(ctx.TEXTURE_CUBE_MAP, ctx.TEXTURE_MAG_FILTER, ctx.NEAREST);
+        ctx.texParameteri(ctx.TEXTURE_CUBE_MAP, ctx.TEXTURE_MIN_FILTER, ctx.NEAREST);
+        ctx.texParameteri(ctx.TEXTURE_CUBE_MAP, ctx.TEXTURE_WRAP_S, ctx.CLAMP_TO_EDGE);
+        ctx.texParameteri(ctx.TEXTURE_CUBE_MAP, ctx.TEXTURE_WRAP_T, ctx.CLAMP_TO_EDGE);
+        for (let i = 0; i < 6; ++i) {
+            ctx.texImage2D(ctx.TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, ctx.RGBA, ctx.RGBA, ctx.UNSIGNED_BYTE, imgs[i]);
+        }
+        ctx.generateMipmap(ctx.TEXTURE_CUBE_MAP);
+        ctx.bindTexture(ctx.TEXTURE_CUBE_MAP, null);
+        if (doYFlip) ctx.pixelStorei(ctx.UNPACK_FLIP_Y_WEBGL, true);
+        this.texCache[name] = tex;
+        tex.name = name;
+        tex.type = ctx.TEXTURE_CUBE_MAP;
+        return tex;
     };
     getTexture(name) { return this.texCache[name]; };
-    getOrCreateTexture(img, name = this._getImageName(img), doYFlip = false) {
-        return this.getTexture(name) || this.createTexture(img, name, doYFlip);
+    getOrCreateTexture(img, name, doYFlip = false) {
+        return this.getTexture(name) || (
+            Array.isArray(img)
+                ? this.createCubemapsTexture(imgs, name, doYFlip)
+                : this.createTexture(img, name, doYFlip));
     };
 };
 

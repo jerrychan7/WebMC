@@ -95,21 +95,20 @@ export let blockInventoryTexure = {
     }`
 };
 
-export let startGamePage = {
+export let welcomePage = {
     vert: `
-        attribute vec3 position;
-        attribute vec2 textureCoord;
-        uniform   mat4 mvpMatrix;
-        varying   vec2 vTextureCoord;
+        attribute vec3 aPosition;
+        uniform   mat4 uMvpMatrix;
+        varying   vec3 vNoraml;
         void main(void){
-            vTextureCoord = textureCoord;
-            gl_Position = mvpMatrix * vec4(position, 1.0);
+            vNoraml = normalize(aPosition);
+            gl_Position = uMvpMatrix * vec4(aPosition, 1.0);
         }`,
     frag: `
         precision lowp float;
-        uniform sampler2D texture;
-        varying vec2 vTextureCoord;
+        uniform samplerCube uTexture;
+        varying vec3 vNoraml;
         void main(void){
-            gl_FragColor = texture2D(texture, vTextureCoord);
+            gl_FragColor = textureCube(uTexture, vNoraml);
         }`
 };

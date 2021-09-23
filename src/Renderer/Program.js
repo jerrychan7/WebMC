@@ -112,10 +112,10 @@ class Program {
         }
         return this;
     };
-    bindTex(uniName, tex, unit = 0) {
+    bindTex(uniName, tex, texType = tex.type || ctx.TEXTURE_2D, unit = 0) {
         const ctx = this.ctx;
         ctx.activeTexture(ctx.TEXTURE0 + unit);
-        ctx.bindTexture(ctx.TEXTURE_2D, tex);
+        ctx.bindTexture(texType, tex);
         return this.setUni(uniName, unit);
     };
 };
