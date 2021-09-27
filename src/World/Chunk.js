@@ -33,14 +33,11 @@ class Chunk extends EventDispatcher {
         this.world = world;
         this.x = chunkX; this.y = chunkY; this.z = chunkZ;
         this.chunkKey = Chunk.chunkKeyByChunkXYZ(chunkX, chunkY, chunkZ);
-        // Y_SIZE * Z_SIZE * X_SIZE    array
-        this.tileMap = new Array(Y_SIZE * Z_SIZE * X_SIZE);
+        this.tileMap = new Uint32Array(Y_SIZE * Z_SIZE * X_SIZE);
         this.lightMap = new LightMap();
         this.generator = generator;
         generator(chunkX, chunkY, chunkZ, this.tileMap);
         this.setRenderer(renderer);
-        // callback type -> [callback function]
-        this.callbacks = {};
     };
     setRenderer(renderer = null) {
         if (!renderer) return;
@@ -49,17 +46,20 @@ class Chunk extends EventDispatcher {
     getTile(blockRX, blockRY, blockRZ) {
         return this.tileMap[Chunk.getLinearBlockIndex(blockRX, blockRY, blockRZ)];
     };
-    setTile(blockRX, blockRY, blockRZ, id, bd) {
-        this.tileMap[Chunk.getLinearBlockIndex(blockRX, blockRY, blockRZ)] = [id, bd];
-        this.dispatchEvent("onTileChanges", blockRX, blockRY, blockRZ);
-    };
     getBlock(blockRX, blockRY, blockRZ) {
-        return Block.getBlockByBlockIDandData(...this.getTile(blockRX, blockRY, blockRZ));
+        return Block.getBlockByBlockLongID(this.getTile(blockRX, blockRY, blockRZ));
+    };
+    setTileByBlock(blockRX, blockRY, blockRZ, block) {
+        if (!block) return block;
+        this.tileMap[Chunk.getLinearBlockIndex(blockRX, blockRY, blockRZ)] = block.longID;
+        this.dispatchEvent("onTileChanges", blockRX, blockRY, blockRZ);
+        return block;
+    };
+    setTile(blockRX, blockRY, blockRZ, id, bd) {
+        return this.setTileByBlock(blockRX, blockRY, blockRZ, Block.getBlockByBlockIDandData(id, bd));
     };
     setBlock(blockRX, blockRY, blockRZ, blockName) {
-        let b = Block.getBlockByBlockName(blockName);
-        if (b) this.setTile(blockRX, blockRY, blockRZ, ...b.idAndBd);
-        return b;
+        return this.setTileByBlock(blockRX, blockRY, blockRZ, Block.getBlockByBlockName(blockName));
     };
     getLight(blockRX, blockRY, blockRZ) {
         return this.lightMap.getMax(blockRX, blockRY, blockRZ);

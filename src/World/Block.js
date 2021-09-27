@@ -81,6 +81,7 @@ class Block {
         this.friction = friction;
         this.id = id;
         this.bd = bd;
+        this.longID = bd << 16 | id;
         if (blockIDs.has(id)) blockIDs.get(id)[bd] = this;
         else {
             let t = []; t[bd] = this;
@@ -168,21 +169,21 @@ class Block {
             return out;
         })(vs.length/12)})).reduce((ac, o) => ({...ac, ...o}), {});
     };
-    static enrollBlock(block) {
-        BLOCKS[block.name] = block;
-    };
     static getBlockByBlockName(blockName) {
         return BLOCKS[blockName];
     };
     static getBlockByBlockIDandData(id, bd = 0) {
         return blockIDs.has(id)? blockIDs.get(id)[bd]: undefined;
     };
+    static getBlockByBlockLongID(longID) {
+        return this.getBlockByBlockIDandData(longID & 0xFFFF, longID >>> 16);
+    };
     static listBlocks() {
         return Object.values(BLOCKS);
     };
     static initBlocksByDefault() {
         Object.entries(blocksCfg.blocks).forEach(([blockName, cfg]) => {
-            this.enrollBlock(new this(blockName, cfg));
+            new this(blockName, cfg);
         });
         console.log(BLOCKS)
     };
