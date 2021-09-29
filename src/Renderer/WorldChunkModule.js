@@ -7,6 +7,8 @@ import {
     CHUNK_Z_SIZE as Z_SIZE,
 } from "../World/Chunk.js";
 
+const rxyz2int = Chunk.getLinearBlockIndex;
+
 const calCol = (verNum, blockLight) => {
     let ans = new Array(verNum * 4);
     for (let i = 0; i < verNum * 4; i += 4) {
@@ -18,12 +20,12 @@ const calCol = (verNum, blockLight) => {
 
 class ChunksModule {
     constructor(world, renderer) {
-        /*
-         * blockFace: chunkKey => [x][y][z]["x+|x-|y+|y-|z+|z-"]: {
-         *   ver: vertex coordiate (length == 12)
-         *   tex: texture uv corrdiate (length == 8)
-         *   col: vertex color (length == 16)
-         *   ele: element length
+        /* render cache (help to quick update chunk module without recalculate)
+         * blockFace: chunkKey => [yxz]["x+|x-|y+|y-|z+|z-|face"]: {
+         *   ver: vertex coordiate (length == 3n)
+         *   tex: texture uv corrdiate (length == 2n)
+         *   col: vertex color (length == 4n)
+         *   ele: element (length == 3n/2)
          * }
          */
         this.blockFace = {};
@@ -59,15 +61,8 @@ class ChunksModule {
     buildChunkModule(chunkKey) {
         const world = this.world, chunk = world.getChunkByChunkKey(chunkKey);
         if (chunk === null) return;
-        let blockFace = this.blockFace[chunkKey];
-        if (!blockFace) {
-            // first-time build
-            blockFace = this.blockFace[chunkKey] = [...Array(X_SIZE)].map(_ =>
-                [...Array(Y_SIZE)].map(_ =>
-                    [...Array(Z_SIZE)].map(_ => ({}))
-                )
-            );
-        }
+        let blockFace = this.blockFace[chunkKey] || [...Array(X_SIZE * Y_SIZE * Z_SIZE)].map(() => ({}));
+        this.blockFace[chunkKey] = blockFace;
         // build vertex
         for (let j = 0; j < Y_SIZE; ++j)
         for (let k = 0; k < Z_SIZE; ++k)
@@ -75,7 +70,7 @@ class ChunksModule {
             let cblock = chunk.getBlock(i, j, k);
             if (cblock.name === "air") continue;
             let [wx, wy, wz] = chunk.blockRXYZ2BlockXYZ(i, j, k),
-                bf = blockFace[i][j][k];
+                bf = blockFace[rxyz2int(i, j, k)];
             // 如果周围方块透明 绘制
             switch(cblock.renderType) {
             case Block.renderType.CACTUS:
@@ -180,7 +175,7 @@ class ChunksModule {
         }
         let [blockRX, blockRY, blockRZ] = Chunk.getRelativeBlockXYZ(blockX, blockY, blockZ),
             chunkKey = Chunk.chunkKeyByBlockXYZ(blockX, blockY, blockZ);
-        this.blockFace[chunkKey][blockRX][blockRY][blockRZ] = bf;
+        this.blockFace[chunkKey][rxyz2int(blockRX, blockRY, blockRZ)] = bf;
         this.needUpdateMeshChunks.add(chunkKey);
         // handle around block
         let cbl = world.getLight(blockX, blockY, blockZ);
@@ -191,7 +186,7 @@ class ChunksModule {
             if (ablock === null || ablock.name === "air") return;
             let achunkKey = Chunk.chunkKeyByBlockXYZ(awx, awy, awz),
                 [arx, ary, arz] = Chunk.getRelativeBlockXYZ(awx, awy, awz),
-                abf = this.blockFace[achunkKey][arx][ary][arz];
+                abf = this.blockFace[achunkKey][rxyz2int(arx, ary, arz)];
             switch (ablock.renderType) {
             case Block.renderType.CACTUS:
             case Block.renderType.NORMAL: {
@@ -223,7 +218,7 @@ class ChunksModule {
             let cblock = chunk.getBlock(i, j, k);
             if (cblock.name === "air") continue;
             let [wx, wy, wz] = chunk.blockRXYZ2BlockXYZ(i, j, k),
-                bf = blockFace[i][j][k];
+                bf = blockFace[rxyz2int(i, j, k)];
             switch(cblock.renderType) {
             case Block.renderType.CACTUS:
             case Block.renderType.NORMAL: {
@@ -321,14 +316,14 @@ class ChunksModule {
             this.needUpdateColMeshChunks.forEach(chunkKey => {
                 if (this.needUpdateMeshChunks.has(chunkKey)) return;
                 let col = [], dcfCol = [];
-                this.blockFace[chunkKey].forEach(bfyz => bfyz.forEach(bfz => bfz.forEach(bf => {
+                this.blockFace[chunkKey].forEach(bf => {
                     for (let face in bf) {
                         let bff = bf[face];
                         if (bff.disableCullFace)
                             dcfCol.push(...bff.col);
                         else col.push(...bff.col);
                     }
-                })));
+                });
                 this.updateMesh(chunkKey, {col, disableCullFace: { col: dcfCol, }});
             });
             this.needUpdateColMeshChunks.clear();
@@ -338,7 +333,7 @@ class ChunksModule {
             if (!(chunkKey in this.blockFace)) return;
             let ver = [], col = [], ele = [], tex = [], totalVer = 0,
                 dcfVer = [], dcfCol = [], dcfEle = [], dcfTex = [], dcfTotalver = 0;
-            this.blockFace[chunkKey].forEach(bfyz => bfyz.forEach(bfz => bfz.forEach(bf => {
+            this.blockFace[chunkKey].forEach(bf => {
                 for (let face in bf) {
                     let bff = bf[face], verNum = bff.ver.length / 3;
                     if (bff.disableCullFace) {
@@ -355,7 +350,7 @@ class ChunksModule {
                     ele.push(...bff.ele.map(v => v + totalVer));
                     totalVer += verNum;
                 }
-            })));
+            });
             this.updateMesh(chunkKey, {ver, tex, col, ele, disableCullFace: {
                 ver: dcfVer, tex: dcfTex,
                 col: dcfCol, ele: dcfEle,
@@ -386,13 +381,14 @@ class ChunksModule {
                 ctx.enable(ctx.POLYGON_OFFSET_FILL);
                 ctx.polygonOffset(1.0, 1.0);
                 ctx.bindBuffer(bufferObj.disableCullFace.ele.type, bufferObj.disableCullFace.ele);
+                // ctx.drawElements(ctx.LINES, bufferObj.disableCullFace.ele.length, ctx.UNSIGNED_SHORT, 0);
                 ctx.drawElements(ctx.TRIANGLES, bufferObj.disableCullFace.ele.length, ctx.UNSIGNED_SHORT, 0);
                 ctx.disable(ctx.POLYGON_OFFSET_FILL);
                 ctx.enable(ctx.CULL_FACE);
             }
         }
     };
-}
+};
 
 export {
     ChunksModule,
