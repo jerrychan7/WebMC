@@ -93,7 +93,8 @@ class Page extends MCComponent {
     constructor() {
         super();
         this.onHistoryBack = this.onHistoryBack.bind(this);
-        this._onTransitioned = (from, to, en, [fromPage, toPage]) => {
+        this._transitionedCallbackID =
+        pageManager.addEventListener("transitioned", (from, to, en, [fromPage, toPage]) => {
             if (fromPage === this) {
                 this.onTransitionedFromThis(to, en, toPage);
                 window.removeEventListener("back", this.onHistoryBack);
@@ -102,15 +103,14 @@ class Page extends MCComponent {
                 this.onTransitionedToThis(from, en, fromPage);
                 window.addEventListener("back", this.onHistoryBack);
             }
-        };
-        pageManager.addEventListener("transitioned", this._onTransitioned);
+        });
     };
     onTransitionedFromThis(to, en, toPage) {};
     onTransitionedToThis(from, en, fromPage) {};
     onHistoryBack() {};
     async disconnectedCallback() {
         await super.disconnectedCallback();
-        pageManager.removeEventListener("transitioned", this._onTransitioned);
+        pageManager.removeEventListenerByID(this._transitionedCallbackID);
     };
     appendTemplate(template = this.template) {
         let tmp = super.appendTemplate(template);

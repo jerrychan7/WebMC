@@ -2,6 +2,8 @@
 class EventDispatcher {
     constructor() {
         this._listeners = {};
+        this._IDcount = 0n;
+        this._IDmap = new Map();
     };
     hasEventListener(type, listener) {
         return !!(this._listeners[type] && this._listeners[type].find(o => o.listener === listener));
@@ -12,20 +14,38 @@ class EventDispatcher {
         if (typeof listener !== "function") return console.warn("Cannot bind a non-function as an event listener!");
         const listeners = this._listeners[type] || [];
         this._listeners[type] = listeners;
-        if (!listeners.find(o => o.listener === listener))
-            listeners.push({ listener, once, });
+        let i = listeners.findIndex(o => o.listener === listener);
+        if (i !== -1) return this._IDmap[listeners[i].id];
+        let t = { listener, once, type, id: this._IDcount++ };
+        this._IDmap.set(this._IDcount, t);
+        listeners.push(t);
+        return this._IDcount;
     };
-    removeEventListener(type, listener) {
-        if (!(type in this._listeners)) return;
+    removeEventListenerByID(id) {
+        if (typeof id !== "bigint" || !this._IDmap.has(id)) return false;
+        let t = this._IDmap.get(id);
+        this._IDmap.delete(id);
+        let arr = this._listeners[t.type];
+        arr.slice(arr.indexOf(t), 1);
+        return true;
+    };
+    removeEventListener(typeOrID, listener) {
+        if (this.removeEventListenerByID(typeOrID)) return true;
+        const type = typeOrID;
+        if (!(type in this._listeners)) return false;
         let arr = this._listeners[type],
             i = arr.findIndex(o => o.listener === listener);
-        if (i !== -1) arr.splice(i, 1);
+        if (i !== -1) {
+            this._IDmap.delete(arr[i].id);
+            arr.splice(i, 1);
+        }
+        return true;
     };
     dispatchEvent(type, ...datas) {
         if (!(type in this._listeners)) return;
         return this._listeners[type].slice(0).map(o => {
             o.listener(...datas);
-            if (o.once) this.removeEventListener(type, o.listener);
+            if (o.once) this.removeEventListenerByID(o.id);
         });
     };
 };
