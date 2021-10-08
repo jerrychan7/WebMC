@@ -18,6 +18,7 @@ class MCFullScreenButton extends MCButton {
     constructor() {
         super();
         this.onfullscreenchange = this.onfullscreenchange.bind(this);
+        this.onclick = this.onclick.bind(this);
         pm.addEventListener("onfullscreenchange", this.onfullscreenchange);
         this.addEventListener("click", this.onclick);
     };

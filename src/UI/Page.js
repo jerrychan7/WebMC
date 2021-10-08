@@ -14,7 +14,7 @@ edm.getOrNewEventDispatcher("mc.preload")
     window.addEventListener("exit", e => {
         history.go(-2);
     });
-});
+}, { once: true, });
 
 class PageManager extends FSM {
     constructor() {
@@ -111,6 +111,7 @@ class Page extends MCComponent {
     async disconnectedCallback() {
         await super.disconnectedCallback();
         pageManager.removeEventListenerByID(this._transitionedCallbackID);
+        window.removeEventListener("back", this.onHistoryBack);
     };
     appendTemplate(template = this.template) {
         let tmp = super.appendTemplate(template);

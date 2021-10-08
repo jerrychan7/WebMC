@@ -17,16 +17,16 @@ class EventDispatcher {
         let i = listeners.findIndex(o => o.listener === listener);
         if (i !== -1) return this._IDmap[listeners[i].id];
         let t = { listener, once, type, id: this._IDcount++ };
-        this._IDmap.set(this._IDcount, t);
+        this._IDmap.set(t.id, t);
         listeners.push(t);
-        return this._IDcount;
+        return t.id;
     };
     removeEventListenerByID(id) {
         if (typeof id !== "bigint" || !this._IDmap.has(id)) return false;
         let t = this._IDmap.get(id);
         this._IDmap.delete(id);
         let arr = this._listeners[t.type];
-        arr.slice(arr.indexOf(t), 1);
+        arr.splice(arr.indexOf(t), 1);
         return true;
     };
     removeEventListener(typeOrID, listener) {
