@@ -1,13 +1,7 @@
 import { asyncLoadResByUrl } from "../utils/loadResources.js";
 import { textureMipmapByTile, prepareTextureAarray, blockInventoryTexture } from "../processingPictures.js";
 
-let defaultBlockTextureImg = null;
-asyncLoadResByUrl("texture/terrain-atlas.png").then(img => {
-    defaultBlockTextureImg = img;
-    if (isSupportWebGL2)
-        prepareTextureAarray(img);
-    else textureMipmapByTile(img);
-});
+let defaultBlockTextureImg = null, blocksCfg = null;
 
 const BlockRenderType = {
     NORMAL: Symbol("block render type: normal"),
@@ -16,44 +10,6 @@ const BlockRenderType = {
 };
 // BLOCKS: block name -> block      blockIDs: block id -> [db] -> block
 const BLOCKS = {}, blockIDs = new Map();
-
-let blocksCfg = null;
-asyncLoadResByUrl("src/World/blocks.json").then(obj => {
-    blocksCfg = obj;
-    // index_renderType = [index -> BlockRenderType[render type]]
-    let index_renderType = blocksCfg.index_renderType = [];
-    Object.entries(blocksCfg.block_renderType_index).forEach(([type, i]) => {
-        index_renderType[i] = BlockRenderType[type.toUpperCase()];
-    });
-    // blocksCfg.blocks.renderType = BlockRenderType[render type]
-    Object.entries(blocksCfg.blocks).forEach(([, block]) => {
-        if ("renderType" in block)
-            block.renderType = index_renderType[block.renderType];
-    });
-    let brtv = blocksCfg.block_renderType_vertex;
-    blocksCfg.vertexs = {
-        [BlockRenderType.NORMAL]:
-            ("x+:2763,x-:0541,y+:0123,y-:4567,z+:1472,z-:3650")
-            .split(",").map(s => s.split(":"))
-            .map(([face, vs]) => {
-                return ({[face]: [...vs].map(i => brtv.normal[i]).reduce((ac, d) => {ac.push(...d); return ac;},[])});
-            })
-            .reduce((ac, o) => ({...ac, ...o}), {}),
-        [BlockRenderType.FLOWER]:
-            ("face:14630572").split(",").map(s => s.split(":"))
-            .map(([face, vs]) => {
-                return ({[face]: [...vs].map(i => brtv.flower[i]).reduce((ac, d) => {ac.push(...d); return ac;},[])});
-            })
-            .reduce((ac, o) => ({...ac, ...o}), {}),
-        [BlockRenderType.CACTUS]:
-            ("x+:12 13 14 15,x-:20 21 22 23,y+:0 1 2 3,y-:4 5 6 7,z+:8 9 10 11,z-:16 17 18 19")
-            .split(",").map(s => s.split(":"))
-            .map(([face, vs]) => {
-                return ({[face]: vs.split(" ").map(i => brtv.cactus[i]).reduce((ac, d) => {ac.push(...d); return ac;},[])});
-            })
-            .reduce((ac, o) => ({...ac, ...o}), {}),
-    };
-});
 
 class Block {
     constructor(blockName, {
@@ -188,16 +144,60 @@ class Block {
     static listBlocks() {
         return Object.values(BLOCKS);
     };
-    static initBlocksByDefault() {
-        Object.entries(blocksCfg.blocks).forEach(([blockName, cfg]) => {
-            new this(blockName, cfg);
-        });
-        console.log(BLOCKS)
-    };
     static get defaultBlockTextureImg() {
         return defaultBlockTextureImg;
-    }
-}
+    };
+};
+
+Block.preloaded = Promise.all([
+asyncLoadResByUrl("texture/terrain-atlas.png").then(img => {
+    defaultBlockTextureImg = img;
+    if (isSupportWebGL2)
+        prepareTextureAarray(img);
+    else textureMipmapByTile(img);
+}),
+asyncLoadResByUrl("src/World/blocks.json").then(obj => {
+    // index_renderType = [index -> BlockRenderType[render type]]
+    let index_renderType = obj.index_renderType = [];
+    Object.entries(obj.block_renderType_index).forEach(([type, i]) => {
+        index_renderType[i] = BlockRenderType[type.toUpperCase()];
+    });
+    // blocksCfg.blocks.renderType = BlockRenderType[render type]
+    Object.entries(obj.blocks).forEach(([, block]) => {
+        if ("renderType" in block)
+            block.renderType = index_renderType[block.renderType];
+    });
+    let brtv = obj.block_renderType_vertex;
+    obj.vertexs = {
+        [BlockRenderType.NORMAL]:
+            ("x+:2763,x-:0541,y+:0123,y-:4567,z+:1472,z-:3650")
+            .split(",").map(s => s.split(":"))
+            .map(([face, vs]) => {
+                return ({[face]: [...vs].map(i => brtv.normal[i]).reduce((ac, d) => {ac.push(...d); return ac;},[])});
+            })
+            .reduce((ac, o) => ({...ac, ...o}), {}),
+        [BlockRenderType.FLOWER]:
+            ("face:14630572").split(",").map(s => s.split(":"))
+            .map(([face, vs]) => {
+                return ({[face]: [...vs].map(i => brtv.flower[i]).reduce((ac, d) => {ac.push(...d); return ac;},[])});
+            })
+            .reduce((ac, o) => ({...ac, ...o}), {}),
+        [BlockRenderType.CACTUS]:
+            ("x+:12 13 14 15,x-:20 21 22 23,y+:0 1 2 3,y-:4 5 6 7,z+:8 9 10 11,z-:16 17 18 19")
+            .split(",").map(s => s.split(":"))
+            .map(([face, vs]) => {
+                return ({[face]: vs.split(" ").map(i => brtv.cactus[i]).reduce((ac, d) => {ac.push(...d); return ac;},[])});
+            })
+            .reduce((ac, o) => ({...ac, ...o}), {}),
+    };
+    blocksCfg = obj;
+}),
+]).then(() => {
+    Object.entries(blocksCfg.blocks).forEach(([blockName, cfg]) => {
+        new Block(blockName, cfg);
+    });
+});
+
 
 export {
     Block,

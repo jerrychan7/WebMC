@@ -30,12 +30,6 @@ const updatePixelRatio = () => {
 };
 updatePixelRatio();
 
-import { edm } from "./utils/EventDispatcher.js";
-edm.getOrNewEventDispatcher("mc.preload")
-.addEventListener("done", async _ => {
-    const {Block} = await import("./World/Block.js");
-    Block.initBlocksByDefault();
-}, { once: true, });
 
 import {} from "./UI/index.js";
 import {} from "./processingPictures.js";
