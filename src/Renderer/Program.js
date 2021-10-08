@@ -86,6 +86,7 @@ class Program {
                 ctx.uniform1f(uni.loc, value);
                 break;
             case ctx.INT: case ctx.SAMPLER_CUBE: case ctx.SAMPLER_2D:
+            case ctx.SAMPLER_2D_ARRAY:
                 ctx.uniform1i(uni.loc, value);
                 break;
             case ctx.FLOAT_VEC2:

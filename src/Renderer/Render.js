@@ -1,4 +1,5 @@
 import Program from "./Program.js";
+import { isWebGL2Context } from "../utils/isWebGL2Context.js";
 
 class Render {
     constructor(canvas) {
@@ -6,6 +7,7 @@ class Render {
             canvas.getContext("webgl2") ||
             canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
         if (!ctx) throw "Cannot get the WebGL context";
+        this.isWebGL2 = window.isSupportWebGL2 || isWebGL2Context(ctx);
         this.prgCache = {};
         this.texCache = {};
         this.camera = [];
@@ -118,6 +120,35 @@ class Render {
         tex.type = ctx.TEXTURE_2D;
         return tex;
     };
+    createTextureArray(img, {
+        singleW = img.texture4array && img.texture4array.singleW,
+        singleH = img.texture4array && img.texture4array.singleH,
+        altesCount = img.texture4array && img.texture4array.altesCount,
+        name = this._getImageName(img),
+        doYFlip = false,
+        useMips = true,
+    } = {}) {
+        if (img.texture4array) img = img.texture4array;
+        const {ctx} = this,
+              tex  = ctx.createTexture();
+        if (doYFlip) ctx.pixelStorei(ctx.UNPACK_FLIP_Y_WEBGL, true);
+        ctx.bindTexture(ctx.TEXTURE_2D_ARRAY, tex);
+        ctx.texParameteri(ctx.TEXTURE_2D_ARRAY, ctx.TEXTURE_MAG_FILTER, ctx.NEAREST);
+        ctx.texParameteri(ctx.TEXTURE_2D_ARRAY, ctx.TEXTURE_MIN_FILTER, ctx.NEAREST);
+        ctx.texParameteri(ctx.TEXTURE_2D_ARRAY, ctx.TEXTURE_WRAP_S, ctx.CLAMP_TO_EDGE);
+        ctx.texParameteri(ctx.TEXTURE_2D_ARRAY, ctx.TEXTURE_WRAP_T, ctx.CLAMP_TO_EDGE);
+        ctx.texImage3D(ctx.TEXTURE_2D_ARRAY, 0, ctx.RGBA, singleW, singleH, altesCount, 0, ctx.RGBA, ctx.UNSIGNED_BYTE, img);
+        if (useMips) {
+            ctx.generateMipmap(ctx.TEXTURE_2D_ARRAY);
+            ctx.texParameteri(ctx.TEXTURE_2D_ARRAY, ctx.TEXTURE_MIN_FILTER, ctx.NEAREST_MIPMAP_LINEAR);
+        }
+        ctx.bindTexture(ctx.TEXTURE_2D_ARRAY, null);
+        if (doYFlip) ctx.pixelStorei(ctx.UNPACK_FLIP_Y_WEBGL, false);
+        this.texCache[name] = tex;
+        tex.name = name;
+        tex.type = ctx.TEXTURE_2D_ARRAY;
+        return tex;
+    };
     createCubemapsTexture(imgs, name = Math.random(), doYFlip = false) {
         const {ctx} = this, tex = ctx.createTexture();
         if (doYFlip) ctx.pixelStorei(ctx.UNPACK_FLIP_Y_WEBGL, true);
@@ -138,11 +169,13 @@ class Render {
         return tex;
     };
     getTexture(name) { return this.texCache[name]; };
-    getOrCreateTexture(img, name, doYFlip = false) {
+    getOrCreateTexture(img, name = img instanceof Image && this._getImageName(img), doYFlip = false) {
         return this.getTexture(name) || (
             Array.isArray(img)
-                ? this.createCubemapsTexture(imgs, name, doYFlip)
-                : this.createTexture(img, name, doYFlip));
+            ? this.createCubemapsTexture(img, name, doYFlip)
+            : img.texture4array
+            ? this.createTextureArray(img, { name, doYFlip })
+            : this.createTexture(img, name, doYFlip));
     };
 };
 

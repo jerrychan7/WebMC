@@ -23,9 +23,12 @@ class WorldRenderer extends Render {
         ctx.frontFace(ctx.CCW);
         this.mainCamera = new Camera(this.aspectRatio, { fovy: 70, pitch: -90 * Math.PI / 180, position: [0, 20, 0] });
         this.addCamera(this.mainCamera);
-        const blockTex = this.createTexture(Block.defaultBlockTextureImg);
-        this.createProgram("showBlock", glsl.showBlock.vert, glsl.showBlock.frag)
-            .use().bindTex("texture", blockTex);
+        if (this.isWebGL2)
+            this.createProgram("showBlock", glsl.showBlock_webgl2.vert, glsl.showBlock_webgl2.frag)
+                .use().bindTex("blockTex", this.createTextureArray(Block.defaultBlockTextureImg));
+        else
+            this.createProgram("showBlock", glsl.showBlock.vert, glsl.showBlock.frag)
+                .use().bindTex("blockTex", this.createTexture(Block.defaultBlockTextureImg));
         this.createProgram("selector", glsl.selector.vert, glsl.selector.frag);
         if (world !== null) this.setWorld(world);
     };

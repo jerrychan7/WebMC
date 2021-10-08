@@ -125,41 +125,25 @@ function textureMipmapByTile(img, mipLevel = 1, tileCount = [32, 16]) {
         mipmap[i] = canvas.toImage();
     }
     return img.mipmap = mipmap;
+}
 
-    /**single tile:
-     *                  +----+
-     * +--+             |1212|
-     * |12| =>          |3434|
-     * |34| =>          |1212|
-     * +--+             |3434|
-     *                  +----+
-     */
-    // pad = 2;
-    // if (pad > 1) {
-    //     w *= pad * 2;
-    //     h *= pad * 2;
-    // }
-    // for (let i = pad > 1? 0: 1; w > wTileCount && h > hTileCount; ++i) {
-    //     w = (w >>> 1) || w;
-    //     h = (h >>> 1) || h;
-    //     canvas.setSize(w, h);
-    //     let sw = w / wTileCount / pad, sh = h / hTileCount / pad;
-    //     console.log(w, h, sw, sh)
-    //     for (let x = 0; x < wTileCount; ++x)
-    //     for (let y = 0; y < hTileCount; ++y) {
-    //         for (let dx = 0; dx < pad; ++dx)
-    //         for (let dy = 0; dy < pad; ++dy) {
-    //             canvas.drawImage(img, x * singleW, y * singleH, singleW, singleH, (x * pad + dx) * sw, (y * pad + dy) * sh, sw, sh);
-    //         }
-    //     }
-    //     let mipimg = new Image(w, h);
-    //     // mipimg.onload = () => {
-    //     //     console.log(i);
-    //     // };
-    //     mipimg.src = canvas.toDataURL();
-    //     mipmap[i] = mipimg;
-    // }
-    // mipmap.pad = pad;
+function prepareTextureAarray(img, tileCount = [32, 16]) {
+    let w = img.width, h = img.height,
+        [wTileCount, hTileCount] = tileCount,
+        singleW = w / wTileCount, singleH = h / hTileCount,
+        canvas = new Canvas2D(singleW, h * wTileCount);
+    for (let y = 0; y < hTileCount; ++y)
+    for (let x = 0; x < wTileCount; ++x) {
+        canvas.drawImage(img,
+            x * singleW, y * singleH, singleW, singleH,
+            0, (y * wTileCount + x) * singleH, singleW, singleH);
+    }
+    img.texture4array = canvas.toImage();
+    img.texture4array.tileCount = tileCount;
+    img.texture4array.singleW = singleW;
+    img.texture4array.singleH = singleH;
+    img.texture4array.altesCount = wTileCount * hTileCount;
+    return img.texture4array;
 }
 
 import { asyncLoadResByUrl, setResource } from "./utils/loadResources.js";
@@ -293,7 +277,9 @@ class BlockInventoryTexRender extends Render {
         });
         this.mainCamera = mainCamera;
         this.addCamera(mainCamera);
-        this.prg = this.createProgram("blockInventoryTexure", glsl.blockInventoryTexure.vert, glsl.blockInventoryTexure.frag);
+        this.prg = this.isWebGL2
+            ? this.createProgram("blockInventoryTexure", glsl.blockInventoryTexure_webgl2.vert, glsl.blockInventoryTexure_webgl2.frag)
+            : this.createProgram("blockInventoryTexure", glsl.blockInventoryTexure.vert, glsl.blockInventoryTexure.frag);
         this.bo = {
             ver: this.createVbo([], ctx.DYNAMIC_DRAW),
             nor: this.createVbo([], ctx.DYNAMIC_DRAW),
@@ -345,7 +331,7 @@ class BlockInventoryTexRender extends Render {
             this.bindBoData(this.bo.col, color, {drawType: ctx.DYNAMIC_DRAW});
             this.bindBoData(this.bo.tex, tex, {drawType: ctx.DYNAMIC_DRAW});
             this.bindBoData(this.bo.ele, ele, {drawType: ctx.DYNAMIC_DRAW});
-            prg.use().bindTex("texture", blockTex)
+            prg.use().bindTex("blockTex", blockTex)
             .setUni("diffuseLightColor", block.luminance? [0, 0, 0]: [1.0, 1.0, 1.0])
             .setUni("ambientLightColor", block.luminance? [1, 1, 1]: [0.2, 0.2, 0.2])
             .setUni("diffuseLightDirection", vec3.normalize([0.5, 3.0, 4.0]))
@@ -366,7 +352,12 @@ class BlockInventoryTexRender extends Render {
         ctx2d.clear();
         const img = block.texture.img.mipmap? block.texture.img.mipmap[0]: block.texture.img;
         const w = img.width, h = img.height, uv = Object.values(block.texture.uv)[0];
-        ctx2d.drawImage(img, w * uv[0], h * uv[1], w * (uv[4] - uv[0]), h * (uv[3] - uv[1]), 0, 0, this.canvas.width, this.canvas.height);
+        if (img.texture4array) {
+            const t = img.texture4array, {singleW, singleH} = t;
+            ctx2d.drawImage(t, 0, singleH * uv[2], singleW, singleH, 0, 0, this.canvas.width, this.canvas.height);
+        }
+        else
+            ctx2d.drawImage(img, w * uv[0], h * uv[1], w * (uv[6] - uv[0]), h * (uv[4] - uv[1]), 0, 0, this.canvas.width, this.canvas.height);
         return ctx2d.toImage();
     };
     setSize(w, h, dpr = 1) {
@@ -382,5 +373,6 @@ function blockInventoryTexture(block) {
 
 export {
     textureMipmapByTile,
+    prepareTextureAarray,
     blockInventoryTexture,
 };

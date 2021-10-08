@@ -1,10 +1,12 @@
 import { asyncLoadResByUrl } from "../utils/loadResources.js";
-import { textureMipmapByTile, blockInventoryTexture } from "../processingPictures.js";
+import { textureMipmapByTile, prepareTextureAarray, blockInventoryTexture } from "../processingPictures.js";
 
 let defaultBlockTextureImg = null;
 asyncLoadResByUrl("texture/terrain-atlas.png").then(img => {
     defaultBlockTextureImg = img;
-    textureMipmapByTile(img);
+    if (isSupportWebGL2)
+        prepareTextureAarray(img);
+    else textureMipmapByTile(img);
 });
 
 const BlockRenderType = {
@@ -106,13 +108,18 @@ class Block {
         let {texture: {img: texImg, uv, coordinate}} = this;
         let xsize = 1 / 32, ysize = 1 / 16,
             calculateOffset = i => texImg.mipmap? i / 4: 0,
-            dx = calculateOffset(xsize),
-            dy = calculateOffset(ysize),
-            cr2uv = ([x, y]) => [
-                x*xsize+dx,     y*ysize+dy,
-                x*xsize+dx,     (y+1)*ysize-dy,
-                (x+1)*xsize-dx, (y+1)*ysize-dy,
-                (x+1)*xsize-dx, y*ysize+dy
+            dx = texImg.texture4array? texImg.texture4array.tileCount[0]: calculateOffset(xsize),
+            dy = texImg.texture4array? texImg.texture4array.tileCount[1]: calculateOffset(ysize),
+            cr2uv = texImg.texture4array? ([x, y]) => [
+                0, 0, (x + y * dx),
+                0, 1, (x + y * dx),
+                1, 1, (x + y * dx),
+                1, 0, (x + y * dx),
+            ]: ([x, y]) => [
+                x*xsize+dx,     y*ysize+dy, 0,
+                x*xsize+dx,     (y+1)*ysize-dy, 0,
+                (x+1)*xsize-dx, (y+1)*ysize-dy, 0,
+                (x+1)*xsize-dx, y*ysize+dy, 0
             ];
         switch (this.renderType) {
             case BlockRenderType.CACTUS:
