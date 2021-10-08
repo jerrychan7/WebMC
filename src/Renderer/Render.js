@@ -177,6 +177,13 @@ class Render {
             ? this.createTextureArray(img, { name, doYFlip })
             : this.createTexture(img, name, doYFlip));
     };
+
+    dispose() {
+        this.stop();
+        const {ctx} = this;
+        Object.values(this.texCache).forEach(tex => ctx.deleteTexture(tex));
+        Object.values(this.prgCache).forEach(prg => prg.dispose());
+    };
 };
 
 export {

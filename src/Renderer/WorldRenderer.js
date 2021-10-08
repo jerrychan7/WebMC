@@ -49,6 +49,12 @@ class WorldRenderer extends Render {
         this.blockHighlight.draw();
         ctx.flush();
     };
+    dispose() {
+        super.dispose();
+        if (!this.world) return;
+        this.chunksModule.dispose();
+        this.blockHighlight.dispose();
+    };
 };
 
 export {

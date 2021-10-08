@@ -62,7 +62,12 @@ class WelcomeRenderer extends Render {
         ctx.drawElements(ctx.TRIANGLES, bos.ele.length, ctx.UNSIGNED_SHORT, 0);
         ctx.flush();
     };
-}
+    dispose() {
+        super.dispose();
+        this.ctx.deleteBuffer(this.bos.ver);
+        this.ctx.deleteBuffer(this.bos.ele);
+    };
+};
 
 export {
     WelcomeRenderer,

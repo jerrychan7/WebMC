@@ -45,7 +45,7 @@ class PlayPage extends Page {
     async disconnectedCallback() {
         await super.disconnectedCallback();
         if (!worldRenderer) return;
-        worldRenderer.stop();
+        worldRenderer.dispose();
         this.playerLocalController.dispose();
         worldRenderer = world = null;
     };

@@ -22,10 +22,10 @@ function createProgram(ctx, vertShader, fragShader) {
 class Program {
     constructor(ctx, vertSrc, fragSrc) {
         this.ctx = this.gl = ctx;
-        let prog = this.prog = this.program = createProgram(ctx,
-            createShader(ctx, ctx.VERTEX_SHADER, vertSrc),
-            createShader(ctx, ctx.FRAGMENT_SHADER, fragSrc)
-        );
+        let vs = createShader(ctx, ctx.VERTEX_SHADER, vertSrc),
+            fs = createShader(ctx, ctx.FRAGMENT_SHADER, fragSrc);
+        this.shaders = { vs, fs };
+        let prog = this.prog = this.program = createProgram(ctx, vs, fs);
         const getCurrentVars = (varsType, aou = varsType === ctx.ACTIVE_ATTRIBUTES? "Attrib": "Uniform") =>
             [...Array(ctx.getProgramParameter(prog, varsType))]
             .map((_, i) => {
@@ -118,6 +118,12 @@ class Program {
         ctx.activeTexture(ctx.TEXTURE0 + unit);
         ctx.bindTexture(texType, tex);
         return this.setUni(uniName, unit);
+    };
+    dispose() {
+        const {ctx} = this;
+        ctx.deleteShader(this.shaders.vs);
+        ctx.deleteShader(this.shaders.fs);
+        ctx.deleteProgram(this.program);
     };
 };
 

@@ -114,7 +114,17 @@ class HighlightSelectedBlock {
         ctx.disable(ctx.BLEND);
         ctx.enable(ctx.CULL_FACE);
     };
-}
+    dispose() {
+        const {ctx} = this.renderer;
+        for (let [, mesh] of this.meshs) {
+            for (let k of ["ver", "ele", "col"]) {
+                ctx.deleteBuffer(mesh.line[k]);
+                Object.values(mesh.surface).forEach(surfaceMesh => ctx.deleteBuffer(surfaceMesh[k]));
+            }
+            ctx.deleteBuffer(mesh.line.defaultCol);
+        }
+    };
+};
 
 export {
     HighlightSelectedBlock,

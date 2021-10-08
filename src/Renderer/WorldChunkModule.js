@@ -388,6 +388,16 @@ class ChunksModule {
             }
         }
     };
+    dispose() {
+        if (!this.renderer) return;
+        const ctx = this.renderer.ctx;
+        Object.values(this.meshs).forEach(({bo}) => {
+            for (let k of ["ver", "col", "tex", "ele"]) {
+                ctx.deleteBuffer(bo[k]);
+                ctx.deleteBuffer(bo.disableCullFace[k]);
+            }
+        });
+    };
 };
 
 export {

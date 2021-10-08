@@ -18,7 +18,7 @@ class WelcomePage extends Page {
     };
     async disconnectedCallback() {
         await super.disconnectedCallback();
-        this.renderer.stop();
+        this.renderer.dispose();
         this.renderer = null;
     };
     onTransitionedFromThis(to) {
