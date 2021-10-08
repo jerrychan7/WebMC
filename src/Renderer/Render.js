@@ -7,7 +7,7 @@ class Render {
             canvas.getContext("webgl2") ||
             canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
         if (!ctx) throw "Cannot get the WebGL context";
-        this.isWebGL2 = window.isSupportWebGL2 || isWebGL2Context(ctx);
+        this.isWebGL2 = "isSupportWebGL2" in window? window.isSupportWebGL2: isWebGL2Context(ctx);
         this.prgCache = {};
         this.texCache = {};
         this.camera = [];
@@ -128,6 +128,7 @@ class Render {
         doYFlip = false,
         useMips = true,
     } = {}) {
+        if (!window.isSupportWebGL2 || !this.isWebGL2) throw "not support webgl2";
         if (img.texture4array) img = img.texture4array;
         const {ctx} = this,
               tex  = ctx.createTexture();
@@ -137,7 +138,16 @@ class Render {
         ctx.texParameteri(ctx.TEXTURE_2D_ARRAY, ctx.TEXTURE_MIN_FILTER, ctx.NEAREST);
         ctx.texParameteri(ctx.TEXTURE_2D_ARRAY, ctx.TEXTURE_WRAP_S, ctx.CLAMP_TO_EDGE);
         ctx.texParameteri(ctx.TEXTURE_2D_ARRAY, ctx.TEXTURE_WRAP_T, ctx.CLAMP_TO_EDGE);
-        ctx.texImage3D(ctx.TEXTURE_2D_ARRAY, 0, ctx.RGBA, singleW, singleH, altesCount, 0, ctx.RGBA, ctx.UNSIGNED_BYTE, img);
+        if (singleW >= ctx.getParameter(ctx.MAX_TEXTURE_SIZE)) throw "width out of range";
+        if (singleH >= ctx.getParameter(ctx.MAX_TEXTURE_SIZE)) throw "height out of range";
+        if (altesCount >= ctx.getParameter(ctx.MAX_ARRAY_TEXTURE_LAYERS)) throw "depth out of range";
+        if (Array.isArray(img)) {
+            ctx.texImage3D(ctx.TEXTURE_2D_ARRAY, 0, ctx.RGBA, singleW, singleH, altesCount, 0, ctx.RGBA, ctx.UNSIGNED_BYTE, null);
+            for (let i = 0; i < img.length; ++i)
+                ctx.texSubImage3D(ctx.TEXTURE_2D_ARRAY, 0, 0, 0, i, singleW, singleH, 1, ctx.RGBA, ctx.UNSIGNED_BYTE, img[i]);
+        }
+        else
+            ctx.texImage3D(ctx.TEXTURE_2D_ARRAY, 0, ctx.RGBA, singleW, singleH, altesCount, 0, ctx.RGBA, ctx.UNSIGNED_BYTE, img);
         if (useMips) {
             ctx.generateMipmap(ctx.TEXTURE_2D_ARRAY);
             ctx.texParameteri(ctx.TEXTURE_2D_ARRAY, ctx.TEXTURE_MIN_FILTER, ctx.NEAREST_MIPMAP_LINEAR);
@@ -170,12 +180,16 @@ class Render {
     };
     getTexture(name) { return this.texCache[name]; };
     getOrCreateTexture(img, name = img instanceof Image && this._getImageName(img), doYFlip = false) {
-        return this.getTexture(name) || (
-            Array.isArray(img)
-            ? this.createCubemapsTexture(img, name, doYFlip)
-            : img.texture4array
-            ? this.createTextureArray(img, { name, doYFlip })
-            : this.createTexture(img, name, doYFlip));
+        let cache = this.getTexture(name);
+        if (cache) return cache;
+        if (Array.isArray(img)) return this.createCubemapsTexture(img, name, doYFlip);
+        if (img.texture4array)
+            try { return this.createTextureArray(img, { name, doYFlip }); }
+            catch (e) {
+                console.warn(e);
+                window.isSupportWebGL2 = this.isWebGL2 = false;
+            }
+        return this.createTexture(img, name, doYFlip);
     };
 
     dispose() {

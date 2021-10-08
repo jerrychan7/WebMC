@@ -131,14 +131,13 @@ function prepareTextureAarray(img, tileCount = [32, 16]) {
     let w = img.width, h = img.height,
         [wTileCount, hTileCount] = tileCount,
         singleW = w / wTileCount, singleH = h / hTileCount,
-        canvas = new Canvas2D(singleW, h * wTileCount);
+        canvas = new Canvas2D(singleW, singleH);
+    img.texture4array = [];
     for (let y = 0; y < hTileCount; ++y)
     for (let x = 0; x < wTileCount; ++x) {
-        canvas.drawImage(img,
-            x * singleW, y * singleH, singleW, singleH,
-            0, (y * wTileCount + x) * singleH, singleW, singleH);
+        canvas.cropAndZoom(img, x * singleW, y * singleH, singleW, singleH);
+        img.texture4array.push(canvas.toImage());
     }
-    img.texture4array = canvas.toImage();
     img.texture4array.tileCount = tileCount;
     img.texture4array.singleW = singleW;
     img.texture4array.singleH = singleH;
@@ -354,7 +353,10 @@ class BlockInventoryTexRender extends Render {
         const w = img.width, h = img.height, uv = Object.values(block.texture.uv)[0];
         if (img.texture4array) {
             const t = img.texture4array, {singleW, singleH} = t;
-            ctx2d.drawImage(t, 0, singleH * uv[2], singleW, singleH, 0, 0, this.canvas.width, this.canvas.height);
+            if (Array.isArray(t))
+                ctx2d.drawImage(t[uv[2]], 0, 0, singleW, singleH, 0, 0, this.canvas.width, this.canvas.height);
+            else
+                ctx2d.drawImage(t, 0, singleH * uv[2], singleW, singleH, 0, 0, this.canvas.width, this.canvas.height);
         }
         else
             ctx2d.drawImage(img, w * uv[0], h * uv[1], w * (uv[6] - uv[0]), h * (uv[4] - uv[1]), 0, 0, this.canvas.width, this.canvas.height);
