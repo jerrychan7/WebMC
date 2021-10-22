@@ -5,8 +5,12 @@ function isWebGL2Context(ctx = null) {
     // but in reality pass less than 20% of the conformance tests. Add a few simple
     // tests to fail so as not to mislead users.
     if (ctx) for (let param of [
+        { pname: "MAX_TEXTURE_SIZE", min: 0, },
         { pname: "MAX_3D_TEXTURE_SIZE", min: 256, },
-        { pname: "MAX_ARRAY_TEXTURE_LAYERS", min: 256, },
+        // Since the texture atlas is 32*16, there are 512 textures.
+        // TODO: Use multiple texture arrays instead of a single texture array
+        // { pname: "MAX_ARRAY_TEXTURE_LAYERS", min: 256, },
+        { pname: "MAX_ARRAY_TEXTURE_LAYERS", min: 512, },
         { pname: "MAX_DRAW_BUFFERS", min: 4, },
         { pname: "MAX_COLOR_ATTACHMENTS", min: 4, },
         { pname: "MAX_VERTEX_UNIFORM_BLOCKS", min: 12, },
