@@ -1,8 +1,9 @@
 import Chunk from "./Chunk.js";
 import Block from "./Block.js";
 import Player from "../Entity/Player.js";
-import { vec3 } from "../utils/gmath.js";
+import { vec3, radian2degree } from "../utils/gmath.js";
 import { PerlinNoise } from "./noise.js";
+import { FluidCalculator } from "./WorldFluidCal.js";
 import { ChunksLightCalculation } from "./WorldLight.js";
 import { asyncLoadResByUrl } from "../utils/loadResources.js";
 import { EventDispatcher } from "../utils/EventDispatcher.js";
@@ -37,8 +38,9 @@ class World extends EventDispatcher {
         for (let z = -2; z <= 2; ++z)
         for (let y = 2; y >= -2; --y)
             this.loadChunk(x, y, z);
-        this.setRenderer(renderer);
+        this.fluidCalculator = new FluidCalculator(this);
         this.lightingCalculator = new ChunksLightCalculation(this);
+        this.setRenderer(renderer);
     };
     generator(chunkX, chunkY, chunkZ, tileMap) {
         switch(this.type) {
@@ -224,12 +226,45 @@ class World extends EventDispatcher {
     };
     update(dt) {
         for (let ck in this.chunkMap) {
-            this.chunkMap[ck].update();
+            this.chunkMap[ck].update(dt);
         }
-        this.lightingCalculator.update();
+        this.fluidCalculator.update(dt);
+        this.lightingCalculator.update(dt);
         this.entitys.forEach(e => e.update(dt));
 
         const {mainPlayer} = this;
+
+        let start = mainPlayer.getEyePosition(),
+            end = mainPlayer.getDirection(20);
+        vec3.add(start, end, end);
+        let hit = this.rayTraceBlock(start, end, (x, y, z) => {
+            let b = this.getBlock(x, y, z);
+            return b && b.name !== "air";
+        });
+        let block = hit? this.getBlock(...hit.blockPos): null;
+        let longID = hit? this.getTile(...hit.blockPos): null;
+        let chunk = this.getChunkByBlockXYZ(...[...mainPlayer.position].map(n => n < 0? n - 1: n));
+        if (!this.fpss) this.fpss = [];
+        this.fpss.push(dt);
+        if (this.fpss.length > 15) this.fpss.shift();
+        document.getElementsByTagName("mcpage-play")[0].debugOutput.innerHTML = Object.entries({
+            "FPS: ": (1000 / (this.fpss.reduce((n, i) => n + i, 0) / this.fpss.length)).toFixed(2),
+            "Player:": [
+                "XYZ: " + [...mainPlayer.position].map(n => n.toFixed(1)).join(", "),
+                `Pitch: ${radian2degree(mainPlayer.pitch).toFixed(2)}°, Yaw: ${Math.abs(radian2degree(mainPlayer.yaw) * 100 % 36000 / 100).toFixed(2)}°`,
+                `Chunk: ${chunk? Chunk.getRelativeBlockXYZ(...mainPlayer.position).map(n => ~~n).join(" ") + " in " + [chunk.x, chunk.y, chunk.z].join(" "): "null"}`,
+                `Light: ${this.getLight(...mainPlayer.position)} (${this.getSkylight(...mainPlayer.position)} sky, ${this.getTorchlight(...mainPlayer.position)} block)`,
+            ],
+            "Crosshairs:": [
+                "XYZ: " + (hit? hit.blockPos.join(", "): "null") + " (" + (hit? hit.axis? hit.axis: "in block": "null") + ")",
+                `Block: ${block? block.name: "null"} (${longID?.id ?? "null"}, ${longID?.bd ?? "null"}, ${longID? longID: "null"})`,
+            ],
+        }).map(([k, v]) => `<p>${k}${
+            Array.isArray(v)
+            ? v.map(str => `<p>\t${str}</p>`).join("")
+            : v
+        }</p>`).join("");
+
         let cxyz = Chunk.getChunkXYZByBlockXYZ(...mainPlayer.position),
             [cx, cy, cz] = cxyz;
         if (vec3.exactEquals(cxyz, mainPlayer.lastChunk || []))

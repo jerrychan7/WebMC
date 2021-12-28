@@ -1,4 +1,4 @@
-import Block from "./Block.js";
+import { Block, LongID } from "./Block.js";
 import { LightMap } from "./WorldLight.js";
 import { EventDispatcher } from "../utils/EventDispatcher.js";
 
@@ -27,6 +27,9 @@ class Chunk extends EventDispatcher {
         let blockY = (index >> SHIFT_Y >> SHIFT_Z) & (Y_SIZE - 1);
         return [blockX, blockY, blockZ];
     };
+    static getChunkXYZByChunkKey(chunkKey) {
+        return chunkKey.split(",").map(Number);
+    };
 
     constructor(world, chunkX, chunkY, chunkZ, renderer = world.renderer, generator = world.generator) {
         super();
@@ -44,19 +47,26 @@ class Chunk extends EventDispatcher {
         this.renderer = renderer;
     };
     getTile(blockRX, blockRY, blockRZ) {
-        return this.tileMap[Chunk.getLinearBlockIndex(blockRX, blockRY, blockRZ)];
+        return new LongID(this.tileMap[Chunk.getLinearBlockIndex(blockRX, blockRY, blockRZ)]);
     };
     getBlock(blockRX, blockRY, blockRZ) {
         return Block.getBlockByBlockLongID(this.getTile(blockRX, blockRY, blockRZ));
     };
-    setTileByBlock(blockRX, blockRY, blockRZ, block) {
+    setTileByBlock(blockRX, blockRY, blockRZ, block, id = block?.id, bd = block?.bd) {
         if (!block) return block;
-        this.tileMap[Chunk.getLinearBlockIndex(blockRX, blockRY, blockRZ)] = block.longID;
-        this.dispatchEvent("onTileChanges", blockRX, blockRY, blockRZ);
+        let lbi = Chunk.getLinearBlockIndex(blockRX, blockRY, blockRZ);
+        let oldLongID = new LongID(this.tileMap[lbi]), oldBlock = Block.getBlockByBlockLongID(oldLongID);
+        let newLongID = new LongID(id, bd);
+        this.tileMap[lbi] = newLongID;
+        this.dispatchEvent("onTileChanges", blockRX, blockRY, blockRZ, {
+            longID: newLongID, block,
+        }, {
+            longID: oldLongID, block: oldBlock,
+        });
         return block;
     };
     setTile(blockRX, blockRY, blockRZ, id, bd) {
-        return this.setTileByBlock(blockRX, blockRY, blockRZ, Block.getBlockByBlockIDandData(id, bd));
+        return this.setTileByBlock(blockRX, blockRY, blockRZ, Block.getBlockByBlockIDandData(id, bd), id, bd);
     };
     setBlock(blockRX, blockRY, blockRZ, blockName) {
         return this.setTileByBlock(blockRX, blockRY, blockRZ, Block.getBlockByBlockName(blockName));

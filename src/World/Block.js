@@ -1,12 +1,21 @@
 import { asyncLoadResByUrl } from "../utils/loadResources.js";
 import { textureMipmapByTile, prepareTextureAarray, blockInventoryTexture } from "../processingPictures.js";
 
+class LongID extends Number {
+    constructor(id = 0, bd = 0) {
+        super(bd << 16 | id);
+    };
+    get id() { return this & 0xFFFF; };
+    get bd() { return this >>> 16 };
+};
+
 let defaultBlockTextureImg = null, blocksCfg = null;
 
 const BlockRenderType = {
     NORMAL: Symbol("block render type: normal"),
     FLOWER: Symbol("block render type: flower"),
     CACTUS: Symbol("block render type: cactus"),
+    FLUID: Symbol("block render type: fluid"),
 };
 // BLOCKS: block name -> block      blockIDs: block id -> [db] -> block
 const BLOCKS = {}, blockIDs = new Map();
@@ -25,9 +34,15 @@ class Block {
         showName = blockName.toLowerCase().replace(/_/g, " ").replace(/^\w|\s\w/g, w => w.toUpperCase()),
         isLeaves = blockName.endsWith("leaves"),
         isGlass = blockName.endsWith("glass"),
+        isFluid = renderType == Block.renderType.FLUID,
+        maxLevel = 8,
         ...others
     } = {}) {
         this.name = blockName;
+        this.isFluid = isFluid;
+        if (isFluid) this.maxLevel = maxLevel - 1;
+        // if (renderType == Block.renderType.FLUID)
+        //     renderType = Block.renderType.NORMAL;
         this.renderType = renderType;
         this.vertexs = Block.getVertexsByRenderType(renderType);
         this.elements = Block.getElementsByRenderType(renderType);
@@ -39,7 +54,7 @@ class Block {
         this.friction = friction;
         this.id = id;
         this.bd = bd;
-        this.longID = bd << 16 | id;
+        this.longID = new LongID(id, bd);
         if (blockIDs.has(id)) blockIDs.get(id)[bd] = this;
         else {
             let t = []; t[bd] = this;
@@ -53,7 +68,6 @@ class Block {
     };
 
     get isOpaque() { return this.opacity === 15; };
-    get idAndBd() { let t = [this.id, this.bd]; t.id = t[0]; t.bd = t[1]; return t; };
 
     initTexUV(texCoord = this.texture.textureCoord) {
         for (let texture of texCoord) {
@@ -75,7 +89,7 @@ class Block {
                 x*xsize+dx,     y*ysize+dy, 0,
                 x*xsize+dx,     (y+1)*ysize-dy, 0,
                 (x+1)*xsize-dx, (y+1)*ysize-dy, 0,
-                (x+1)*xsize-dx, y*ysize+dy, 0
+                (x+1)*xsize-dx, y*ysize+dy, 0,
             ];
         switch (this.renderType) {
             case BlockRenderType.CACTUS:
@@ -114,6 +128,12 @@ class Block {
                 uv["face"] = [...uvw, ...uvw];
                 break;
             }
+            case BlockRenderType.FLUID: {
+                if (coordinate.length > 2)
+                    throw this.name + " texture translate error: array length";
+                let uvw = cr2uv(coordinate[0]);
+                "x+,x-,y+,y-,z+,z-".split(",").forEach(k => uv[k] = uvw);
+            }
         }
     };
 
@@ -121,7 +141,7 @@ class Block {
         return BlockRenderType;
     };
     static getVertexsByRenderType(renderType) {
-        return blocksCfg.vertexs[renderType];
+        return blocksCfg.vertexs[renderType] || {};
     };
     static getElementsByRenderType(renderType) {
         return Object.entries(this.getVertexsByRenderType(renderType)).map(([face, vs]) => ({[face]: (len => {
@@ -133,13 +153,17 @@ class Block {
         })(vs.length/12)})).reduce((ac, o) => ({...ac, ...o}), {});
     };
     static getBlockByBlockName(blockName) {
-        return BLOCKS[blockName];
+        return BLOCKS[blockName] || null;
     };
     static getBlockByBlockIDandData(id, bd = 0) {
-        return blockIDs.has(id)? blockIDs.get(id)[bd]: undefined;
+        let blocks = blockIDs.get(id);
+        return blocks
+            ? bd < blocks.length? blocks[bd]: blocks[0]
+            : null;
     };
     static getBlockByBlockLongID(longID) {
-        return this.getBlockByBlockIDandData(longID & 0xFFFF, longID >>> 16);
+        longID = longID instanceof LongID? longID: new LongID(longID);
+        return this.getBlockByBlockIDandData(longID.id, longID.bd);
     };
     static listBlocks() {
         return Object.values(BLOCKS);
@@ -189,6 +213,13 @@ asyncLoadResByUrl("src/World/blocks.json").then(obj => {
                 return ({[face]: vs.split(" ").map(i => brtv.cactus[i]).reduce((ac, d) => {ac.push(...d); return ac;},[])});
             })
             .reduce((ac, o) => ({...ac, ...o}), {}),
+        [BlockRenderType.FLUID]:
+            ("x+:2763,x-:0541,y+:0123,y-:4567,z+:1472,z-:3650")
+            .split(",").map(s => s.split(":"))
+            .map(([face, vs]) => {
+                return ({[face]: [...vs].map(i => brtv.fluid[i]).reduce((ac, d) => ac.concat(d), [])});
+            })
+            .reduce((ac, o) => ({...ac, ...o}), {}),
     };
     blocksCfg = obj;
 }),
@@ -201,5 +232,6 @@ asyncLoadResByUrl("src/World/blocks.json").then(obj => {
 
 export {
     Block,
-    Block as default
+    Block as default,
+    LongID,
 };

@@ -9,6 +9,8 @@ class HighlightSelectedBlock {
         const {ctx} = renderer;
         this.meshs = new Map();
         for (let renderType of Object.values(Block.renderType)) {
+            let isFluid = renderType === Block.renderType.FLUID;
+            if (isFluid) renderType = Block.renderType.NORMAL;
             let blockEles = Block.getElementsByRenderType(renderType);
             let lineVer = [], vers = Block.getVertexsByRenderType(renderType), surfaceMesh = {};
             for (let f in vers) {
@@ -28,6 +30,7 @@ class HighlightSelectedBlock {
                 return out;
             })(lineVer.length / 12);
             let defaultCol = [...Array(lineVer.length / 3 * 4)].map((_, i) => i % 4 === 3? 0.5: 1.0);
+            if (isFluid) renderType = Block.renderType.FLUID;
             this.meshs.set(renderType, {
                 line: {
                     ver: renderer.createVbo(lineVer),
@@ -62,6 +65,7 @@ class HighlightSelectedBlock {
         selector.setUni("mvp", this.mvp);
         let mesh = this.meshs.get(block.renderType), lineMesh = mesh.line, surfaceMeshs = mesh.surface;
         switch (block.renderType) {
+        case Block.renderType.FLUID:
         case Block.renderType.CACTUS:
         case Block.renderType.NORMAL: {
             if (!hit.axis) break;

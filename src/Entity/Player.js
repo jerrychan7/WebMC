@@ -37,6 +37,7 @@ class Player extends Entity {
         this._onHandItem = Block.getBlockByBlockName("air");
         this._velocity = vec3.create();
         this._acceleration = vec3.create();
+        this.eyeInFluid = false;
     };
     get onHandItem() { return this._onHandItem; };
     set onHandItem(value) {
@@ -89,7 +90,7 @@ class Player extends Entity {
         let ds = vec3.scale(motion, dt);
         let chunkFn = (x, y, z) => {
             let b = this.world.getBlock(x, y, z);
-            return b && b.name !== "air" && b.renderType !== Block.renderType.FLOWER;
+            return b && b.name !== "air" && b.renderType !== Block.renderType.FLOWER && b.renderType !== Block.renderType.FLUID;
         };
         vec3.create(0, 0, 0, this.rest);
         for (let i = 0, dSpatium = vec3.create(); i < 3; dSpatium[i++] = 0) {
@@ -107,6 +108,7 @@ class Player extends Entity {
         this.horiVelocity.set([motion[0], motion[2]]);
         this.vertVelocity = motion[1];
         vec3.add(this.position, ds, this.position);
+        this.eyeInFluid = this.world.getBlock(...this.getEyePosition())?.isFluid ?? false;
     };
     update(dt) {
         if (!this.world) return;

@@ -31,6 +31,10 @@
         [0.9375, 1, 1], [0.9375, 0, 1], [0.9375, 0, 0], [0.9375, 1, 0],
         [1, 1, 0.0625], [1, 0, 0.0625], [0, 0, 0.0625], [0, 1, 0.0625],
         [0.0625, 1, 0], [0.0625, 0, 0], [0.0625, 0, 1], [0.0625, 1, 1]
+    ],
+    "fluid": [
+        [0, "y0", 0], [0, "y1", 1], [1, "y2", 1], [1, "y3", 0],
+        [0, 0, 1], [0, 0, 0], [1, 0, 0], [1, 0, 1]
     ]
 },
 "blocks":{
@@ -60,8 +64,8 @@
     "bedrock":      {"id":7,"blastResistance":18000000,"texture":[[2,1]]},
     "water":        {"id":8,"renderType":3,"opacity":1,"blastResistance":500,"stackable":null,"texture":[[12,1]]},
     "flowing_water":{"id":9,"renderType":3,"opacity":1,"blastResistance":500,"stackable":null,"texture":[[12,1]]},
-    "lava":         {"id":10,"renderType":3,"luminance":15,"blastResistance":500,"stackable":null,"texture":[[12,3]]},
-    "flowing_lava": {"id":11,"renderType":3,"luminance":15,"blastResistance":500,"stackable":null,"texture":[[12,3]]},
+    "lava":         {"id":10,"renderType":3,"opacity":14,"luminance":15,"maxLevel":4,"blastResistance":500,"stackable":null,"texture":[[12,3]]},
+    "flowing_lava": {"id":11,"renderType":3,"opacity":14,"luminance":15,"maxLevel":4,"blastResistance":500,"stackable":null,"texture":[[12,3]]},
     "oak_log":    {"id":17,"texture":[[3,30],[3,29]]},
     "spruce_log": {"id":17,"bd":1,"texture":[[3,32],[3,31]]},
     "birch_log":  {"id":17,"bd":2,"texture":[[4,2],[4,1]]},

@@ -8,6 +8,7 @@ import {
 
 // low 4 bit save sky light, and hight 4 bit save torch light
 // https://www.seedofandromeda.com/blogs/29-fast-flood-fill-lighting-in-a-blocky-voxel-game-pt-1
+// https://www.reddit.com/r/gamedev/comments/2k7gxt/fast_flood_fill_lighting_in_a_blocky_voxel_game/
 class LightMap extends Uint8Array {
     constructor() { super(Y_SIZE * Z_SIZE * X_SIZE); };
     get(x, y, z) { return this[Chunk.getLinearBlockIndex(x, y, z)]; };
@@ -32,7 +33,6 @@ class LightMap extends Uint8Array {
 
 class ChunksLightCalculation {
     constructor(world) {
-        this.needRebuildChunk = new Set();
         this.setWorld(world);
     };
     setWorld(world) {

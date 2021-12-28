@@ -483,9 +483,19 @@ const vec2 = {
 const PI = Math.PI;
 const d2r = deg => deg * PI / 180;
 const r2d = rad => rad * 180 / PI;
+const squaredEuclideanDis = (point1, point2) => point1.reduce((sum, x, i) => sum + (x - point2[i]) ** 2, 0);
+const euclideanDis = (point1, point2) => Math.sqrt(squaredEuclideanDis(point1, point2));
+const manhattanDis = (point1, point2) => point1.reduce((sum, x, i) => sum + Math.abs(x - point2[i]), 0);
+const chebyshevDis = (point1, point2) => point1.reduce((max, x, i) => Math.max(max, Math.abs(x - point2[i])), 0);
+const minkowskiDis = (point1, point2, p) => (point1.reduce((sum, x, i) => sum + Math.abs(x - point2[i]) ** p, 0)) ** (1 / p);
 
 export {
     mat4, vec3, vec2, EPSILON,
     d2r as degree2radian,
     r2d as radian2degree,
+    squaredEuclideanDis,
+    euclideanDis,
+    manhattanDis,
+    chebyshevDis,
+    minkowskiDis,
 };
