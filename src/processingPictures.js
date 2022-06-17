@@ -305,8 +305,8 @@ class BlockInventoryTexRender extends Render {
         }
         if (block.renderType === Block.renderType.NORMAL || block.renderType === Block.renderType.CACTUS) {
             let normal = [], color = [], ver = [], tex = [], ele = [], totalVer = 0;
-            for (let face in block.vertexs) {
-                let vs = block.vertexs[face],
+            for (let face in block.vertices) {
+                let vs = block.vertices[face],
                     pa = vec3.create(vs[0], vs[1], vs[2]),
                     pb = vec3.create(vs[3], vs[4], vs[5]),
                     pc = vec3.create(vs[6], vs[7], vs[8]),

@@ -44,7 +44,7 @@ class Block {
         // if (renderType == Block.renderType.FLUID)
         //     renderType = Block.renderType.NORMAL;
         this.renderType = renderType;
-        this.vertexs = Block.getVertexsByRenderType(renderType);
+        this.vertices = Block.getVerticesByRenderType(renderType);
         this.elements = Block.getElementsByRenderType(renderType);
         this.texture = { img: textureImg, uv: {} };
         this.initTexUV(textureCoord);
@@ -140,11 +140,11 @@ class Block {
     static get renderType() {
         return BlockRenderType;
     };
-    static getVertexsByRenderType(renderType) {
-        return blocksCfg.vertexs[renderType] || {};
+    static getVerticesByRenderType(renderType) {
+        return blocksCfg.vertices[renderType] || {};
     };
     static getElementsByRenderType(renderType) {
-        return Object.entries(this.getVertexsByRenderType(renderType)).map(([face, vs]) => ({[face]: (len => {
+        return Object.entries(this.getVerticesByRenderType(renderType)).map(([face, vs]) => ({[face]: (len => {
             if (!len) return [];
             let base = [0,1,2, 0,2,3], out = [];
             for(let i=0,j=0; i<len; j=++i*4)
@@ -192,7 +192,7 @@ asyncLoadResByUrl("src/World/blocks.json").then(obj => {
             block.renderType = index_renderType[block.renderType];
     });
     let brtv = obj.block_renderType_vertex;
-    obj.vertexs = {
+    obj.vertices = {
         [BlockRenderType.NORMAL]:
             ("x+:2763,x-:0541,y+:0123,y-:4567,z+:1472,z-:3650")
             .split(",").map(s => s.split(":"))

@@ -87,7 +87,7 @@ class ChunksModule {
                             : chunk.getBlock(rx, ry, rz);
                     if (b && b.isOpaque) return delete bf[face];
                     if (cblock.isGlass && b && b.isGlass) return delete bf[face];
-                    let verNum = cblock.vertexs[face].length / 3,
+                    let verNum = cblock.vertices[face].length / 3,
                         bff = bf[face] || {},
                         bl = inOtherChunk
                             ? world.getLight(wx + dx, wy + dy, wz + dz)
@@ -95,7 +95,7 @@ class ChunksModule {
                     if (bl === null) bl = 15;
                     bff.disableCullFace = cblock.renderType === Block.renderType.CACTUS;
                     if (cblock.isLeaves && !(b && b.isLeaves)) bff.disableCullFace = true;
-                    bff.ver = cblock.vertexs[face].map((v, ind) => ind%3===0? v+wx: ind%3===1? v+wy: v+wz);
+                    bff.ver = cblock.vertices[face].map((v, ind) => ind%3===0? v+wx: ind%3===1? v+wy: v+wz);
                     bff.col = calCol(verNum, bl);
                     bff.ele = cblock.elements[face];
                     bff.tex = cblock.texture.uv[face];
@@ -116,10 +116,10 @@ class ChunksModule {
                     break;
                 }
                 let bl = chunk.getLight(i, j, k),
-                    verNum = cblock.vertexs.face.length / 3;
+                    verNum = cblock.vertices.face.length / 3;
                 bf.face = {
                     disableCullFace: true,
-                    ver: cblock.vertexs.face.map((v, ind) => ind%3===0? v+wx: ind%3===1? v+wy: v+wz),
+                    ver: cblock.vertices.face.map((v, ind) => ind%3===0? v+wx: ind%3===1? v+wy: v+wz),
                     col: calCol(verNum, bl),
                     ele: cblock.elements.face,
                     tex: cblock.texture.uv.face,
@@ -221,9 +221,9 @@ class ChunksModule {
                             b = world.getBlock(wx, wy, wz);
                         if (b && (b.isOpaque || b.isFluid)) return;
                         let bl = world.getLight(wx, wy, wz),
-                            verNum = cblock.vertexs[face].length / 3;
+                            verNum = cblock.vertices[face].length / 3;
                         if (bl === null) bl = 15;
-                        let ver = cblock.vertexs[face].map(v => typeof v == "string"? yp[v]: v),
+                        let ver = cblock.vertices[face].map(v => typeof v == "string"? yp[v]: v),
                             uv = cblock.texture.uv[face];
                         bf[face] = {
                             fluidSurface: true,// disableCullFace: true,
@@ -257,11 +257,11 @@ class ChunksModule {
                         if (b && b.isOpaque) return;
                         if (cblock.isGlass && b && b.isGlass) return delete bf[face];
                         let bl = world.getLight(wx, wy, wz),
-                            verNum = cblock.vertexs[face].length / 3;
+                            verNum = cblock.vertices[face].length / 3;
                         if (bl === null) bl = 15;
                         bf[face] = {
                             disableCullFace: cblock.renderType === Block.renderType.CACTUS,
-                            ver: cblock.vertexs[face].map((v, ind) => ind%3===0? v+blockX: ind%3===1? v+blockY: v+blockZ),
+                            ver: cblock.vertices[face].map((v, ind) => ind%3===0? v+blockX: ind%3===1? v+blockY: v+blockZ),
                             ele: cblock.elements[face],
                             tex: cblock.texture.uv[face],
                             col: [...Array(verNum * 4)].map((_, ind) => ind % 4 === 3? 1.0: Math.pow(0.9, 15 - bl)),
@@ -278,10 +278,10 @@ class ChunksModule {
                     }
                     if (aroundOpaque === 6) break;
                     let bl = world.getLight(blockX, blockY, blockZ),
-                        verNum = cblock.vertexs.face.length / 3;
+                        verNum = cblock.vertices.face.length / 3;
                     bf.face = {
                         disableCullFace: true,
-                        ver: cblock.vertexs.face.map((v, ind) => ind%3===0? v+blockX: ind%3===1? v+blockY: v+blockZ),
+                        ver: cblock.vertices.face.map((v, ind) => ind%3===0? v+blockX: ind%3===1? v+blockY: v+blockZ),
                         ele: cblock.elements.face,
                         tex: cblock.texture.uv.face,
                         col: [...Array(verNum * 4)].map((_, ind) => ind % 4 === 3? 1.0: Math.pow(0.9, 15 - bl)),
@@ -315,9 +315,9 @@ class ChunksModule {
                         break;
                     }
                     if (cblock.renderType !== Block.renderType.FLUID) break;
-                    let verNum = ablock.vertexs[inverseFace].length / 3;
+                    let verNum = ablock.vertices[inverseFace].length / 3;
                     let fn = v => ({v0: "v1", v1: "v0", v2: "v3", v3: "v2"})[v];
-                    let ver = ablock.vertexs[inverseFace].map(v => typeof v == "string"? yp[fn(v)]: v),
+                    let ver = ablock.vertices[inverseFace].map(v => typeof v == "string"? yp[fn(v)]: v),
                         uv = ablock.texture.uv[inverseFace];
                     abf[inverseFace] = {
                         fluidSurface: true,// disableCullFace: true,
@@ -347,9 +347,9 @@ class ChunksModule {
                         delete abf[inverseFace];
                         break;
                     }
-                    let verNum = ablock.vertexs[inverseFace].length / 3;
+                    let verNum = ablock.vertices[inverseFace].length / 3;
                     abf[inverseFace] = {
-                        ver: ablock.vertexs[inverseFace].map((v, ind) => ind%3===0? v+awx: ind%3===1? v+awy: v+awz),
+                        ver: ablock.vertices[inverseFace].map((v, ind) => ind%3===0? v+awx: ind%3===1? v+awy: v+awz),
                         ele: ablock.elements[inverseFace],
                         tex: ablock.texture.uv[inverseFace],
                         col: [...Array(verNum * 4)].map((_, ind) => ind % 4 === 3? 1.0: Math.pow(0.9, 15 - cbl)),
@@ -382,7 +382,7 @@ class ChunksModule {
                 .forEach(([dx, dy, dz, face]) => {
                     if (!(face in bf)) return;
                     let rx = i + dx, ry = j + dy, rz = k + dz,
-                        verNum = cblock.vertexs[face].length / 3,
+                        verNum = cblock.vertices[face].length / 3,
                         b = chunk.inOtherChunk(rx, ry, rz)
                             ? world.getBlock(wx + dx, wy + dy, wz + dz)
                             : chunk.getBlock(rx, ry, rz),
@@ -397,7 +397,7 @@ class ChunksModule {
                 break;}
             case Block.renderType.FLOWER: {
                 let bl = chunk.getLight(i, j, k),
-                    verNum = cblock.vertexs.face.length / 3;
+                    verNum = cblock.vertices.face.length / 3;
                 bf.face.col = calCol(verNum, bl);
                 break;}
             }

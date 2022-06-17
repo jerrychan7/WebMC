@@ -12,7 +12,7 @@ class HighlightSelectedBlock {
             let isFluid = renderType === Block.renderType.FLUID;
             if (isFluid) renderType = Block.renderType.NORMAL;
             let blockEles = Block.getElementsByRenderType(renderType);
-            let lineVer = [], vers = Block.getVertexsByRenderType(renderType), surfaceMesh = {};
+            let lineVer = [], vers = Block.getVerticesByRenderType(renderType), surfaceMesh = {};
             for (let f in vers) {
                 if (renderType !== Block.renderType.CACTUS || (f != "y+" && f != "y-"))
                     lineVer.push(...vers[f]);
