@@ -18,9 +18,11 @@
         margin: 0;
         padding: 20px 0 0;
     }
+    mc-slider,
     mc-button {
         padding: 1.2vh 0;
-        width: 50%;
+        width: 49%;
+        box-sizing: border-box;
         max-width: 400px;
         margin-bottom: 10px;
     }
@@ -28,7 +30,10 @@
 <div class="mc-background" darken>
     <h1>Options</h1>
     <h2>Terrain type:</h2>
-    <mc-button class="world-terrain">flat</mc-button><br />
-    <mc-button class="world-terrain">pre-classic</mc-button><br />
+    <mc-button class="world-terrain">flat</mc-button>
+    <mc-button class="world-terrain">pre-classic</mc-button>
+    <h2>Video Settings</h2>
+    <mc-slider id="homepage-blur" label="Homepage Blur: " unit=" px" min="0" step="0.5" max="10" value="3.5"></mc-slider>
+    <br />
     <mc-button gotoPage="*pop">Back</mc-button>
 </div>
