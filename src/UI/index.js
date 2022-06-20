@@ -15,3 +15,4 @@ export * from "./MCCrosshairs.js";
 export * from "./MCFullScreenBtn.js";
 export * from "./MCInventory.js";
 export * from "./MCMoveBtns.js";
+export * from "./MCSlider.js";

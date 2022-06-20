@@ -7,9 +7,10 @@ class MCComponent extends HTMLElement {
     static setBorderAndWaitImg(uri, styleSelector = "." + uri, styleDeclarations = {}) {
         if (!("preloadStyleRules" in this)) this.preloadStyleRules = [];
         if (!uri.startsWith("mc-ui-")) uri = "mc-ui-" + uri + "-img";
-        const setIfNotExist = obj => Object.entries(obj).forEach(([property, value]) =>
-            styleDeclarations[property] = styleDeclarations[property] || value);
-        setIfNotExist({
+        const keepCenter = "keepCenter" in styleDeclarations? styleDeclarations.keepCenter: true;
+        delete styleDeclarations.keepCenter;
+        styleDeclarations = {
+            ...styleDeclarations,
             "border-color": "transparent",
             "border-style": "solid",
             "border-image": `var(--${uri})
@@ -17,8 +18,8 @@ class MCComponent extends HTMLElement {
                 var(--${uri}-border-right)
                 var(--${uri}-border-bottom)
                 var(--${uri}-border-left)
-                fill stretch`,
-        });
+                ${keepCenter? "fill": ""} stretch`,
+        };
         let rule = styleSelector + " {\n"
             + Object.entries(styleDeclarations).map(([property, value]) => `${property}: ${value};`).join("\n")
             + "\n}";

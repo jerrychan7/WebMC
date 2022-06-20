@@ -12,5 +12,5 @@ const updatePixelRatio = () => {
 updatePixelRatio();
 
 
-import {} from "./UI/index.js";
-import {} from "./processingPictures.js";
+import "./UI/index.js";
+import "./processingPictures.js";

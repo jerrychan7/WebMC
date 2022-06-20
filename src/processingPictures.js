@@ -185,7 +185,9 @@ asyncLoadResByUrl("texture/gui.png")
     const drawAndSet = genDrawAndSet(img, canvas, coordZoomFactor);
 
     drawAndSet(0, 66, 200, 20, "button", {slice: [3]});
+    setBorderOrBgStyle("slider-thumb", canvas.toImage(), {slice: [3, 4]});
     drawAndSet(0, 86, 200, 20, "button-hover", {slice: [3]});
+    setBorderOrBgStyle("slider-thumb-hover", canvas.toImage(), {slice: [3, 4]});
     drawAndSet(0, 46, 200, 20, "button-active", {slice: [3]});
     setBorderOrBgStyle("button-disabled", canvas.toImage(), {slice: [3]});
 

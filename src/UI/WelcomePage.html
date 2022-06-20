@@ -38,8 +38,10 @@
         top: calc(100vw / 512 * 50 + 10vh);
         transform: rotate(-25deg);
         animation: mc-bouncing-text-bounce 0.4s infinite;
+        padding: 0; margin: 0;
     }
-    a.mc-bouncing-text {
+    a.mc-bouncing-text, .mc-bouncing-text a {
+        color: yellow;
         text-decoration: underline;
     }
     @media (min-width: 767px) { .mc-bouncing-text { font-size: 1.5rem; text-shadow: 0.2rem 0.2rem 0 #404000; } }
@@ -52,7 +54,7 @@
 </style>
 <canvas id="background-canvas">Your browser does not support canvas. Please upgrade your browser.</canvas>
 <img width="512" height="64" src="./texture/title.png" />
-<a class="mc-bouncing-text" href="https://github.com/jerrychan7/WebMC">View in Github</a>
+<p class="mc-bouncing-text">View in <a href="https://github.com/jerrychan7/WebMC">GitHub!</a></p>
 <ul>
     <li><mc-button gotoPage="play">Start</mc-button></li>
     <li><mc-button gotoPage="how-to-play">How to play</mc-button></li>
