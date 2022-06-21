@@ -29,6 +29,15 @@ class SettingPage extends Page {
             pm.getPageByID("welcome").bgCanvas.style.filter = `blur(calc(${detail}px / var(--device-pixel-ratio)))`;
             this.homepageBlur.setAttribute("progress", (+detail).toFixed(1));
         });
+        this.homepageBlur.addEventListener("pointerdown", e => {
+            const x = this.homepageBlur.offsetLeft, y = this.homepageBlur.offsetTop;
+            const w = this.homepageBlur.offsetWidth, h = this.homepageBlur.offsetHeight;
+            this.style.clipPath = `polygon(${x}px ${y}px, ${x + w}px ${y}px, ${x + w}px ${y + h}px, ${x}px ${y + h}px)`;
+        });
+        for (let e of "pointerup,pointercancel,pointerout".split(","))
+            this.addEventListener(e, () => {
+                this.style.clipPath = null;
+            });
     };
     onHistoryBack() { this.close(); };
 };
