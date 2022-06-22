@@ -6,26 +6,39 @@ export let showBlock_webgl2 = {
         in vec3 position;
         in vec4 color;
         in vec3 textureCoord;
-        uniform   mat4 mvpMatrix;
-        out   vec4 vColor;
-        out   vec3 vTextureCoord;
+        // uniform mat4 mMatrix;
+        // uniform mat4 vMatrix;
+        // uniform mat4 pMatrix;
+        uniform mat4 mvMatrix;
+        uniform mat4 mvpMatrix;
+        out vec4 vColor;
+        out vec3 vTextureCoord;
+        out vec3 vPos;
         void main(void) {
             vColor = color;
             vTextureCoord  = textureCoord;
-            gl_Position    = mvpMatrix * vec4(position, 1.0);
+            vec4 pos = vec4(position, 1.0);
+            vPos = (mvMatrix * pos).xyz;
+            gl_Position = mvpMatrix * pos;
         }`,
     frag: `#version 300 es
         precision highp int;
         precision highp float;
         precision highp sampler2DArray;
         uniform sampler2DArray blockTex;
-        in vec4      vColor;
-        in vec3      vTextureCoord;
+        uniform vec4 fogColor;
+        uniform float fogNear;
+        uniform float fogFar;
+        in vec4 vColor;
+        in vec3 vTextureCoord;
+        in vec3 vPos;
         out vec4 fragmentColor;
         void main(void){
             vec4 smpColor = texture(blockTex, vTextureCoord);
             if (smpColor.a <= 0.3) discard;
-            fragmentColor  = vColor * smpColor;
+            float fogDistance = length(vPos);
+            float fogAmount = smoothstep(fogNear, fogFar, fogDistance);
+            fragmentColor  = mix(vColor * smpColor, fogColor, fogAmount);
         }`
 };
 
@@ -40,13 +53,20 @@ export let showBlock = {
         attribute vec3 position;
         attribute vec4 color;
         attribute vec3 textureCoord;
-        uniform   mat4 mvpMatrix;
-        varying   vec4 vColor;
-        varying   vec3 vTextureCoord;
+        // uniform mat4 mMatrix;
+        // uniform mat4 vMatrix;
+        // uniform mat4 pMatrix;
+        uniform mat4 mvMatrix;
+        uniform mat4 mvpMatrix;
+        varying vec4 vColor;
+        varying vec3 vTextureCoord;
+        varying vec3 vPos;
         void main(void) {
             vColor = color;
             vTextureCoord  = textureCoord;
-            gl_Position    = mvpMatrix * vec4(position, 1.0);
+            vec4 pos = vec4(position, 1.0);
+            vPos = (mvMatrix * pos).xyz;
+            gl_Position = mvpMatrix * pos;
         }`,
     // fs中的vColor是vs中传进来的
     // precision指定精确度 此为精密度中的float
@@ -57,12 +77,18 @@ export let showBlock = {
         precision mediump float;
         #endif
         uniform sampler2D blockTex;
-        varying vec4      vColor;
-        varying vec3      vTextureCoord;
+        uniform vec4 fogColor;
+        uniform float fogNear;
+        uniform float fogFar;
+        varying vec4 vColor;
+        varying vec3 vTextureCoord;
+        varying vec3 vPos;
         void main(void){
             vec4 smpColor = texture2D(blockTex, vTextureCoord.xy);
             if (smpColor.a <= 0.3) discard;
-            gl_FragColor  = vColor * smpColor;
+            float fogDistance = length(vPos);
+            float fogAmount = smoothstep(fogNear, fogFar, fogDistance);
+            gl_FragColor  = mix(vColor * smpColor, fogColor, fogAmount);
         }`
 };
 

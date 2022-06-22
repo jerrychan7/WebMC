@@ -565,7 +565,15 @@ class ChunksModule {
     draw() {
         const {renderer} = this, {ctx} = renderer;
         const prg = renderer.getProgram("showBlock");
-        prg.use().setUni("mvpMatrix", renderer.mainCamera.projview);
+        prg.use()
+        // .setUni("vMatrix", renderer.mainCamera.view)
+        // .setUni("pMatrix", renderer.mainCamera.projection)
+        .setUni("mvMatrix", renderer.mainCamera.view)
+        .setUni("mvpMatrix", renderer.mainCamera.projview)
+        .setUni("fogColor", [0.62, 0.81, 1.0, 1.0])
+        // 3 ~ 4 chunks
+        .setUni("fogNear", 48)
+        .setUni("fogFar", 64);
         const mainPlayer = this.world.mainPlayer;
         let chunk = this.world.getChunkByBlockXYZ(...[...mainPlayer.position].map(n => n < 0? n - 1: n));
         const meshs = Object.entries(this.meshs).map(([chunkKey, mesh]) => {

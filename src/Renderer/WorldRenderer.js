@@ -21,7 +21,7 @@ class WorldRenderer extends Render {
         ctx.depthFunc(ctx.LEQUAL);
         ctx.enable(ctx.CULL_FACE);
         ctx.frontFace(ctx.CCW);
-        this.mainCamera = new Camera(this.aspectRatio, { fovy: 70, pitch: -90 * Math.PI / 180, position: [0, 20, 0] });
+        this.mainCamera = new Camera(this.aspectRatio, { fovy: 60, pitch: -90 * Math.PI / 180, position: [0, 20, 0] });
         this.addCamera(this.mainCamera);
         if (this.isWebGL2)
             this.createProgram("showBlock", glsl.showBlock_webgl2.vert, glsl.showBlock_webgl2.frag)
