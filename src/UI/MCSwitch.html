@@ -1,0 +1,26 @@
+
+<style>
+    :host {
+        display: inline-block;
+        text-align: center;
+        color: #E0E0E0;
+        cursor: pointer;
+        text-shadow: 0.13rem 0.13rem 0 #383838;
+        padding: 0.5em;
+        --mc-ui-button-border-width: calc(3px * var(--mc-ui-button-img-border-top));
+        border-width: var(--mc-ui-button-border-width);
+    }
+    :host(:hover) {
+        color: #FFFFA0;
+        text-shadow: 0.13rem 0.13rem 0 #3F3F28;
+    }
+    :host(:active) {
+        color: #979797;
+    }
+    :host([disabled]) {
+        color: #979797;
+        cursor: not-allowed;
+    }
+</style>
+<slot></slot><slot name="sep">: </slot>
+<slot name="on">ON</slot><slot name="off">OFF</slot>
