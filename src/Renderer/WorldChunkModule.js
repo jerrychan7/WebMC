@@ -1,4 +1,4 @@
-// 计算顶点，材质坐标，下标
+// 负责计算顶点，材质坐标，以及区块的绘制工作
 import { Block } from "../World/Block.js";
 import { 
     Chunk,
@@ -7,6 +7,7 @@ import {
     CHUNK_Z_SIZE as Z_SIZE,
 } from "../World/Chunk.js";
 import { manhattanDis } from "../utils/gmath.js";
+import * as glsl from "./glsl.js";
 
 const rxyz2int = Chunk.getLinearBlockIndex;
 
@@ -58,6 +59,12 @@ class ChunksModule {
     setRenderer(renderer = null) {
         if (!renderer) return;
         this.renderer = renderer;
+        if (renderer.isWebGL2)
+            renderer.createProgram("showBlock", glsl.showBlock_webgl2.vert, glsl.showBlock_webgl2.frag)
+                .use().bindTex("blockTex", renderer.createTextureArray(Block.defaultBlockTextureImg));
+        else
+            renderer.createProgram("showBlock", glsl.showBlock.vert, glsl.showBlock.frag)
+                .use().bindTex("blockTex", renderer.createTexture(Block.defaultBlockTextureImg));
         this.updateMeshs();
     };
     buildChunkModule(chunkKey) {

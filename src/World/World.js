@@ -234,13 +234,7 @@ class World extends EventDispatcher {
 
         const {mainPlayer} = this;
 
-        let start = mainPlayer.getEyePosition(),
-            end = mainPlayer.getDirection(20);
-        vec3.add(start, end, end);
-        let hit = this.rayTraceBlock(start, end, (x, y, z) => {
-            let b = this.getBlock(x, y, z);
-            return b && b.name !== "air";
-        });
+        const hit = mainPlayer.controller.getHitting?.() ?? null;
         let block = hit? this.getBlock(...hit.blockPos): null;
         let longID = hit? this.getTile(...hit.blockPos): null;
         let chunk = this.getChunkByBlockXYZ(...[...mainPlayer.position].map(n => n < 0? n - 1: n));
