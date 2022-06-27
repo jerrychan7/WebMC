@@ -1,12 +1,15 @@
 import { Block } from "../World/Block.js";
 import { vec3, mat4 } from "../utils/gmath.js";
+import * as glsl from "./glsl.js";
 
 class HighlightSelectedBlock {
     constructor(world, renderer = world.renderer) {
         this.world = world;
-        this.renderer = renderer;
         this.mvp = mat4.identity();
-        const {ctx} = renderer;
+        this.setRenderer(renderer);
+    };
+    #calcMesh() {
+        const {renderer} = this, {ctx} = this.renderer;
         this.meshs = new Map();
         for (let renderType of Object.values(Block.renderType)) {
             let isFluid = renderType === Block.renderType.FLUID;
@@ -42,16 +45,18 @@ class HighlightSelectedBlock {
             });
         }
     };
+    setRenderer(renderer = null) {
+        if (!renderer) return;
+        // to free buffer
+        if (this.renderer) this.dispose();
+        this.renderer = renderer;
+        renderer.createProgram("selector", glsl.selector.vert, glsl.selector.frag);
+        this.#calcMesh();
+    };
     draw() {
         const {world} = this, {mainPlayer} = world;
         if (mainPlayer.camera === null) return;
-        let start = mainPlayer.getEyePosition(),
-            end = mainPlayer.getDirection(20);
-        vec3.add(start, end, end);
-        let hit = world.rayTraceBlock(start, end, (x, y, z) => {
-            let b = world.getBlock(x, y, z);
-            return b && b.name !== "air";
-        });
+        const hit = mainPlayer.controller.getHitting?.() ?? null;
         if (hit === null) return;
 
         const {renderer} = this, {ctx} = renderer;

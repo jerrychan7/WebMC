@@ -79,6 +79,7 @@ class PlayerLocalController extends EntityController {
         pm.addEventListener("pause=>play", this["pause=>play"]);
         pm.addEventListener("play=>pause", this["play=>pause"]);
     };
+    // 转换成键盘消息 复用键盘的处理逻辑
     setMoveBtns(moveBtns = null) {
         if (this.moveBtns) {
             for (let btn of "up,left,down,right,jump,upleft,upright,flyup,flydown,fly,sneak".split(",")) {
@@ -133,6 +134,17 @@ class PlayerLocalController extends EntityController {
         if (type in this) this[type](event);
         this.dispatchEvent(type, event);
     };
+    getHitting(bType = Block.renderType.NORMAL) {
+        let entity = this.entity,
+            world = entity.world,
+            start = entity.getEyePosition(),
+            end = entity.getDirection(20);
+        vec3.add(start, end, end);
+        return world.rayTraceBlock(start, end, (x, y, z) => {
+            let b = world.getBlock(x, y, z);
+            return b && b.name !== "air" && b.renderType === bType;
+        });
+    };
     _setEntityPitchAndYaw(movementX, movementY) {
         let i = this.mousemoveSensitivity * (Math.PI / 180);
         // movementX left- right+    movementY up- down+
@@ -159,15 +171,7 @@ class PlayerLocalController extends EntityController {
         if (e.button === 0) this.mouseRightBtnDown = true;
         if (e.button === 2) this.mouseLeftBtnDown = true;
         const destroyOrPlaceBlock = () => {
-            let entity = this.entity,
-                world = entity.world,
-                start = entity.getEyePosition(),
-                end = entity.getDirection(20);
-            vec3.add(start, end, end);
-            let hit = world.rayTraceBlock(start, end, (x, y, z) => {
-                let b = world.getBlock(x, y, z);
-                return b && b.name !== "air";
-            });
+            const world = this.entity.world, hit = this.getHitting();
             if (hit === null || hit.axis === "") return;
             let pos = hit.blockPos;
             if (this.mouseLeftBtnDown) {
