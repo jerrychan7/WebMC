@@ -134,7 +134,7 @@ class PlayerLocalController extends EntityController {
         if (type in this) this[type](event);
         this.dispatchEvent(type, event);
     };
-    getHitting(bType = Block.renderType.NORMAL) {
+    getHitting(bTypes = [Block.renderType.NORMAL, Block.renderType.FLOWER, Block.renderType.CACTUS]) {
         let entity = this.entity,
             world = entity.world,
             start = entity.getEyePosition(),
@@ -142,7 +142,7 @@ class PlayerLocalController extends EntityController {
         vec3.add(start, end, end);
         return world.rayTraceBlock(start, end, (x, y, z) => {
             let b = world.getBlock(x, y, z);
-            return b && b.name !== "air" && b.renderType === bType;
+            return b && b.name !== "air" && bTypes.includes(b.renderType);
         });
     };
     _setEntityPitchAndYaw(movementX, movementY) {
