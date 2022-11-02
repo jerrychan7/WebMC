@@ -11,10 +11,11 @@ import * as glsl from "./glsl.js";
 
 const rxyz2int = Chunk.getLinearBlockIndex;
 
-const calCol = (verNum, blockLight) => {
-    let ans = new Array(verNum * 4);
+const calCol = blockLight => Math.pow(0.9, 15 - blockLight);
+const genColArr = (verNum, blockLight, calcCol = calCol) => {
+    let ans = new Array(verNum * 4), l = calcCol(blockLight);
     for (let i = 0; i < verNum * 4; i += 4) {
-        ans[i] = ans[i + 1] = ans[i + 2] = Math.pow(0.9, 15 - blockLight);
+        ans[i] = ans[i + 1] = ans[i + 2] = l;
         ans[i + 3] = 1;
     }
     return ans;
@@ -57,8 +58,27 @@ class ChunksModule {
         });
     };
     setRenderer(renderer = null) {
-        if (!renderer) return;
+        if (this.renderer === renderer) return;
+        if (this.renderer && this.meshs.bo.ver) {
+            Object.values(this.meshs).forEach((mesh) => {
+                const {bo} = mesh;
+                this.renderer.delBo(bo.ver);
+                this.renderer.delBo(bo.col);
+                this.renderer.delBo(bo.tex);
+                this.renderer.delBo(bo.ele);
+                this.renderer.delBo(bo.disableCullFace.ver);
+                this.renderer.delBo(bo.disableCullFace.col);
+                this.renderer.delBo(bo.disableCullFace.tex);
+                this.renderer.delBo(bo.disableCullFace.ele);
+                this.renderer.delBo(bo.fluidSurface.ver);
+                this.renderer.delBo(bo.fluidSurface.col);
+                this.renderer.delBo(bo.fluidSurface.tex);
+                this.renderer.delBo(bo.fluidSurface.ele);
+                mesh.bo = {};
+            });
+        }
         this.renderer = renderer;
+        if (!renderer) return;
         if (renderer.isWebGL2)
             renderer.createProgram("showBlock", glsl.showBlock_webgl2.vert, glsl.showBlock_webgl2.frag)
                 .use().bindTex("blockTex", renderer.createTextureArray(Block.defaultBlockTextureImg));
@@ -103,7 +123,7 @@ class ChunksModule {
                     bff.disableCullFace = cblock.renderType === Block.renderType.CACTUS;
                     if (cblock.isLeaves && !(b && b.isLeaves)) bff.disableCullFace = true;
                     bff.ver = cblock.vertices[face].map((v, ind) => ind%3===0? v+wx: ind%3===1? v+wy: v+wz);
-                    bff.col = calCol(verNum, bl);
+                    bff.col = genColArr(verNum, bl);
                     bff.ele = cblock.elements[face];
                     bff.tex = cblock.texture.uv[face];
                     bf[face] = bff;
@@ -127,7 +147,7 @@ class ChunksModule {
                 bf.face = {
                     disableCullFace: true,
                     ver: cblock.vertices.face.map((v, ind) => ind%3===0? v+wx: ind%3===1? v+wy: v+wz),
-                    col: calCol(verNum, bl),
+                    col: genColArr(verNum, bl),
                     ele: cblock.elements.face,
                     tex: cblock.texture.uv.face,
                 };
@@ -399,13 +419,13 @@ class ChunksModule {
                     if (bl === null) bl = 15;
                     if (cblock.isFluid && b && b.isOpaque)
                         bl = Math.max(0, bl - 1);
-                    bf[face].col = calCol(verNum, bl);
+                    bf[face].col = genColArr(verNum, bl);
                 });
                 break;}
             case Block.renderType.FLOWER: {
                 let bl = chunk.getLight(i, j, k),
                     verNum = cblock.vertices.face.length / 3;
-                bf.face.col = calCol(verNum, bl);
+                bf.face.col = genColArr(verNum, bl);
                 break;}
             }
         }
@@ -416,21 +436,21 @@ class ChunksModule {
             this.updateMesh(chunkKey);
     };
     updateMesh(chunkKey, {
-        ver = this.meshs[chunkKey].ver,
-        col = this.meshs[chunkKey].col,
-        tex = this.meshs[chunkKey].tex,
-        ele = this.meshs[chunkKey].ele,
+        ver = this.meshs[chunkKey]?.ver,
+        col = this.meshs[chunkKey]?.col,
+        tex = this.meshs[chunkKey]?.tex,
+        ele = this.meshs[chunkKey]?.ele,
         disableCullFace: {
-            ver: dcfVer = this.meshs[chunkKey].disableCullFace.ver,
-            col: dcfCol = this.meshs[chunkKey].disableCullFace.col,
-            tex: dcfTex = this.meshs[chunkKey].disableCullFace.tex,
-            ele: dcfEle = this.meshs[chunkKey].disableCullFace.ele,
+            ver: dcfVer = this.meshs[chunkKey]?.disableCullFace.ver,
+            col: dcfCol = this.meshs[chunkKey]?.disableCullFace.col,
+            tex: dcfTex = this.meshs[chunkKey]?.disableCullFace.tex,
+            ele: dcfEle = this.meshs[chunkKey]?.disableCullFace.ele,
         } = {},
         fluidSurface: {
-            ver: fluidVer = this.meshs[chunkKey].fluidSurface.ver,
-            col: fluidCol = this.meshs[chunkKey].fluidSurface.col,
-            tex: fluidTex = this.meshs[chunkKey].fluidSurface.tex,
-            ele: fluidEle = this.meshs[chunkKey].fluidSurface.ele,
+            ver: fluidVer = this.meshs[chunkKey]?.fluidSurface.ver,
+            col: fluidCol = this.meshs[chunkKey]?.fluidSurface.col,
+            tex: fluidTex = this.meshs[chunkKey]?.fluidSurface.tex,
+            ele: fluidEle = this.meshs[chunkKey]?.fluidSurface.ele,
         } = {},
     } = this.meshs[chunkKey]) {
         let mesh = this.meshs[chunkKey];
@@ -659,4 +679,6 @@ class ChunksModule {
 export {
     ChunksModule,
     ChunksModule as default,
+    genColArr,
+    calCol,
 };

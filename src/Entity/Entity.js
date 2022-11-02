@@ -3,9 +3,9 @@ import { vec3 } from "../utils/gmath.js";
 class Entity {
     constructor(hitboxes, {
         eyePos = [
-            (hitboxes.max[0] - hitboxes.min[0] / 2),
-            (hitboxes.max[1] - hitboxes.min[1] / 2),
-            (hitboxes.max[2] - hitboxes.min[2] / 2)
+            hitboxes.min[0] + (hitboxes.max[0] - hitboxes.min[0]) / 2,
+            hitboxes.min[1] + (hitboxes.max[1] - hitboxes.min[1]) / 2,
+            hitboxes.min[2] + (hitboxes.max[2] - hitboxes.min[2]) / 2
         ],
         pitch = 0, yaw = 0,
         position = [0, 0, 0],

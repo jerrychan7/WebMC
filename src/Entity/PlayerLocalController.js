@@ -3,6 +3,7 @@ import { EntityController } from "./EntityController.js";
 import { Block } from "../World/Block.js";
 import { vec3 } from "../utils/gmath.js";
 import { pm } from "../UI/Page.js";
+import { Item } from "./Item.js";
 
 class PlayerLocalController extends EntityController {
     constructor(player = null, {
@@ -207,6 +208,16 @@ class PlayerLocalController extends EntityController {
         if (!this.locked) return;
         if (e.cancelable) e.preventDefault();
         if (e.repeat) return;
+        if (e.key == 'Q' || e.key == 'q') {
+            let item = new Item({
+                thrower: this.entity,
+                longID: this.entity.onHandItem.longID,
+                position: this.entity.position,
+                world: this.entity.world,
+            });
+            this.entity.world.entities.push(item);
+            this.entity.world.dispatchEvent("onAddEntity", item);
+        }
         if (e.key == 'E' || e.key == 'e') {
             if (this.locked) {
                 this.showStopPage = false;

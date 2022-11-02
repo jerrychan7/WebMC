@@ -2,6 +2,7 @@ import { Render } from "./Render.js";
 import { Camera } from "./Camera.js";
 import { ChunksModule } from "./WorldChunkModule.js";
 import { HighlightSelectedBlock } from "./HighlightSelectedBlock.js";
+import { EntitiesPainter } from "./EntitiesPainter.js";
 
 class WorldRenderer extends Render {
     constructor(canvas, world = null) {
@@ -30,13 +31,16 @@ class WorldRenderer extends Render {
         this.mainCamera.bindEntity(world.mainPlayer);
         this.chunksModule = new ChunksModule(world, this);
         this.blockHighlight = new HighlightSelectedBlock(world, this);
+        this.entitiesPainter = new EntitiesPainter(world, this);
     };
     onRender(timestamp, dt) {
         this.world.update(dt);
         this.chunksModule.update();
+        this.entitiesPainter.update(timestamp, dt);
         const {ctx} = this;
         ctx.clear(ctx.COLOR_BUFFER_BIT | ctx.DEPTH_BUFFER_BIT);
         this.chunksModule.draw();
+        this.entitiesPainter.draw();
         this.blockHighlight.draw();
         ctx.flush();
     };

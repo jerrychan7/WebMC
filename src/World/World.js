@@ -29,7 +29,7 @@ class World extends EventDispatcher {
         this.chunkMap = {};
         this.callbacks = {};
         this.mainPlayer = new Player(this);
-        this.entitys = [this.mainPlayer];
+        this.entities = [this.mainPlayer];
         this.renderer = renderer;
         this.seed = seed;
         this.noise = new PerlinNoise(seed);
@@ -230,7 +230,7 @@ class World extends EventDispatcher {
         }
         this.fluidCalculator.update(dt);
         this.lightingCalculator.update(dt);
-        this.entitys.forEach(e => e.update(dt));
+        this.entities.forEach(e => e.update(dt));
 
         const {mainPlayer} = this;
 

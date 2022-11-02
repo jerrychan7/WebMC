@@ -92,6 +92,48 @@ export let showBlock = {
         }`
 };
 
+export let entityItem_webgl2 = {
+    vert: `#version 300 es
+        precision highp int;
+        precision highp float;
+        in vec3 position;
+        in vec4 color;
+        in vec3 textureCoord;
+        uniform mat4 mMatrix;
+        uniform mat4 vMatrix;
+        uniform mat4 pMatrix;
+        out vec4 vColor;
+        out vec3 vTextureCoord;
+        out vec3 vPos;
+        void main(void) {
+            vColor = color;
+            mat4 mvMatrix = vMatrix * mMatrix;
+            vTextureCoord  = textureCoord;
+            vec4 pos = vec4(position, 1.0);
+            vPos = (mvMatrix * pos).xyz;
+            gl_Position = pMatrix * mvMatrix * pos;
+        }`,
+    frag: `#version 300 es
+        precision highp int;
+        precision highp float;
+        precision highp sampler2DArray;
+        uniform sampler2DArray blockTex;
+        uniform vec4 fogColor;
+        uniform float fogNear;
+        uniform float fogFar;
+        in vec4 vColor;
+        in vec3 vTextureCoord;
+        in vec3 vPos;
+        out vec4 fragmentColor;
+        void main(void){
+            vec4 smpColor = texture(blockTex, vTextureCoord);
+            if (smpColor.a <= 0.3) discard;
+            float fogDistance = length(vPos);
+            float fogAmount = smoothstep(fogNear, fogFar, fogDistance);
+            fragmentColor  = mix(vColor * smpColor, fogColor, fogAmount);
+        }`
+};
+
 export let selector = {
     vert: `
         attribute vec3 pos;

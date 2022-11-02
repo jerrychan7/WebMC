@@ -46,8 +46,11 @@ class Block {
         this.renderType = renderType;
         this.vertices = Block.getVerticesByRenderType(renderType);
         this.elements = Block.getElementsByRenderType(renderType);
-        this.texture = { img: textureImg, uv: {} };
-        this.initTexUV(textureCoord);
+        this.texture = Block.getTexUVByTexCoord({
+            renderType, name: blockName,
+            coordinate: textureCoord,
+            texImg: textureImg,
+        });
         this.opacity = opacity;
         this.luminance = luminance;
         this.stackable = stackable;
@@ -69,13 +72,16 @@ class Block {
 
     get isOpaque() { return this.opacity === 15; };
 
-    initTexUV(texCoord = this.texture.textureCoord) {
-        for (let texture of texCoord) {
-            let [x, y] = texture;
-            texture[0] = y-1; texture[1] = x-1;
+    static getTexUVByTexCoord({
+        renderType, name = "Block",
+        coordinate = [[16, 32]],
+        texImg = defaultBlockTextureImg,
+    } = {}) {
+        for (let texCoord of coordinate) {
+            let [x, y] = texCoord;
+            texCoord[0] = y - 1; texCoord[1] = x - 1;
         }
-        this.texture.coordinate = texCoord;
-        let {texture: {img: texImg, uv, coordinate}} = this;
+        const uv = {}, ans = { img: texImg, uv, coordinate, };
         let xsize = 1 / 32, ysize = 1 / 16,
             calculateOffset = i => texImg.mipmap? i / 4: 0,
             dx = texImg.texture4array? texImg.texture4array.tileCount[0]: calculateOffset(xsize),
@@ -91,52 +97,50 @@ class Block {
                 (x+1)*xsize-dx, (y+1)*ysize-dy, 0,
                 (x+1)*xsize-dx, y*ysize+dy, 0,
             ];
-        switch (this.renderType) {
-            case BlockRenderType.CACTUS:
-            case BlockRenderType.NORMAL: {
-                if (coordinate.length === 1) {
-                    let uvw = cr2uv(coordinate[0]);
-                    "x+,x-,y+,y-,z+,z-".split(",").map(k => uv[k] = uvw);
-                }
-                else if (coordinate.length === 2) {
-                    uv["y+"] = uv["y-"] = cr2uv(coordinate[0]);
-                    let uvw = cr2uv(coordinate[1]);
-                    "x+,x-,z+,z-".split(",").forEach(k => uv[k] = uvw);
-                }
-                else if (coordinate.length === 3) {
-                    uv["y+"] = cr2uv(coordinate[0]);
-                    uv["y-"] = cr2uv(coordinate[1]);
-                    let uvw = cr2uv(coordinate[2]);
-                    "x+,x-,z+,z-".split(",").forEach(k => uv[k] = uvw);
-                }
-                else if (coordinate.length === 4) {
-                    uv["y+"] = cr2uv(coordinate[0]);
-                    uv["y-"] = cr2uv(coordinate[1]);
-                    uv["x+"] = uv["x-"] = cr2uv(coordinate[2]);
-                    uv["z+"] = uv["z-"] = cr2uv(coordinate[3]);
-                }
-                else if (coordinate.length === 6) {
-                    "x+,x-,y+,y-,z+,z-".split(",").forEach((k, i) => uv[k] = cr2uv(coordinate[i]));
-                }
-                else throw this.name + " texture translate error: array length";
-                break;
-            }
-            case BlockRenderType.FLOWER: {
-                if (coordinate.length > 2)
-                    throw this.name + " texture translate error: array length";
+        switch (renderType) {
+        case BlockRenderType.CACTUS:
+        case BlockRenderType.NORMAL: {
+            switch (coordinate.length) {
+            case 1: {
                 let uvw = cr2uv(coordinate[0]);
-                uv["face"] = [...uvw, ...uvw];
-                break;
+                "x+,x-,y+,y-,z+,z-".split(",").map(k => uv[k] = uvw);
+                break; }
+            case 2: {
+                uv["y+"] = uv["y-"] = cr2uv(coordinate[0]);
+                let uvw = cr2uv(coordinate[1]);
+                "x+,x-,z+,z-".split(",").forEach(k => uv[k] = uvw);
+                break; }
+            case 3: {
+                uv["y+"] = cr2uv(coordinate[0]);
+                uv["y-"] = cr2uv(coordinate[1]);
+                let uvw = cr2uv(coordinate[2]);
+                "x+,x-,z+,z-".split(",").forEach(k => uv[k] = uvw);
+                break; }
+            case 4: {
+                uv["y+"] = cr2uv(coordinate[0]);
+                uv["y-"] = cr2uv(coordinate[1]);
+                uv["x+"] = uv["x-"] = cr2uv(coordinate[2]);
+                uv["z+"] = uv["z-"] = cr2uv(coordinate[3]);
+                break; }
+            case 6: {
+                "x+,x-,y+,y-,z+,z-".split(",").forEach((k, i) => uv[k] = cr2uv(coordinate[i]));
+                break; }
+            default: throw name + " texture translate error: array length";
             }
-            case BlockRenderType.FLUID: {
-                if (coordinate.length > 2)
-                    throw this.name + " texture translate error: array length";
-                let uvw = cr2uv(coordinate[0]);
-                "x+,x-,y+,y-,z+,z-".split(",").forEach(k => uv[k] = uvw);
-            }
+            break; }
+        case BlockRenderType.FLOWER: {
+            if (coordinate.length > 2) throw name + " texture translate error: array length";
+            let uvw = cr2uv(coordinate[0]);
+            uv["face"] = [...uvw, ...uvw];
+            break; }
+        case BlockRenderType.FLUID: {
+            if (coordinate.length > 2) throw name + " texture translate error: array length";
+            let uvw = cr2uv(coordinate[0]);
+            "x+,x-,y+,y-,z+,z-".split(",").forEach(k => uv[k] = uvw);
+            break; }
         }
+        return ans;
     };
-
     static get renderType() {
         return BlockRenderType;
     };
@@ -158,7 +162,7 @@ class Block {
     static getBlockByBlockIDandData(id, bd = 0) {
         let blocks = blockIDs.get(id);
         return blocks
-            ? bd < blocks.length? blocks[bd]: blocks[0]
+            ? blocks[bd] || blocks[0]
             : null;
     };
     static getBlockByBlockLongID(longID) {

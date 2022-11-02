@@ -10,6 +10,7 @@ class Render {
         this.isWebGL2 = "isSupportWebGL2" in window? window.isSupportWebGL2: isWebGL2Context(ctx);
         this.prgCache = {};
         this.texCache = {};
+        this.bufferCache = new Set();
         this.camera = [];
         this.frame = this.frame.bind(this);
         this.timer = null;
@@ -27,6 +28,10 @@ class Render {
         return this.prgCache[name] = new Program(this.ctx, vectSrc, fragSrc);
     };
     getProgram(name) { return this.prgCache[name]; };
+    delProgram(name) {
+        this.prgCache[name]?.dispose();
+        delete this.prgCache[name];
+    };
 
     frame(timestamp = this.lastFrameTime) {
         this.timer = window.requestAnimationFrame(this.frame);
@@ -64,15 +69,12 @@ class Render {
     createIbo(data, drawType = this.ctx.STATIC_DRAW) {
         return this.createBo(data, this.ctx.ELEMENT_ARRAY_BUFFER, drawType);
     };
-
     createVbo(data, drawType = this.ctx.STATIC_DRAW) {
         return this.createBo(data, this.ctx.ARRAY_BUFFER, drawType);
     };
-
     createBo(data, boType, drawType = this.ctx.STATIC_DRAW) {
         return this.bindBoData(this.ctx.createBuffer(), data, {boType, drawType});
-    }
-
+    };
     bindBoData(bufferObj, data, {
         boType = bufferObj.type,
         drawType = this.ctx.STATIC_DRAW,
@@ -89,7 +91,14 @@ class Render {
         ctx.bindBuffer(boType, bufferObj);
         ctx.bufferData(boType, data, drawType);
         ctx.bindBuffer(boType, null);
+        if (!this.bufferCache.has(bufferObj))
+            this.bufferCache.add(bufferObj);
         return bufferObj;
+    };
+    delBo(bufferObj) {
+        if (!this.bufferCache.has(bufferObj)) return false;
+        this.ctx.deleteBuffer(bufferObj);
+        return this.bufferCache.delete(bufferObj);
     };
 
     _getImageName(img) {
@@ -195,7 +204,10 @@ class Render {
     dispose() {
         this.stop();
         const {ctx} = this;
+        this.bufferCache.forEach(bo => ctx.deleteBuffer(bo));
+        this.bufferCache.clear();
         Object.values(this.texCache).forEach(tex => ctx.deleteTexture(tex));
+        this.texCache = {};
         Object.values(this.prgCache).forEach(prg => prg.dispose());
     };
 };

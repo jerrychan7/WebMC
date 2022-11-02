@@ -16,18 +16,6 @@ class WelcomeRenderer extends Render {
             await new Promise(s => setTimeout(s, 0));
             this.fitScreen();
         }).observe(canvas);
-        const {ctx} = this;
-        this.prg = this.createProgram("welcomePage", glsl.welcomePage.vert, glsl.welcomePage.frag)
-                    .use().bindTex("uTexture", this.createCubemapsTexture(texImgs, "welcomePage/textures"));
-        ctx.texParameteri(ctx.TEXTURE_CUBE_MAP, ctx.TEXTURE_MAG_FILTER, ctx.LINEAR);
-        ctx.texParameteri(ctx.TEXTURE_CUBE_MAP, ctx.TEXTURE_MIN_FILTER, ctx.LINEAR);
-        let mainCamera = this.mainCamera = new Camera(this.aspectRatio, {
-            viewType: Camera.viewType.lookAt,
-            fovy: 120, position: [0, 0, 0],
-            lookAt: [-1, 0, 0], up: [0, 1, 0],
-            far: 10,
-        });
-        this.addCamera(mainCamera);
         let vertexPosition = [
                 -1, 1,-1, -1,-1,-1, -1,-1, 1, -1, 1, 1,
                 -1, 1, 1, -1,-1, 1,  1,-1, 1,  1, 1, 1,
@@ -46,6 +34,19 @@ class WelcomeRenderer extends Render {
             ver: this.createVbo(vertexPosition),
             ele: this.createIbo(element),
         };
+        this.prg = this.createProgram("welcomePage", glsl.welcomePage.vert, glsl.welcomePage.frag)
+                    .use().bindTex("uTexture", this.createCubemapsTexture(texImgs, "welcomePage/textures"))
+                    .setAtt("aPosition", this.bos.ver);
+        const {ctx} = this;
+        ctx.texParameteri(ctx.TEXTURE_CUBE_MAP, ctx.TEXTURE_MAG_FILTER, ctx.LINEAR);
+        ctx.texParameteri(ctx.TEXTURE_CUBE_MAP, ctx.TEXTURE_MIN_FILTER, ctx.LINEAR);
+        let mainCamera = this.mainCamera = new Camera(this.aspectRatio, {
+            viewType: Camera.viewType.lookAt,
+            fovy: 120, position: [0, 0, 0],
+            lookAt: [-1, 0, 0], up: [0, 1, 0],
+            far: 10,
+        });
+        this.addCamera(mainCamera);
         this.mM = mat4.identity();
         this.mvpM = mat4.identity();
     };
@@ -54,18 +55,11 @@ class WelcomeRenderer extends Render {
         const {ctx, prg, mM, vpM, mvpM, bos} = this;
         mat4.rotate(mM, d2r(1 / 70), [0, 1, 0], mM);
         mat4.multiply(vpM, mM, mvpM);
-        prg.use()
-            .setUni("uMvpMatrix", mvpM)
-            .setAtt("aPosition", bos.ver);
+        prg.use().setUni("uMvpMatrix", mvpM);
         ctx.clear(ctx.COLOR_BUFFER_BIT);
         ctx.bindBuffer(bos.ele.type, bos.ele);
         ctx.drawElements(ctx.TRIANGLES, bos.ele.length, ctx.UNSIGNED_SHORT, 0);
         ctx.flush();
-    };
-    dispose() {
-        super.dispose();
-        this.ctx.deleteBuffer(this.bos.ver);
-        this.ctx.deleteBuffer(this.bos.ele);
     };
 };
 
