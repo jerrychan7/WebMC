@@ -1,4 +1,4 @@
-import { vec3, vec2 } from "../utils/gmath.js";
+import { vec3, vec2 } from "../utils/math/index.js";
 
 function lerp(a, b, t) {
     return (1 - t) * a + t * b;

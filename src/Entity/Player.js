@@ -1,5 +1,5 @@
 import Entity from "./Entity.js";
-import { vec3, vec2, EPSILON } from "../utils/gmath.js";
+import { vec3, vec2, EPSILON } from "../utils/math/index.js";
 import Block from "../World/Block.js";
 
 class Player extends Entity {
@@ -48,8 +48,7 @@ class Player extends Entity {
     };
     get horiMoveDir() { return this._horiMoveDir; };
     set horiMoveDir(arr) {
-        vec2.create(arr[0], arr[1], this._horiMoveDir);
-        vec2.normalize(this._horiMoveDir, this._horiMoveDir);
+        vec2(this._horiMoveDir).set(arr).norm();
     };
     get vertMoveDir() { return this._vertMoveDir; };
     set vertMoveDir(val) { this._vertMoveDir = val? val > 0? 1: -1: 0; };
@@ -86,7 +85,7 @@ class Player extends Entity {
         }
     };
     get onGround() { return this.rest[1] === -1; };
-    move_and_collide(motion, dt) {
+    moveAndCollide(motion, dt) {
         let ds = vec3.scale(motion, dt);
         let chunkFn = (x, y, z) => {
             let b = this.world.getBlock(x, y, z);
@@ -131,17 +130,17 @@ class Player extends Entity {
                 blockFriction = block? (block.friction || 1): 1;
             this.horiAcceleration = blockFriction * 20;
         }
-        let horiVel = vec2.create();
         if (vec2.length(this.horiMoveDir) > EPSILON) {
-            let deltaYaw = vec2.angle(vec2.create(0, 1, horiVel), this.horiMoveDir);
-            vec2.rotateOrigin(vec2.create(0, -this.moveSpeed, horiVel), -(this.yaw + deltaYaw), horiVel);
+            let deltaYaw = vec2.angle([0, 1], this.horiMoveDir);
+            let horiVel = vec2.rotateOrigin([0, -this.moveSpeed], -(this.yaw + deltaYaw));
+            vec2.moveToward(this.horiVelocity, horiVel, this.horiAcceleration * dt, this.horiVelocity);
         }
-        vec2.move_toward(this.horiVelocity, horiVel, this.horiAcceleration * dt, this.horiVelocity);
-        this.move_and_collide(this.velocity, dt);
+        else vec2.moveToward(this.horiVelocity, [0, 0], this.horiAcceleration * dt, this.horiVelocity);
+        this.moveAndCollide(this.velocity, dt);
     };
 };
 
 export {
+    Player as default,
     Player,
-    Player as default
 };

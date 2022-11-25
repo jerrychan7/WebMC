@@ -1,11 +1,11 @@
-import { vec3 } from "../utils/gmath.js";
+import { vec3 } from "../utils/math/index.js";
 
 class Entity {
     constructor(hitboxes, {
         eyePos = [
-            hitboxes.min[0] + (hitboxes.max[0] - hitboxes.min[0]) / 2,
-            hitboxes.min[1] + (hitboxes.max[1] - hitboxes.min[1]) / 2,
-            hitboxes.min[2] + (hitboxes.max[2] - hitboxes.min[2]) / 2
+            (hitboxes.min[0] + hitboxes.min[0]) / 2,
+            (hitboxes.min[1] + hitboxes.min[1]) / 2,
+            (hitboxes.min[2] + hitboxes.min[2]) / 2
         ],
         pitch = 0, yaw = 0,
         position = [0, 0, 0],
@@ -37,10 +37,10 @@ class Entity {
         };
     };
     getDirection(scale = 1) {
-        vec3.create(0, 0, -scale, this.direction);
-        vec3.rotateX(this.direction, this.pitch, this.direction);
-        vec3.rotateY(this.direction, this.yaw, this.direction);
-        return this.direction;
+        return vec3(this.direction)
+            .create(0, 0, -scale)
+            .rotateX(this.pitch)
+            .rotateY(this.yaw).res;
     };
     setCamera(camera = null) {
         if (camera === this.camera) return;

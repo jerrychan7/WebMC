@@ -1,7 +1,7 @@
 import Chunk from "./Chunk.js";
 import Block from "./Block.js";
 import Player from "../Entity/Player.js";
-import { vec3, radian2degree } from "../utils/gmath.js";
+import { vec3, radian2degree } from "../utils/math/index.js";
 import { PerlinNoise } from "./noise.js";
 import { FluidCalculator } from "./WorldFluidCal.js";
 import { ChunksLightCalculation } from "./WorldLight.js";
@@ -275,7 +275,7 @@ class World extends EventDispatcher {
         if (chunkFn(...start.map(Math.floor))) return {
             axis: "", blockPos: start.map(Math.floor)
         };
-        let vec = vec3.subtract(end, start),
+        let vec = vec3.subtract(end, start, end),
             len = vec3.length(vec),
             delta = vec3.create(),
             axisStepDir = vec3.create(),
@@ -363,6 +363,6 @@ class World extends EventDispatcher {
 };
 
 export {
+    World as default,
     World,
-    World as default
 };

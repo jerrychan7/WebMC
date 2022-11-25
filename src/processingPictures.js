@@ -257,7 +257,7 @@ asyncLoadResByUrl("texture/title.png");
 import { Render } from "./Renderer/Render.js";
 import { Camera } from "./Renderer/Camera.js";
 import * as glsl from "./Renderer/glsl.js";
-import { mat4, vec3 } from "./utils/gmath.js";
+import { mat4, vec3 } from "./utils/math/index.js";
 import { Block } from "./World/Block.js";
 class BlockInventoryTexRender extends Render {
     constructor() {
@@ -288,12 +288,9 @@ class BlockInventoryTexRender extends Render {
             tex: this.createVbo([], ctx.DYNAMIC_DRAW),
             ele: this.createIbo([], ctx.DYNAMIC_DRAW),
         };
-        let mM = mat4.identity();
-        mat4.translate(mM, [-0.5, -0.5, -0.5], mM);
-        this.mM = mM;
-        this.mvpM = mat4.multiply(mainCamera.projview, mM);
-        let imM = mat4.inverse(mM);
-        this.itmM = mat4.transpose(imM, imM);
+        this.mM = mat4().E().translate([-0.5, -0.5, -0.5]).res;
+        this.mvpM = mat4.mul(mainCamera.projview, this.mM);
+        this.itmM = mat4().set(this.mM).inv().T().res;
     };
     toImage() {
         let img = new Image(this.canvas.width, this.canvas.height);
@@ -309,12 +306,11 @@ class BlockInventoryTexRender extends Render {
             let normal = [], color = [], ver = [], tex = [], ele = [], totalVer = 0;
             for (let face in block.vertices) {
                 let vs = block.vertices[face],
-                    pa = vec3.create(vs[0], vs[1], vs[2]),
-                    pb = vec3.create(vs[3], vs[4], vs[5]),
-                    pc = vec3.create(vs[6], vs[7], vs[8]),
-                    ab = vec3.subtract(pb, pa),
-                    ac = vec3.subtract(pc, pa),
-                    n = vec3.cross(ab, ac),
+                    pa = [vs[0], vs[1], vs[2]],
+                    pb = [vs[3], vs[4], vs[5]],
+                    pc = [vs[6], vs[7], vs[8]],
+                    // n = (pb - pa) x (pc - pa) 法向量
+                    n = vec3(pb).sub(pa).cross(vec3.sub(pc, pa, pc)).res,
                     verNum = vs.length / 3;
                 for (let i = 0; i < verNum; ++i) {
                     normal.push(...n);

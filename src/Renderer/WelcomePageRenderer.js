@@ -1,9 +1,9 @@
 
-import {mat4, degree2radian as d2r} from "../utils/gmath.js";
+import { mat4, degree2radian as d2r } from "../utils/math/index.js";
 import Render from "./Render.js";
 import Camera from "./Camera.js";
 import * as glsl from "./glsl.js";
-import {waitResource} from "../utils/loadResources.js";
+import { waitResource } from "../utils/loadResources.js";
 
 let texImgs = null;
 waitResource("welcomePage/textures").then(imgs => texImgs = imgs);
@@ -64,5 +64,6 @@ class WelcomeRenderer extends Render {
 };
 
 export {
+    WelcomeRenderer as default,
     WelcomeRenderer,
 };

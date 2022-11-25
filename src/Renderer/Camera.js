@@ -1,4 +1,4 @@
-import {vec3, mat4} from "../utils/gmath.js";
+import { vec3, mat4 } from "../utils/math/index.js";
 
 class Camera {
     static get projectionType() {
@@ -153,6 +153,6 @@ class Camera {
 };
 
 export {
+    Camera as default,
     Camera,
-    Camera as default
 };

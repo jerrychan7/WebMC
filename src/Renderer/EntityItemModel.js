@@ -1,7 +1,7 @@
 
 import { Block } from "../World/Block.js";
 import { genColArr, calCol } from "./WorldChunkModule.js";
-import { mat4, degree2radian as d2r } from "../utils/gmath.js";
+import { mat4, degree2radian as d2r } from "../utils/math/index.js";
 
 // Block => textureUV, block render type => { ver, ele, defaultTexUV, defaultColor }
 const blockMeshs = new Map();
@@ -96,11 +96,10 @@ class EntityItemModel {
         if (!this.renderer) return;
         const {renderer, bufferObj, mM, entity} = this, {ctx} = renderer;
         const prg = renderer.getProgram("entityItem");
-        mat4.identity(mM);
-        mat4.translate(mM, entity.position, mM);
-        mat4.rotate(mM, d2r(this.randomStart / 36), [0, 1, 0], mM);
-        mat4.scale(mM, [.25, .25, .25], mM);
-        mat4.translate(mM, [-.5, Math.sin(this.randomStart / 540) * 0.5 + 1.125, -.5], mM);
+        mat4(mM).E().translate(entity.position)
+        .rotate(d2r(this.randomStart / 36), [0, 1, 0])
+        .scale([.25, .25, .25])
+        .translate([-.5, Math.sin(this.randomStart / 540) * 0.5 + 1.125, -.5]);
         prg.use()
             .setUni("mMatrix", mM)
             .setUni("vMatrix", renderer.mainCamera.view)

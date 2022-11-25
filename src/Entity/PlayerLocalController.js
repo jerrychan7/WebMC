@@ -1,7 +1,7 @@
 
 import { EntityController } from "./EntityController.js";
 import { Block } from "../World/Block.js";
-import { vec3 } from "../utils/gmath.js";
+import { vec3 } from "../utils/math/index.js";
 import { pm } from "../UI/Page.js";
 import { Item } from "./Item.js";
 

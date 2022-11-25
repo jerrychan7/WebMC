@@ -6,7 +6,7 @@ import {
     CHUNK_Y_SIZE as Y_SIZE,
     CHUNK_Z_SIZE as Z_SIZE,
 } from "../World/Chunk.js";
-import { manhattanDis } from "../utils/gmath.js";
+import { manhattanDis } from "../utils/math/index.js";
 import * as glsl from "./glsl.js";
 
 const rxyz2int = Chunk.getLinearBlockIndex;

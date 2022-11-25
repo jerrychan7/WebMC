@@ -1,5 +1,5 @@
 import { Block } from "../World/Block.js";
-import { mat4 } from "../utils/gmath.js";
+import { mat4 } from "../utils/math/index.js";
 import * as glsl from "./glsl.js";
 import { calCol } from "./WorldChunkModule.js";
 
@@ -65,9 +65,7 @@ class HighlightSelectedBlock {
             block = world.getBlock(bx, by, bz),
             selector = renderer.getProgram("selector").use(),
             linecol = [], surfaceCol = [];
-        mat4.identity(this.mvp);
-        mat4.translate(this.mvp, hit.blockPos, this.mvp);
-        mat4.multiply(mainPlayer.camera.projview, this.mvp, this.mvp);
+        mat4(this.mvp).E().translate(hit.blockPos).postMul(mainPlayer.camera.projview);
         selector.setUni("mvp", this.mvp);
         let mesh = this.meshs.get(block.renderType), lineMesh = mesh.line, surfaceMeshs = mesh.surface;
         switch (block.renderType) {
@@ -137,6 +135,6 @@ class HighlightSelectedBlock {
 };
 
 export {
-    HighlightSelectedBlock,
     HighlightSelectedBlock as default,
+    HighlightSelectedBlock,
 };
