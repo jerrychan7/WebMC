@@ -3,7 +3,7 @@ import { MCComponent } from "./Component.js";
 
 class MCSlider extends MCComponent {
     static get componentName() { return "mc-slider"; };
-    static get templateUrl() { return "src/UI/MCSlider.html" };
+    static get templateUrl() { return "src/UI/components/MCSlider.html" };
     static observedAttributes = ["label", "echo", "prefix", "progress", "unit", "min", "step", "max", "value"];
     #input = this.shadowRoot.querySelector("input");
     #progress = this.shadowRoot.getElementById("progress");

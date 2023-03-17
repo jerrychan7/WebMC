@@ -1,5 +1,5 @@
 
-import { asyncLoadResByUrl, setResource, waitResource } from "../utils/loadResources.js";
+import { asyncLoadResByUrl, setResource, waitResource } from "../../utils/loadResources.js";
 const mcComponents = {};
 setResource("MCComponent", mcComponents);
 

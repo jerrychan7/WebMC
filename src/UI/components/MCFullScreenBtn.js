@@ -1,6 +1,6 @@
 
 import { MCButton } from "./MCButton.js";
-import { pm } from "./Page.js";
+import { pm } from "../pages/Page.js";
 
 const requestFullscreen = document.body.requestFullscreen || document.body.mozRequestFullScreen || document.body.webkitRequestFullScreen || document.body.msRequestFullscreen;
 const isFullscreen = () => document.body === (document.fullscreenElement || document.mozFullScreenElement || document.webkitFullscreenElement || document.msFullscreenElement);

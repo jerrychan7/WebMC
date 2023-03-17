@@ -1,8 +1,8 @@
 
 import { Page, pm } from "./Page.js";
 
-import { edm } from "../utils/EventDispatcher.js";
-import { RESOURCES } from "../utils/loadResources.js";
+import { edm } from "../../utils/EventDispatcher.js";
+import { RESOURCES } from "../../utils/loadResources.js";
 
 let preloadIsDone = false,
     numOfResLoaded = 0,
@@ -26,6 +26,7 @@ edm.getOrNewEventDispatcher("mc.load")
     resCount[url] = (resCount[url] || 0) + 1;
     li.innerHTML = url + " (" + resCount[url] + ")";
     promise.then(async _ => {
+        // console.log(url, promise);
         await sleep(600);
         li.innerHTML = url + " (" + --resCount[url] + ")";
         if (resCount[url] == 0) {

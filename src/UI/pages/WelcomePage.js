@@ -1,11 +1,11 @@
 
 import { Page } from "./Page.js";
 
-import { WelcomeRenderer } from "../Renderer/WelcomePageRenderer.js";
+import { WelcomeRenderer } from "../../Renderer/WelcomePageRenderer.js";
 
 class WelcomePage extends Page {
     static get shortPageID() { return "welcome"; };
-    static get templateUrl() { return "src/UI/WelcomePage.html"; };
+    static get templateUrl() { return "src/UI/pages/WelcomePage.html"; };
     constructor() {
         super();
         this.bgCanvas = this.shadowRoot.getElementById("background-canvas");

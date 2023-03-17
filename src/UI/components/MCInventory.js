@@ -3,7 +3,7 @@ import { MCComponent } from "./Component.js";
 
 class MCInventory extends MCComponent {
     static get componentName() { return "mc-inventory"; };
-    static get templateUrl() { return "src/UI/MCInventory.html"; };
+    static get templateUrl() { return "src/UI/components/MCInventory.html"; };
     constructor() {
         super();
         this.closeBtn = this.shadowRoot.querySelector(".mc-close-btn");

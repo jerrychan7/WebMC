@@ -3,7 +3,7 @@ import { MCComponent } from "./Component.js";
 
 class MCSwitch extends MCComponent {
     static get componentName() { return "mc-switch"; };
-    static get templateUrl() { return "src/UI/MCSwitch.html" };
+    static get templateUrl() { return "src/UI/components/MCSwitch.html" };
     static observedAttributes = ["disabled", "value", "sep", "checked", "on", "off"];
     #on = this.shadowRoot.querySelector("slot[name=on]");
     #off = this.shadowRoot.querySelector("slot[name=off");

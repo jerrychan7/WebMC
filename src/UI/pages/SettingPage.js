@@ -1,12 +1,12 @@
 
 import { Page, pm } from "./Page.js";
-import { World } from "../World/World.js";
+import { World } from "../../World/World.js";
 
 // TODO: 使用单个设置单例来同步设置以及持久化
 
 class SettingPage extends Page {
     static get shortPageID() { return "setting"; };
-    static get templateUrl() { return "src/UI/SettingPage.html"; };
+    static get templateUrl() { return "src/UI/pages/SettingPage.html"; };
     constructor() {
         super();
         this.worldTerrainBtns = this.shadowRoot.querySelectorAll(".world-terrain");

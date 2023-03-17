@@ -3,7 +3,7 @@ import { Page, pm } from "./Page.js";
 
 class PausePage extends Page {
     static get shortPageID() { return "pause"; };
-    static get templateUrl() { return "src/UI/PausePage.html"; };
+    static get templateUrl() { return "src/UI/pages/PausePage.html"; };
     onHistoryBack() { this.close(); };
 };
 

@@ -1,11 +1,11 @@
 
 import { MCComponent } from "./Component.js";
 
-import { pm } from "./Page.js";
+import { pm } from "../pages/Page.js";
 
 class MCButton extends MCComponent {
     static get componentName() { return "mc-button"; };
-    static get templateUrl() { return "src/UI/MCButton.html" };
+    static get templateUrl() { return "src/UI/components/MCButton.html" };
     constructor() {
         super();
         this.addEventListener("click", e => {

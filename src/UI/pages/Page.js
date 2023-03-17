@@ -1,8 +1,8 @@
 
-import { MCComponent } from "./Component.js";
-import { edm } from "../utils/EventDispatcher.js";
+import { MCComponent } from "../components/Component.js";
+import { edm } from "../../utils/EventDispatcher.js";
 
-import { FSM } from "../utils/FiniteStateMachine.js";
+import { FSM } from "../../utils/FiniteStateMachine.js";
 
 edm.getOrNewEventDispatcher("mc.preload")
 .addEventListener("done", () => {

@@ -1,12 +1,12 @@
 
 import { MCComponent } from "./Component.js";
-// import { Block } from "../World/Block.js";
+// import { Block } from "../../World/Block.js";
 
 const normIndex = (i, len) => (i + len) % len;
 
 class MCHotbar extends MCComponent {
     static get componentName() { return "mc-hotbar"; };
-    static get templateUrl() { return "src/UI/MCHotbar.html"; };
+    static get templateUrl() { return "src/UI/components/MCHotbar.html"; };
     constructor() {
         super();
         this.itemsDOM = this.shadowRoot.getElementById("items");

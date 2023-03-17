@@ -1,14 +1,14 @@
 
 import { Page, pm } from "./Page.js";
 
-import { World } from "../World/World.js";
-import { WorldRenderer } from "../Renderer/WorldRenderer.js";
+import { World } from "../../World/World.js";
+import { WorldRenderer } from "../../Renderer/WorldRenderer.js";
 
 const sleep = ms => new Promise(s => window.setTimeout(s, ms));
 
 class LoadTerrainPage extends Page {
     static get shortPageID() { return "load-terrain"; };
-    static get templateUrl() { return "src/UI/LoadTerrainPage.html"; };
+    static get templateUrl() { return "src/UI/pages/LoadTerrainPage.html"; };
     async connectedCallback() {
         await super.connectedCallback();
         let p = this.shadowRoot.getElementById("gen-out");

@@ -1,6 +1,6 @@
 
 import { Page, pm } from "./Page.js";
-import { PlayerLocalController } from "../Entity/PlayerLocalController.js";
+import { PlayerLocalController } from "../../Entity/PlayerLocalController.js";
 let worldRenderer = null, world = null;
 
 pm.addEventListener("load-terrain.loaded", ({world: w, renderer}) => {
@@ -11,7 +11,7 @@ pm.addEventListener("load-terrain.loaded", ({world: w, renderer}) => {
 
 class PlayPage extends Page {
     static get shortPageID() { return "play"; };
-    static get templateUrl() { return "src/UI/PlayPage.html"; };
+    static get templateUrl() { return "src/UI/pages/PlayPage.html"; };
     constructor() {
         super();
         this.moveButtons = this.shadowRoot.querySelector("mc-move-buttons");
