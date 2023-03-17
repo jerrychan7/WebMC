@@ -31,7 +31,7 @@ const vec2 = defineLineAlge("Vec2", () => new ARRAY_TYPE(2), {
         fn(src) { return Math.hypot(src[0], src[1]); },
         argsLen: 1, output: 0,
     },
-    add: { alias: ["+",],
+    add: { alias: ["+", "plus",],
         fn(v1, v2, dest = new ARRAY_TYPE(2)) {
             dest[0] = v1[0] + v2[0]; dest[1] = v1[1] + v2[1];
             return dest;
@@ -57,7 +57,7 @@ const vec2 = defineLineAlge("Vec2", () => new ARRAY_TYPE(2), {
         fn(v1, v2) { return v1[0] * v2[0] + v1[1] * v2[1]; },
         argsLen: 2, output: 0,
     },
-    scale: {
+    scale: { alias: ["times",],
         fn(v, s, dest = new ARRAY_TYPE(2)) {
             dest[0] = v[0] * s; dest[1] = v[1] * s;
             return dest;
@@ -76,7 +76,7 @@ const vec2 = defineLineAlge("Vec2", () => new ARRAY_TYPE(2), {
                     vec2.scaleAndAdd(v, s, dest);
         },
     },
-    divide: { alias: ["div", "/",],
+    divide: { alias: ["div", "/", "dividedBy",],
         fn(v1, v2, dest = new ARRAY_TYPE(2)) {
             dest[0] = v1[0] / v2[0]; dest[1] = v1[1] / v2[1];
             return dest;
@@ -149,10 +149,10 @@ const vec2 = defineLineAlge("Vec2", () => new ARRAY_TYPE(2), {
     },
     lerpUnclamped: {
         fn(src, v, t, dest = new ARRAY_TYPE(2)) {
-            // dest += (v - src) * t
-            const dx = v[0] - src[0], dy = v[1] - src[1];
-            dest[0] += dx * t;
-            dest[1] += dy * t;
+            // dest = src + (v - src) * t
+            const [x, y] = src, dx = v[0] - x, dy = v[1] - y;
+            dest[0] = x + dx * t;
+            dest[1] = y + dy * t;
             return dest;
         },
     },
@@ -167,3 +167,5 @@ export {
     vec2 as default,
     vec2,
 };
+
+window.vec2 = vec2;

@@ -32,7 +32,7 @@ const vec3 = defineLineAlge("Vec3", () => new ARRAY_TYPE(3), {
         fn(src) { return Math.hypot(src[0], src[1], src[2]); },
         argsLen: 1, output: 0,
     },
-    add: { alias: ["+",],
+    add: { alias: ["+", "plus",],
         fn(v1, v2, dest = new ARRAY_TYPE(3)) {
             dest[0] = v1[0] + v2[0]; dest[1] = v1[1] + v2[1]; dest[2] = v1[2] + v2[2];
             return dest;
@@ -61,7 +61,7 @@ const vec3 = defineLineAlge("Vec3", () => new ARRAY_TYPE(3), {
     dot: { alias: [".", "·",],
         fn(v1, v2) { return v1[0] * v2[0] + v1[1] * v2[1] + v1[2] * v2[2]; }, argsLen: 2, output: 0,
     },
-    scale: {
+    scale: { alias: ["times",],
         fn(v, s, dest = new ARRAY_TYPE(3)) {
             dest[0] = v[0] * s; dest[1] = v[1] * s; dest[2] = v[2] * s;
             return dest;
@@ -80,7 +80,7 @@ const vec3 = defineLineAlge("Vec3", () => new ARRAY_TYPE(3), {
                     vec3.scaleAndAdd(v, s, dest);
         },
     },
-    divide: { alias: ["div", "/",],
+    divide: { alias: ["div", "/", "dividedBy",],
         fn(v1, v2, dest = new ARRAY_TYPE(3)) {
             dest[0] = v1[0] / v2[0]; dest[1] = v1[1] / v2[1]; dest[2] = v1[2] / v2[2];
             return dest;
@@ -171,11 +171,11 @@ const vec3 = defineLineAlge("Vec3", () => new ARRAY_TYPE(3), {
     },
     lerpUnclamped: {
         fn(src, v, t, dest = new ARRAY_TYPE(3)) {
-            // dest += (v - src) * t
-            const dx = v[0] - src[0], dy = v[1] - src[1], dz = v[2] - src[2];
-            dest[0] += dx * t;
-            dest[1] += dy * t;
-            dest[2] += dz * t;
+            // dest = src + (v - src) * t
+            const [x, y, z] = src, dx = v[0] - x, dy = v[1] - y, dz = v[2] - z;
+            dest[0] = x + dx * t;
+            dest[1] = y + dy * t;
+            dest[2] = z + dz * t;
             return dest;
         },
     },
@@ -190,3 +190,5 @@ export {
     vec3 as default,
     vec3,
 };
+
+window.vec3 = vec3;

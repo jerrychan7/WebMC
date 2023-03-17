@@ -97,9 +97,9 @@ class EntityItemModel {
         const {renderer, bufferObj, mM, entity} = this, {ctx} = renderer;
         const prg = renderer.getProgram("entityItem");
         mat4(mM).E().translate(entity.position)
-        .rotate(d2r(this.randomStart / 36), [0, 1, 0])
-        .scale([.25, .25, .25])
-        .translate([-.5, Math.sin(this.randomStart / 540) * 0.5 + 1.125, -.5]);
+            .rotate(d2r(this.randomStart / 36), [0, 1, 0])
+            .scale([.25, .25, .25])
+            .translate([-.5, Math.sin(this.randomStart / 540) * 0.5 + 1.125, -.5]);
         prg.use()
             .setUni("mMatrix", mM)
             .setUni("vMatrix", renderer.mainCamera.view)
