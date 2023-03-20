@@ -4,8 +4,6 @@ import { MCComponent } from "./Component.js";
 import { pm } from "../pages/Page.js";
 
 class MCButton extends MCComponent {
-    static get componentName() { return "mc-button"; };
-    static get templateUrl() { return "src/UI/components/MCButton.html" };
     constructor() {
         super();
         this.addEventListener("click", e => {
@@ -15,7 +13,7 @@ class MCButton extends MCComponent {
         });
     };
     static get observedAttributes() { return ["disabled", "value"]; };
-    attributeChangedCallback(name, oldValue, newValue) {
+    onAttrChanged(name, oldValue, newValue) {
         if (name == "value")
             this.shadowRoot.querySelector("slot").innerHTML = newValue;
     };

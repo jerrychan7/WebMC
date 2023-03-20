@@ -2,7 +2,6 @@
 import { MCComponent } from "./Component.js";
 
 class MCCrosshairs extends MCComponent {
-    static get componentName() { return "mc-crosshairs"; };
     get template() {
         return MCComponent.genTemplate(`
             <style>

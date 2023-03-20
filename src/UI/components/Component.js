@@ -3,6 +3,8 @@ import { asyncLoadResByUrl, setResource, waitResource } from "../../utils/loadRe
 const mcComponents = {};
 setResource("MCComponent", mcComponents);
 
+const sleep = ms => new Promise(s => setTimeout(s, ms));
+
 class MCComponent extends HTMLElement {
     static setBorderAndWaitImg(uri, styleSelector = "." + uri, styleDeclarations = {}) {
         if (!("preloadStyleRules" in this)) this.preloadStyleRules = [];
@@ -51,6 +53,9 @@ class MCComponent extends HTMLElement {
         mcComponents[id] = template;
         return template;
     };
+    static get templateUrlPrefix() { return "src/UI/components/" };
+    static get templateUrlFilename() { return this.name; };
+    static get templateUrl() { return this.templateUrlPrefix + this.templateUrlFilename + ".html"; };
     static asyncLoadTemplateByUrl(url = this.templateUrl) {
         return asyncLoadResByUrl(url).then(text => {
             if (typeof text !== "string") return text;
@@ -59,6 +64,7 @@ class MCComponent extends HTMLElement {
             return tmp;
         });
     };
+    static get componentName() { return this.name.replace(/([A-Z]+|[a-z])([A-Z])/g, "$1-$2").toLowerCase(); };
     static define(componentName = this.componentName) {
         if (!componentName) throw "Component registration failed: Missing componentName.";
         return customElements.define(componentName, this);
@@ -77,12 +83,15 @@ class MCComponent extends HTMLElement {
     };
     constructor() {
         super();
+        if (new.target.name === "MCComponent")
+            throw "Class 'MCComponent' cannot be instantiated!";
         this.attachShadow({mode: 'open'});
         if (this.template) this.appendTemplate();
     };
-    async connectedCallback() {};
-    async disconnectedCallback() {};
-    async adoptedCallback() {};
+    async connectedCallback(...args) { if (this.onConnected) { await sleep(0); this.onConnected(...args); } };
+    async disconnectedCallback(...args) { if (this.onDisconnected) { await sleep(0); this.onDisconnected(...args); } };
+    async adoptedCallback(...args) { if (this.onAdopted) { await sleep(0); this.onAdopted(...args); } };
+    async attributeChangedCallback(...args) { if (this.onAttrChanged) { await sleep(0); this.onAttrChanged(...args); } };
     dispatchEvent(type, {
         global = false,
         data = {}

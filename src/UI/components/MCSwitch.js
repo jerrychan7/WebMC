@@ -2,9 +2,6 @@
 import { MCComponent } from "./Component.js";
 
 class MCSwitch extends MCComponent {
-    static get componentName() { return "mc-switch"; };
-    static get templateUrl() { return "src/UI/components/MCSwitch.html" };
-    static observedAttributes = ["disabled", "value", "sep", "checked", "on", "off"];
     #on = this.shadowRoot.querySelector("slot[name=on]");
     #off = this.shadowRoot.querySelector("slot[name=off");
     #refresh(checked = this.checked) {
@@ -20,7 +17,8 @@ class MCSwitch extends MCComponent {
             this.dispatchEvent("toggle", { global: true, data: this.checked, });
         });
     };
-    attributeChangedCallback(name, oldValue, newValue) {
+    static observedAttributes = ["disabled", "value", "sep", "checked", "on", "off"];
+    onAttrChanged(name, oldValue, newValue) {
         if (name === "checked") this.#refresh(newValue !== null);
         else if (name === "disabled") this.disabled = newValue;
         else if (name === "value")

@@ -2,9 +2,6 @@
 import { MCComponent } from "./Component.js";
 
 class MCSlider extends MCComponent {
-    static get componentName() { return "mc-slider"; };
-    static get templateUrl() { return "src/UI/components/MCSlider.html" };
-    static observedAttributes = ["label", "echo", "prefix", "progress", "unit", "min", "step", "max", "value"];
     #input = this.shadowRoot.querySelector("input");
     #progress = this.shadowRoot.getElementById("progress");
     constructor() {
@@ -15,8 +12,7 @@ class MCSlider extends MCComponent {
             this.dispatchEvent("valueChange", { global: true, data: this.#input.value });
         });
     };
-    async connectedCallback() {
-        await super.connectedCallback();
+    onConnected() {
         this.initVar();
     };
     refresh() {
@@ -32,7 +28,8 @@ class MCSlider extends MCComponent {
         input.value = this.getAttribute("value") || 50;
         this.refresh();
     };
-    attributeChangedCallback(name, oldVal, newVal) {
+    static get observedAttributes() { return ["label", "echo", "prefix", "progress", "unit", "min", "step", "max", "value"]; };
+    onAttrChanged(name, oldVal, newVal) {
         if (oldVal === newVal) return;
         if (name === "echo") {
             this.shadowRoot.getElementById("default-echo").style.display = newVal? "none": null;

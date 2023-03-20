@@ -2,8 +2,6 @@
 import { MCComponent } from "./Component.js";
 
 class MCInventory extends MCComponent {
-    static get componentName() { return "mc-inventory"; };
-    static get templateUrl() { return "src/UI/components/MCInventory.html"; };
     constructor() {
         super();
         this.closeBtn = this.shadowRoot.querySelector(".mc-close-btn");
@@ -13,9 +11,6 @@ class MCInventory extends MCComponent {
             return false;
         });
         this.itemList = this.shadowRoot.querySelector(".mc-inventory-items");
-    };
-    async connectedCallback() {
-        await super.connectedCallback();
     };
     appendItem(block) {
         let div = document.createElement("div");

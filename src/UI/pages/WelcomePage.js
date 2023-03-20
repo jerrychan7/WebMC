@@ -4,20 +4,16 @@ import { Page } from "./Page.js";
 import { WelcomeRenderer } from "../../Renderer/WelcomePageRenderer.js";
 
 class WelcomePage extends Page {
-    static get shortPageID() { return "welcome"; };
-    static get templateUrl() { return "src/UI/pages/WelcomePage.html"; };
     constructor() {
         super();
         this.bgCanvas = this.shadowRoot.getElementById("background-canvas");
         this.renderer = null;
     };
-    async connectedCallback() {
-        await super.connectedCallback();
+    onConnected() {
         this.renderer = new WelcomeRenderer(this.bgCanvas);
         this.renderer.play();
     };
-    async disconnectedCallback() {
-        await super.disconnectedCallback();
+    onDisconnected() {
         this.renderer.dispose();
         this.renderer = null;
     };

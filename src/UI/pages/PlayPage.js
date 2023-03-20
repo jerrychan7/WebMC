@@ -10,8 +10,6 @@ pm.addEventListener("load-terrain.loaded", ({world: w, renderer}) => {
 });
 
 class PlayPage extends Page {
-    static get shortPageID() { return "play"; };
-    static get templateUrl() { return "src/UI/pages/PlayPage.html"; };
     constructor() {
         super();
         this.moveButtons = this.shadowRoot.querySelector("mc-move-buttons");
@@ -20,8 +18,7 @@ class PlayPage extends Page {
         this.mainCanvas = this.shadowRoot.getElementById("mainCanvas");
         this.debugOutput = this.shadowRoot.getElementById("mc-f3-out");
     };
-    async connectedCallback() {
-        await super.connectedCallback();
+    onConnected() {
         this.hotbar.addEventListener("inventoryBtnClick", e => {
             if (this.isShownInventory) this.closeInventory();
             else this.showInventory();
@@ -42,8 +39,7 @@ class PlayPage extends Page {
         this.playerLocalController = new PlayerLocalController(null, { playPage: this, });
         if (worldRenderer === null) pm.openPageByID("load-terrain");
     };
-    async disconnectedCallback() {
-        await super.disconnectedCallback();
+    onDisconnected() {
         if (!worldRenderer) return;
         worldRenderer.dispose();
         this.playerLocalController.dispose();

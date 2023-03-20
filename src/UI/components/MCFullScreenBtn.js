@@ -14,7 +14,7 @@ document.body.MSFullscreenChange = function(e) {
 };
 
 class MCFullScreenButton extends MCButton {
-    static get componentName() { return "mc-full-screen-button"; };
+    static get templateUrlFilename() { return "MCButton"; };
     constructor() {
         super();
         this.onfullscreenchange = this.onfullscreenchange.bind(this);
@@ -25,15 +25,13 @@ class MCFullScreenButton extends MCButton {
     onfullscreenchange(isFull) {
         this.style.display = isFull? "none": "";
     };
-    async connectedCallback() {
-        await super.connectedCallback();
+    onConnected() {
         this.innerHTML = "full screen";
         this.style.position = "absolute";
         this.style.top = this.style.right = "10px";
         this.style.display = window.isTouchDevice && !isFullscreen()? "": "none";
     };
-    async disconnectedCallback() {
-        await super.disconnectedCallback();
+    onDisconnected() {
         pm.removeEventListener("onfullscreenchange", this.onfullscreenchange);
         this.removeEventListener("click", this.onclick);
     };

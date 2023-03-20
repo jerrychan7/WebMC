@@ -5,8 +5,6 @@ import { MCComponent } from "./Component.js";
 const normIndex = (i, len) => (i + len) % len;
 
 class MCHotbar extends MCComponent {
-    static get componentName() { return "mc-hotbar"; };
-    static get templateUrl() { return "src/UI/components/MCHotbar.html"; };
     constructor() {
         super();
         this.itemsDOM = this.shadowRoot.getElementById("items");
@@ -27,13 +25,12 @@ class MCHotbar extends MCComponent {
         }
     };
     get selectOn() { return 1 * getComputedStyle(this).getPropertyValue("--offset"); };
-    async connectedCallback() {
-        await super.connectedCallback();
+    onConnected() {
         let showInventoryBtn = this.hasAttribute("showInventoryBtn") || window.isTouchDevice;
         this.inventoryBtn.style.display = showInventoryBtn? "": "none";
     };
     static get observedAttributes() { return ["offset", "inventory_btn_active"]; };
-    attributeChangedCallback(name, oldValue, newValue) {
+    onAttrChanged(name, oldValue, newValue) {
         switch (name) {
         case "inventory_btn_active": {
             this.activeInventoryBtn(this.hasAttribute(name));

@@ -7,10 +7,7 @@ import { WorldRenderer } from "../../Renderer/WorldRenderer.js";
 const sleep = ms => new Promise(s => window.setTimeout(s, ms));
 
 class LoadTerrainPage extends Page {
-    static get shortPageID() { return "load-terrain"; };
-    static get templateUrl() { return "src/UI/pages/LoadTerrainPage.html"; };
-    async connectedCallback() {
-        await super.connectedCallback();
+    async onConnected() {
         let p = this.shadowRoot.getElementById("gen-out");
         p.innerHTML = "Generating terrain...";
         await sleep(70);

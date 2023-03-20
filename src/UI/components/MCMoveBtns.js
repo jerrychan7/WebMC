@@ -2,8 +2,7 @@
 import { MCComponent } from "./Component.js";
 
 class MCMoveButtons extends MCComponent {
-    static get componentName() { return "mc-move-buttons"; };
-    static get templateUrl() { return "src/UI/components/MCMoveBtns.html"; };
+    static get templateUrlFilename() { return "MCMoveBtns"; };
     constructor() {
         super();
         this.lastBtnPressTime = {};

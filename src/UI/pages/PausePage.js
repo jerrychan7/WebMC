@@ -1,17 +1,15 @@
 
-import { Page, pm } from "./Page.js";
+import { Page } from "./Page.js";
 
 class PausePage extends Page {
-    static get shortPageID() { return "pause"; };
-    static get templateUrl() { return "src/UI/pages/PausePage.html"; };
     onHistoryBack() { this.close(); };
+    onTransitionedFromThis(to) {
+        if (to != "welcome") return;
+        let play = Page.pm.getPageByID("play");
+        play && play.close();
+        this.close();
+    };
 };
-
-pm.addEventListener("pause=>welcome", (pause, welcome) => {
-    let play = pm.getPageByID("play");
-    play && play.close();
-    pause.close();
-});
 
 PausePage.asyncLoadAndDefine();
 

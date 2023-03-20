@@ -6,11 +6,16 @@ import { FSM } from "../../utils/FiniteStateMachine.js";
 
 edm.getOrNewEventDispatcher("mc.preload")
 .addEventListener("done", () => {
+    // 设一层空的历史记录作为拦截
     history.pushState(null, document.title);
+    // 如果点击了历史回退或手机上按了返回按钮
     window.addEventListener("popstate", e => {
+        // 把退掉的空历史记录再加回去
         history.pushState(null, document.title);
+        // 在 window 上发送 back 事件
         window.dispatchEvent(new Event("back"));
     }, false);
+    // 当接收到 exit 事件则绕过上面的拦截，视为真正的回退
     window.addEventListener("exit", e => {
         history.go(-2);
     });
@@ -86,27 +91,33 @@ pageStyle.innerHTML = `
 `;
 pageStyle.id = "pageStyle";
 class Page extends MCComponent {
+    static get pm() { return pageManager; };
+    static get pageManager() { return pageManager; };
+    static get shortPageID() { return super.componentName.replace(/-page$/, ""); };
     static get pageID() { return "mcpage-" + this.shortPageID; };
     static get componentName() { return this.pageID; };
+    static get templateUrlPrefix() { return "src/UI/pages/"; };
     get shortPageID() { return this.constructor.shortPageID; };
     get pageID() { return this.constructor.pageID; };
     constructor() {
         super();
+        if (new.target.name === "Page")
+            throw "Class 'Page' cannot be instantiated!";
         this.onHistoryBack = this.onHistoryBack.bind(this);
         this._transitionedCallbackID =
-        pageManager.addEventListener("transitioned", (from, to, en, [fromPage, toPage]) => {
+        pageManager.addEventListener("transitioned", (from, to, eventName, [fromPage, toPage]) => {
             if (fromPage === this) {
-                this.onTransitionedFromThis(to, en, toPage);
+                this.onTransitionedFromThis(to, eventName, toPage);
                 window.removeEventListener("back", this.onHistoryBack);
             }
             else if (toPage === this) {
-                this.onTransitionedToThis(from, en, fromPage);
+                this.onTransitionedToThis(from, eventName, fromPage);
                 window.addEventListener("back", this.onHistoryBack);
             }
         });
     };
-    onTransitionedFromThis(to, en, toPage) {};
-    onTransitionedToThis(from, en, fromPage) {};
+    onTransitionedFromThis(to, eventName, toPage) {};
+    onTransitionedToThis(from, eventName, fromPage) {};
     onHistoryBack() {};
     async disconnectedCallback() {
         await super.disconnectedCallback();

@@ -59,10 +59,8 @@ edm.getOrNewEventDispatcher("mc.preload")
 const template = document.createElement("template");
 let firstTimeOpen = true;
 class PreloadPage extends Page {
-    static get shortPageID() { return "preload"; };
     get template() { return firstTimeOpen? null: template; };
-    async connectedCallback() {
-        await super.connectedCallback();
+    onConnected() {
         if (!firstTimeOpen) return;
         firstTimeOpen = false;
         let style = document.getElementById(this.pageID);
