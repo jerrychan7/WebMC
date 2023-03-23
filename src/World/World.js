@@ -1,5 +1,5 @@
 import Chunk from "./Chunk.js";
-import Block from "./Block.js";
+import { Block, LongID } from "./Block.js";
 import Player from "../Entity/Player.js";
 import { vec3, radian2degree } from "../utils/math/index.js";
 import { PerlinNoise } from "./noise.js";
@@ -14,6 +14,64 @@ asyncLoadResByUrl("src/World/worldDefaultConfig.json")
     worldDefaultConfig = cfg;
 });
 
+class WorldStorage {
+    constructor(id) {
+        this.id = id;
+        let worlds = this._getWorlds();
+        if (!(id in worlds)) worlds[id] = {
+            createAt: Date.now(),
+            modifyAt: Date.now(),
+        };
+        this._setWorlds(worlds);
+    };
+    _getWorlds() { return JSON.parse(localStorage.getItem("worlds") || "{}"); };
+    _setWorlds(data) { localStorage.setItem("worlds", JSON.stringify(data)); };
+    _updateWorld(fn) {
+        let worlds = this._getWorlds();
+        let ans = fn(worlds[this.id]);
+        worlds[this.id].modifyAt = Date.now();
+        this._setWorlds(worlds);
+        return ans;
+    };
+    get(key, defaultValue) {
+        key = key.split(">");
+        return this._updateWorld(world => {
+            let p = world;
+            for (let k of key)
+                if (!(p = p[k]))
+                    return defaultValue;
+            return p;
+        });
+    };
+    set(key, value) {
+        key = key.split(">");
+        return this._updateWorld(world => {
+            let lp = null, p = world;
+            for (let i = 0; i < key.length; ++i) {
+                let k = key[i];
+                lp = p; p = p[k];
+                if (i != key.length - 1) {
+                    if (!p) lp[k] = p = {};
+                }
+                else return lp[k] = value;
+            }
+        });
+    };
+    del(key) {
+        key = key.split(">");
+        return this._updateWorld(world => {
+            let lp = null, p = world;
+            for (let i = 0; i < key.length; ++i) {
+                let k = key[i];
+                lp = p; p = p[k];
+                if (!p) return;
+                if (i == key.length - 1)
+                    return delete lp[k];
+            }
+        });
+    };
+};
+
 class World extends EventDispatcher {
     static get config() { return worldDefaultConfig; };
 
@@ -22,18 +80,48 @@ class World extends EventDispatcher {
         worldType = World.config.terrain,
         renderer = null,
         seed = Date.now(),
+        storageId = null,
     } = {}) {
         super();
+        if (storageId != null) {
+            this.storager = new WorldStorage(storageId);
+            seed = this.storager.get("seed");
+            worldName = this.storager.get("name");
+            worldType = this.storager.get("type");
+            this.seed = seed;
+            this.noise = new PerlinNoise(seed);
+        }
+        else {
+            this.seed = seed;
+            this.noise = new PerlinNoise(seed);
+            storageId = this.noise.seed;
+            this.storager = new WorldStorage(storageId);
+            this.storager.set("name", worldName);
+            this.storager.set("type", worldType);
+            this.storager.set("seed", seed);
+        }
         this.name = worldName;
         this.type = worldType;
         this.chunkMap = {};
         this.callbacks = {};
-        this.mainPlayer = new Player(this);
-        this.entities = [this.mainPlayer];
+        let entities = this.storager.get("entities", []);
+        if (entities.length) {
+            this.entities = entities.map(entity => {
+                switch (entity.type) {
+                case "Player": return Player.from(entity).setWorld(this);
+                // case "Entity": return Entity.from(entity).setWorld(this);
+                }
+            });
+            let mainPlayerUid = this.storager.get("mainPlayer");
+            this.mainPlayer = this.entities.find(ent => ent.uid == mainPlayerUid);
+        }
+        else {
+            this.mainPlayer = new Player(this);
+            this.entities = [this.mainPlayer];
+            this.saveEntities();
+            this.storager.set("mainPlayer", this.mainPlayer.uid);
+        }
         this.renderer = renderer;
-        this.seed = seed;
-        this.noise = new PerlinNoise(seed);
-        this.generator = this.generator.bind(this);
         for (let x = -2; x <= 2; ++x)
         for (let z = -2; z <= 2; ++z)
         for (let y = 2; y >= -2; --y)
@@ -42,7 +130,12 @@ class World extends EventDispatcher {
         this.lightingCalculator = new ChunksLightCalculation(this);
         this.setRenderer(renderer);
     };
-    generator(chunkX, chunkY, chunkZ, tileMap) {
+
+    saveEntities() {
+        this.storager.set("entities", this.entities.map(ent => ent.toObj()));
+    };
+
+    generator = (chunkX, chunkY, chunkZ, tileMap) => {
         switch(this.type) {
         case "flat":
             let block = Block.getBlockByBlockName(chunkY >= 0? "air":
@@ -148,6 +241,11 @@ class World extends EventDispatcher {
             }
             break;}
         }
+        let ck = Chunk.chunkKeyByChunkXYZ(chunkX, chunkY, chunkZ);
+        let data = this.storager.get("chunks>" + ck, {});
+        for (let lb in data) {
+            tileMap[lb] = new LongID(data[lb]);
+        }
     };
     setRenderer(renderer = null) {
         if (!renderer) return;
@@ -200,7 +298,12 @@ class World extends EventDispatcher {
         [blockX, blockY, blockZ] = [blockX, blockY, blockZ].map(Math.floor);
         let c = this.chunkMap[Chunk.chunkKeyByBlockXYZ(blockX, blockY, blockZ)];
         if (c) {
-            let t = c.setBlock(...Chunk.getRelativeBlockXYZ(blockX, blockY, blockZ), blockName);
+            let rxyz = Chunk.getRelativeBlockXYZ(blockX, blockY, blockZ);
+            let t = c.setBlock(...rxyz, blockName);
+            let data = this.storager.get("chunks>" + c.chunkKey, {});
+            data[Chunk.getLinearBlockIndex(...rxyz)] = this.getTile(blockX, blockY, blockZ);
+            this.storager.set("chunks>" + c.chunkKey, data);
+            this.saveEntities();
             this.dispatchEvent("onTileChanges", blockX, blockY, blockZ);
             return t;
         }
@@ -267,6 +370,12 @@ class World extends EventDispatcher {
             for (let dy = 1; dy >= -1; --dy)
                 this.loadChunk(cx + dx, cy + dy, cz + dz);
         mainPlayer.lastChunk = cxyz;
+
+        // 每 20s 存一次实体信息
+        if (Date.now() - (this.lastEntitiesSaveTime || 0) > 20_000) {
+            this.lastEntitiesSaveTime = Date.now();
+            this.saveEntities();
+        }
     };
     // return null->uncollision    else -> { axis->("x+-y+-z+-": collision face, "": in block, b)lockPos}
     rayTraceBlock(start, end, chunkFn) {

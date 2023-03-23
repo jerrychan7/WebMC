@@ -25,14 +25,14 @@ class FiniteStateMachine extends EventDispatcher {
     };
     transition(to, ...data) {
         const from = this.currentState;
-        // console.log(from, "=>", to, this.graph[from][to], data);
+        // console.log(from, "=>", to, this.graph[from]?.[to], data);
         if (!(from in this.graph)) return console.error(`FSM: cannot find state "${from}"`);
         if (!(to in this.graph)) return console.error(`FSM: cannot find state "${to}"`);
         if (!(to in this.graph[from])) return console.error(`FSM: cannot find transition "${from}" => "${to}"`);
         const eventName = this.graph[from][to];
         this.currentState = to;
         this.dispatchEvent(eventName, ...data);
-        this.dispatchEvent("transitioned", from, to, eventName, data);
+        this.dispatchEvent("transitioned", from, to, eventName, ...data);
     };
 };
 

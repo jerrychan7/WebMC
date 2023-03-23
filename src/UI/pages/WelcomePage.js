@@ -19,9 +19,7 @@ class WelcomePage extends Page {
     };
     onTransitionedFromThis(to) {
         switch(to) {
-        case "play": {
-            this.close();
-            break; }
+        case "select-world":
         case "how-to-play": case "setting": {
             this.renderer.stop();
             break; }

@@ -7,10 +7,11 @@ class MCButton extends MCComponent {
     constructor() {
         super();
         this.addEventListener("click", e => {
-            if (this.disabled || !this.hasAttribute("gotoPage")) return false;
+            if (this.disabled) if (e.cancelable) e.stopPropagation();
+            if (!this.hasAttribute("gotoPage")) return false;
             let pageID = this.getAttribute("gotoPage");
             pm.openPageByID(pageID);
-        });
+        }, true);
     };
     static get observedAttributes() { return ["disabled", "value"]; };
     onAttrChanged(name, oldValue, newValue) {

@@ -3,14 +3,24 @@ import { vec3, vec2, EPSILON } from "../utils/math/index.js";
 import Block from "../World/Block.js";
 
 class Player extends Entity {
+    static from(obj) {
+        let player = new Player(null, obj);
+        for (let k in obj)
+            if (player[k].buffer instanceof ArrayBuffer)
+                player[k].set(obj[k]);
+            else player[k] = obj[k];
+        return player;
+    };
     constructor(world = null, {
         position = [0, 10, 0],
         pitch = 0, yaw = 0,
+        uid,
     } = {}) {
         super({
             min: [-0.25, 0, -0.25],
             max: [0.25, 1.8, 0.25]
-        }, {eyePos: [0, 1.65, 0], position, pitch, yaw, world});
+        }, {eyePos: [0, 1.65, 0], position, pitch, yaw, world, uid});
+        super.type = "Player";
 
         this.normalMoveSpeed = 4.317;
         this.runMoveSpeed = 5.612;
@@ -137,6 +147,36 @@ class Player extends Entity {
         }
         else vec2.moveToward(this.horiVelocity, [0, 0], this.horiAcceleration * dt, this.horiVelocity);
         this.moveAndCollide(this.velocity, dt);
+    };
+    toObj() {
+        const typedArr2arr = ta => Array.from(ta);
+        return {
+            ...super.toObj(),
+
+            normalMoveSpeed: this.normalMoveSpeed,
+            runMoveSpeed: this.runMoveSpeed,
+            flyMoveSpeed: this.flyMoveSpeed,
+            flyRunMoveSpeed: this.flyRunMoveSpeed,
+            moveSpeed: this.moveSpeed,
+            jumpSpeed: this.jumpSpeed,
+            normalJumpSpeed: this.normalJumpSpeed,
+            flyJumpSpeed: this.flyJumpSpeed,
+    
+            horiMoveDir: typedArr2arr(this.horiMoveDir),
+            horiVelocity: typedArr2arr(this.horiVelocity),
+            horiAcceleration: this.horiAcceleration,
+            vertMoveDir: this.vertMoveDir,
+            vertVelocity: this.vertVelocity,
+            vertAcceleration: this.vertAcceleration,
+
+            rest: typedArr2arr(this.rest),
+            lastChunk: typedArr2arr(this.lastChunk),
+            isFly: this.isFly,
+            isRun: this.isRun,
+
+            onHandItem: this.onHandItem.longID,
+            eyeInFluid: this.eyeInFluid,
+        };
     };
 };
 

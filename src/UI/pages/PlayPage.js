@@ -3,12 +3,6 @@ import { Page, pm } from "./Page.js";
 import { PlayerLocalController } from "../../Entity/PlayerLocalController.js";
 let worldRenderer = null, world = null;
 
-pm.addEventListener("load-terrain.loaded", ({world: w, renderer}) => {
-    world = w;
-    worldRenderer = renderer;
-    pm.getPageByID("play").playerLocalController.setEntity(world.mainPlayer);
-});
-
 class PlayPage extends Page {
     constructor() {
         super();
@@ -37,13 +31,37 @@ class PlayPage extends Page {
             this.hotbar.setAttribute("showInventoryBtn", "");
         }
         this.playerLocalController = new PlayerLocalController(null, { playPage: this, });
-        if (worldRenderer === null) pm.openPageByID("load-terrain");
     };
-    onDisconnected() {
+    dispose() {
         if (!worldRenderer) return;
         worldRenderer.dispose();
         this.playerLocalController.dispose();
         worldRenderer = world = null;
+    };
+    onDisconnected() { this.dispose(); };
+    onTransitionedFromThis(to, eventName, toPage, ...data) {
+        if (to == "pause") worldRenderer.stop();
+    };
+    onTransitionedToThis(from, eventName, fromPage, ...data) {
+        switch (from) {
+        case "select-world": {
+            let storageId = data[0];
+            if (storageId) pm.openPageByID("load-terrain", storageId);
+            else pm.openPageByID("load-terrain");
+            break; }
+        case "load-terrain": {
+            this.dispose();
+            const [{world: w, renderer}] = data;
+            world = w; worldRenderer = renderer;
+            this.playerLocalController.setPlayPage(this);
+            this.playerLocalController.setEntity(world.mainPlayer);
+            worldRenderer.play();
+            pm.openPageByID("pause");
+            break; }
+        case "pause": {
+            worldRenderer.play();
+            break; }
+        }
     };
     get isShownInventory() { return this.inventory.style.display !== "none"; };
     showInventory() {
@@ -66,16 +84,8 @@ pm.addEventListener("onfullscreenchange", isFull => {
     }
 });
 
-pm.addEventListener("load-terrain=>play", () => {
-    worldRenderer.play();
-    pm.openPageByID("pause");
-});
 pm.addEventListener("pause=>play", (pause, play) => {
     window.addEventListener("back", onHistoryBack, {once: true});
-    worldRenderer.play();
-});
-pm.addEventListener("play=>pause", (play, pause) => {
-    worldRenderer.stop();
 });
 
 PlayPage.asyncLoadAndDefine();

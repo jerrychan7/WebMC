@@ -2,6 +2,7 @@
 // pages
 export * from "./pages/PreloadPage.js";
 export * from "./pages/WelcomePage.js";
+export * from "./pages/SelectWorldPage.js";
 export * from "./pages/HowToPlayPage.js";
 export * from "./pages/SettingPage.js";
 export * from "./pages/LoadTerrainPage.js";

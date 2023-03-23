@@ -28,9 +28,11 @@ class PageManager extends FSM {
             initial: "preload",
             transitions: [
                 { from: "preload", to: "welcome", },
-                { from: "welcome", to: "play", },
+                { from: "welcome", to: "select-world", },
                 { from: "welcome", to: "how-to-play", },
                 { from: "welcome", to: "setting", },
+                { from: "select-world", to: "welcome", },
+                { from: "select-world", to: "play", },
                 { from: "play", to: "load-terrain", },
                 { from: "play", to: "pause", },
                 { from: "load-terrain", to: "play", },
@@ -50,30 +52,30 @@ class PageManager extends FSM {
         let page = [...document.body.childNodes].reverse().find(page => page.pageID == pageID);
         return page || null;
     };
-    openPageByID(pageID) {
+    openPageByID(pageID, ...data) {
         if (pageID === "*pop") return this.closeCurrentPage();
         let currentPage = this.getCurrentPage();
         let page = document.createElement("mcpage-" + pageID);
         document.body.appendChild(page);
-        this.dispatchEvent("open", page);
-        this.transition(pageID, currentPage, page);
+        this.dispatchEvent("opened", page, ...data);
+        this.transition(pageID, currentPage, page, ...data);
         return page;
     };
-    closePage(pageID) {
-        if (pageID === "*pop") return this.closeCurrentPage();
+    closePage(pageID, ...data) {
+        if (pageID === "*pop") return this.closeCurrentPage(...data);
         let page = this.getPageByID(pageID);
         if (!page) return null;
-        if (page === this.getCurrentPage()) return this.closeCurrentPage();
+        if (page === this.getCurrentPage()) return this.closeCurrentPage(...data);
         document.body.removeChild(page);
-        this.dispatchEvent("close", page);
+        this.dispatchEvent("closed", page, ...data);
         return page;
     };
-    closeCurrentPage() {
+    closeCurrentPage(...data) {
         let page = this.getCurrentPage();
         document.body.removeChild(page);
-        this.dispatchEvent("close", page);
+        this.dispatchEvent("closed", page, ...data);
         let nowPage = this.getCurrentPage();
-        this.transition(nowPage.shortPageID, page, nowPage);
+        this.transition(nowPage.shortPageID, page, nowPage, ...data);
         return page;
     };
 };
@@ -105,19 +107,19 @@ class Page extends MCComponent {
             throw "Class 'Page' cannot be instantiated!";
         this.onHistoryBack = this.onHistoryBack.bind(this);
         this._transitionedCallbackID =
-        pageManager.addEventListener("transitioned", (from, to, eventName, [fromPage, toPage]) => {
+        pageManager.addEventListener("transitioned", (from, to, eventName, fromPage, toPage, ...data) => {
             if (fromPage === this) {
-                this.onTransitionedFromThis(to, eventName, toPage);
+                this.onTransitionedFromThis(to, eventName, toPage, ...data);
                 window.removeEventListener("back", this.onHistoryBack);
             }
             else if (toPage === this) {
-                this.onTransitionedToThis(from, eventName, fromPage);
+                this.onTransitionedToThis(from, eventName, fromPage, ...data);
                 window.addEventListener("back", this.onHistoryBack);
             }
         });
     };
-    onTransitionedFromThis(to, eventName, toPage) {};
-    onTransitionedToThis(from, eventName, fromPage) {};
+    onTransitionedFromThis(to, eventName, toPage, ...data) {};
+    onTransitionedToThis(from, eventName, fromPage, ...data) {};
     onHistoryBack() {};
     async disconnectedCallback() {
         await super.disconnectedCallback();
@@ -133,10 +135,10 @@ class Page extends MCComponent {
         });
         return tmp;
     };
-    close() {
+    close(...data) {
         // pageManager.dispatchEvent("close", this);
         // this.parentElement.removeChild(this);
-        pageManager.closePage(this.shortPageID);
+        pageManager.closePage(this.shortPageID, ...data);
     };
 };
 

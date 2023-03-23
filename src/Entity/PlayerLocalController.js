@@ -14,8 +14,6 @@ class PlayerLocalController extends EntityController {
         mousemoveSensitivity = 200,
     } = {}) {
         super(player);
-        this.playPage = playPage;
-        this.hotbarUI = hotbarUI;
         this.mousemoveSensitivity = mousemoveSensitivity;
         this.eventHandler = this.eventHandler.bind(this);
         this["pause=>play"] = this.requestPointerLock.bind(this);
@@ -26,32 +24,48 @@ class PlayerLocalController extends EntityController {
         this.canvasTouchMoveLen = 0;
         this.canvasDestroying = false;
         this.keys = [];
+        this.hotbar = [];
+        this.inventoryStore = Block.listBlocks();
+        this.setPlayPage(playPage, { canvas, moveButtons, hotbarUI });
+    };
+    setPlayPage(playPage = null, {
+        canvas = playPage? playPage.mainCanvas: null,
+        moveButtons = playPage? playPage.moveButtons: null,
+        hotbarUI = playPage? playPage.hotbar: null,
+    } = {}) {
+        if (this.playPage) {
+            this.hotbarUI.removeEventListener("selectBlock", this.onHotbarUISelectBlock);
+            this.playPage.removeEventListener("closeInventory", this.onCloseInventory);
+            this.playPage.removeEventListener("showInventory", this.onShowInventory);
+            this.setCanvas();
+            this.setMoveBtns();
+        }
+        this.playPage = playPage;
+        this.hotbarUI = hotbarUI;
         this.setCanvas(canvas);
         this.setMoveBtns(moveButtons);
-
         this.hotbar = [];
-        const listBlocks = Block.listBlocks();
-        this.inventoryStore = listBlocks;
+        if (!playPage) return;
+        playPage.inventory.clear();
+        const listBlocks = this.inventoryStore;
         for (let b of listBlocks)
             playPage.inventory.appendItem(b);
         for (let i = 0; i < hotbarUI.length; ++i) {
             this.hotbar.push(listBlocks[i]);
             hotbarUI.setItem(listBlocks[i], i);
         }
-        hotbarUI.addEventListener("selectBlock", e => {
-            this.entity.onHandItem = e.detail || Block.getBlockByBlockName("air");
-        });
-        playPage.addEventListener("closeInventory", e => {
-            this.requestPointerLock();
-        });
-        playPage.addEventListener("showInventory", e => {
-            this.exitPointerLock();
-        });
+        hotbarUI.addEventListener("selectBlock", this.onHotbarUISelectBlock);
+        playPage.addEventListener("closeInventory", this.onCloseInventory);
+        playPage.addEventListener("showInventory", this.onShowInventory);
     };
+    onHotbarUISelectBlock = e => {
+        this.entity.onHandItem = e.detail || Block.getBlockByBlockName("air");
+    };
+    onCloseInventory = e => { this.requestPointerLock(); };
+    onShowInventory = e => { this.exitPointerLock(); };
     dispose() {
-        this.setEntity();
-        this.setCanvas();
-        this.setMoveBtns();
+        super.dispose();
+        this.setPlayPage();
     };
     get locked() { return window.isTouchDevice || this._locked; };
     setCanvas(canvas = null) {

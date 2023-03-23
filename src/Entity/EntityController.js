@@ -12,6 +12,9 @@ class EntityController extends EventDispatcher {
         this.entity = entity;
         if (entity) entity.setController(this);
     };
+    dispose() {
+        this.setEntity();
+    };
 };
 
 export {

@@ -34,8 +34,7 @@ function toSeed(seed) {
     if (!Number.isNaN(s)) seed = s;
     if (typeof seed === "number") {
         if (Number.isInteger(seed)) {
-            if (Number.isSafeInteger(seed)) s = seed;
-            else s = seed % MAX_SAFE_PRIME;
+            s = seed % MAX_SAFE_PRIME;
         }
         else {
             seed *= Math.PI;

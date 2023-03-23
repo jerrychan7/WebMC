@@ -24,6 +24,9 @@ class MCInventory extends MCComponent {
         };
         this.itemList.append(div);
     };
+    clear() {
+        this.itemList.innerHTML = "";
+    };
 };
 
 MCInventory.setBorderAndWaitImg("inventory-items", ".mc-inventory-items");

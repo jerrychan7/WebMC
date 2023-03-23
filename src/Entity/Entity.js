@@ -12,6 +12,7 @@ class Entity {
         world = null,
         controller = null,
         camera = null,
+        uid = performance.timeOrigin + performance.now() + "-" + Math.random(),
     } = {}) {
         this.moveSpeed = 0;
         this.gravityAcceleration = 0;
@@ -26,6 +27,8 @@ class Entity {
         this.setWorld(world);
         this.setCamera(camera);
         this.setController(controller);
+        this.uid = uid;
+        this.type = "Entity";
     };
     getEyePosition() {
         return vec3.add(this.eyePos, this.position);
@@ -43,21 +46,40 @@ class Entity {
             .rotateY(this.yaw).res;
     };
     setCamera(camera = null) {
-        if (camera === this.camera) return;
+        if (camera === this.camera) return this;
         if (this.camera) this.camera.bindEntity(null);
         this.camera = camera;
         if (camera) camera.bindEntity(this);
+        return this;
     };
     setController(controller = null) {
-        if (controller === this.controller) return;
+        if (controller === this.controller) return this;
         if (this.controller) this.controller.setEntity(null);
         this.controller = controller;
         if (controller) controller.setEntity(this);
+        return this;
     };
     setWorld(world = null) {
         this.world = world;
+        return this;
     };
     update(dt) {};
+    toObj() {
+        const typedArr2arr = ta => Array.from(ta);
+        return {
+            moveSpeed: this.moveSpeed,
+            gravityAcceleration: this.gravityAcceleration,
+            position: typedArr2arr(this.position),
+            pitch: this.pitch,
+            yaw: this.yaw,
+            hitboxes: { min: this.hitboxes.min, max: this.hitboxes.max },
+            eyePos: typedArr2arr(this.eyePos),
+            forward: typedArr2arr(this.forward),
+            direction: typedArr2arr(this.direction),
+            uid: this.uid,
+            type: this.type,
+        };
+    };
 };
 
 export {
