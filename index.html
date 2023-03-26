@@ -51,13 +51,34 @@
             width: 50%;
             float: right;
         }
+        mcpage-preload .progress {
+            line-height: 1rem;
+        }
+        mcpage-preload progress {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            background-color: #555;
+            height: 8px;
+            border: 0;
+            vertical-align: top;
+            transform: translate(0, 0.5rem) translate(0, -50%);
+        }
+        mcpage-preload progress::-webkit-progress-bar {
+            background-color: transparent;
+        }
+        mcpage-preload progress::-webkit-progress-value {
+            background-color: #8f8;
+        }
+        mcpage-preload progress::-moz-progress-bar {
+            background-color: #8f8;
+        }
     </style>
 </head>
 <body>
     <mcpage-preload>
         <img src="./texture/jumpingBlock.gif" />
         <p>Loading...</p>
-        <div><progress value="0" max="0"></progress>&emsp;<span class="loadingCount">0</span> / <span class="loadedCount">0</span></div>
+        <div class="progress"><progress value="0" max="0"></progress>&emsp;<span class="loadingCount">0</span> / <span class="loadedCount">0</span></div>
         <div class="left"><slot name="loading"><ul></ul></slot></div>
         <div class="right"><slot name="loaded"><ul></ul></slot></div>
         <ul slot="loading"></ul>

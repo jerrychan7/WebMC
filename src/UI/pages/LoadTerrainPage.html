@@ -17,6 +17,39 @@
         margin: 0;
         padding: 45vh 0 20px;
     }
+    progress {
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        background-color: #555;
+        height: 8px;
+        border: 0;
+        vertical-align: middle;
+        position: relative;
+    }
+    progress::-webkit-progress-bar {
+        background-color: transparent;
+    }
+    progress::-webkit-progress-value {
+        background-color: #8f8;
+    }
+    progress::-moz-progress-bar {
+        background-color: #8f8;
+    }
+    progress:indeterminate::after {
+        content: '';
+        display: block;
+        width: 25%; height: 100%;
+        position: absolute;
+        top: 0; left: 0;
+        background-color: #8f8;
+        animation: mc-progress-idtm-pos 2s linear alternate infinite;
+    }
+    progress:indeterminate::-moz-progress-bar {
+        width: 25%;
+        position: relative;
+        animation: mc-progress-idtm-pos 2s linear alternate infinite;
+    }
+    @keyframes mc-progress-idtm-pos { to { margin-left: 75%; } }
 </style>
 <div class="mc-background" darken>
     <p id="gen-out"></p>
