@@ -18,3 +18,4 @@ export * from "./components/MCInventory.js";
 export * from "./components/MCMoveBtns.js";
 export * from "./components/MCSlider.js";
 export * from "./components/MCSwitch.js";
+export * from "./components/MCInput.js";

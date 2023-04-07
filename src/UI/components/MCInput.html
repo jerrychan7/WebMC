@@ -1,0 +1,73 @@
+
+<style>
+    :host {
+        display: inline-block;
+        color: #E0E0E0;
+        background-color: #222;
+        border: 2px #eee solid;
+        text-shadow: 0.13rem 0.13rem 0 #383838;
+        cursor: text;
+        width: 13ch;
+    }
+    :host([disabled]) {
+        cursor: default;
+        opacity: .8;
+    }
+    #wrapper {
+        position: relative;
+    }
+    #input {
+        overflow: auto hidden;
+        width: 100%;
+        min-height: 100%;
+        white-space: pre;
+        outline: none;
+        scrollbar-width: none;
+        display: inline-block;
+        caret-color: transparent;
+    }
+    #input::-webkit-scrollbar { display: none; }
+    #input:not(:empty) br, #input img {
+        display: none;
+    }
+    #input * {
+        display: inline;
+        white-space: pre;
+    }
+    #input:empty::before {
+        content: attr(placeholder);
+        display: inline-block;
+        white-space: nowrap;
+        pointer-events: none;
+        color: #777;
+    }
+    #input:focus-within:not(.has-select-text):empty::after,
+    #input:focus-within:not(.has-select-text):not(:empty)::before {
+        content: "_";
+        overflow: hidden;
+        width: 1ch;
+        display: inline-block;
+        position: absolute;
+        left: calc(1px * var(--caret-x, 0));
+        bottom: 0;
+    }
+    #input:focus-within:not(:empty)::after {
+        content: "x";
+        width: 1ch;
+        color: transparent;
+        text-shadow: none;
+        user-select: none;
+        display: inline-block;
+    }
+    #input.blink:focus-within:empty::after,
+    #input.blink:focus-within:not(:empty)::before {
+        animation: caret-blink 1s infinite steps(1);
+    }
+    @keyframes caret-blink {
+        50% { opacity: 0; }
+    }
+</style>
+<!-- https://stackoverflow.com/a/55950530/21559442 -->
+<div id="wrapper">
+    <div id="input" contenteditable></div>
+</div>
