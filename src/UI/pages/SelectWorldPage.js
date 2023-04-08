@@ -11,14 +11,6 @@ class SelectWorldPage extends Page {
         this.btnSelect.addEventListener("click", this.onBtnSelectClick);
         this.btnDel.addEventListener("click", this.onBtnDelClick);
     };
-    onTransitionedFromThis(to) {
-        switch (to) {
-        case "play": {
-            pm.closePage("welcome");
-            this.close();
-            break; }
-        }
-    };
     refreshList() {
         this.selectedWordStorageId = null;
         this.btnSelect.disabled = true;
@@ -49,7 +41,7 @@ class SelectWorldPage extends Page {
         this.btnDel.disabled = false;
     };
     onBtnSelectClick = () => {
-        pm.openPageByID("play", this.selectedWordStorageId);
+        pm.openPageByID("play", { storageId: this.selectedWordStorageId, });
     };
     onBtnDelClick = () => {
         const worlds = JSON.parse(localStorage.getItem("worlds") || "{}");
@@ -58,6 +50,10 @@ class SelectWorldPage extends Page {
         this.refreshList();
     };
 };
+
+pm.addEventListener("transitioned", (from, to) => {
+    if (to == "play") pm.closePage("select-world");
+});
 
 SelectWorldPage.asyncLoadAndDefine();
 

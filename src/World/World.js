@@ -5,14 +5,7 @@ import { vec3, radian2degree } from "../utils/math/index.js";
 import { PerlinNoise } from "./noise.js";
 import { FluidCalculator } from "./WorldFluidCal.js";
 import { ChunksLightCalculation } from "./WorldLight.js";
-import { asyncLoadResByUrl } from "../utils/loadResources.js";
 import { EventDispatcher } from "../utils/EventDispatcher.js";
-
-let worldDefaultConfig = {};
-asyncLoadResByUrl("src/World/worldDefaultConfig.json")
-.then(cfg => {
-    worldDefaultConfig = cfg;
-});
 
 class WorldStorage {
     constructor(id) {
@@ -73,16 +66,21 @@ class WorldStorage {
 };
 
 class World extends EventDispatcher {
-    static get config() { return worldDefaultConfig; };
 
     constructor({
         worldName = "My World",
-        worldType = World.config.terrain,
+        worldType = "pre-classic",
         renderer = null,
         seed = Date.now(),
         storageId = null,
     } = {}) {
         super();
+        if (seed === "") seed = Date.now();
+        if (worldName === "") worldName = "My World";
+        if (!(["flat", "pre-classic"].includes(worldType))) {
+            console.warn("Undefined world type: " + worldType);
+            worldType = "pre-classic";
+        }
         if (storageId != null) {
             this.storager = new WorldStorage(storageId);
             seed = this.storager.get("seed");
@@ -94,7 +92,7 @@ class World extends EventDispatcher {
         else {
             this.seed = seed;
             this.noise = new PerlinNoise(seed);
-            storageId = this.noise.seed;
+            storageId = Date.now() + "-" + this.noise.seed;
             this.storager = new WorldStorage(storageId);
             this.storager.set("name", worldName);
             this.storager.set("type", worldType);

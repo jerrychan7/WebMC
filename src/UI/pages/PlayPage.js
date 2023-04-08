@@ -44,10 +44,9 @@ class PlayPage extends Page {
     };
     onTransitionedToThis(from, eventName, fromPage, ...data) {
         switch (from) {
-        case "select-world": {
-            let storageId = data[0];
-            if (storageId) pm.openPageByID("load-terrain", storageId);
-            else pm.openPageByID("load-terrain");
+        case "select-world":
+        case "create-new-world": {
+            pm.openPageByID("load-terrain", data[0]);
             break; }
         case "load-terrain": {
             this.dispose();

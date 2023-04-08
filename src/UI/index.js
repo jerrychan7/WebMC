@@ -8,6 +8,7 @@ export * from "./pages/SettingPage.js";
 export * from "./pages/LoadTerrainPage.js";
 export * from "./pages/PausePage.js";
 export * from "./pages/PlayPage.js";
+export * from "./pages/CreateNewWorldPage.js";
 
 // mc components
 export * from "./components/MCButton.js";

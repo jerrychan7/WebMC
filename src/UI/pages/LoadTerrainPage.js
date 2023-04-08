@@ -8,11 +8,10 @@ const sleep = ms => new Promise(s => window.setTimeout(s, ms));
 
 class LoadTerrainPage extends Page {
     async onTransitionedToThis(from, eventName, fromPage, ...data) {
-        let [storageId] = data;
         let p = this.shadowRoot.getElementById("gen-out");
         p.innerHTML = "Generating terrain...";
         await sleep(70);
-        let world = new World({ storageId });
+        let world = new World({ ...(data[0] || {}) });
         p.innerHTML = "Ready to render...";
         await sleep(70);
         let canvas = pm.getPageByID("play").mainCanvas;

@@ -1,5 +1,5 @@
 
-import { Page } from "./Page.js";
+import { Page, pm } from "./Page.js";
 
 import { WelcomeRenderer } from "../../Renderer/WelcomePageRenderer.js";
 
@@ -32,6 +32,10 @@ class WelcomePage extends Page {
         window.dispatchEvent(new Event("exit"));
     };
 };
+
+pm.addEventListener("transitioned", (from, to) => {
+    if (to == "play") pm.closePage("welcome");
+});
 
 WelcomePage.asyncLoadAndDefine();
 
