@@ -1,6 +1,7 @@
 
 import { MCComponent } from "./Component.js";
 
+// progress 存在的意义是可以自定义显示的value值，例如精确到小数点后几位
 class MCSlider extends MCComponent {
     #input = this.shadowRoot.querySelector("input");
     #progress = this.shadowRoot.getElementById("progress");
@@ -17,6 +18,7 @@ class MCSlider extends MCComponent {
     };
     refresh() {
         const input = this.#input;
+        this.setAttribute("value", input.value);
         if (!this.hasAttribute("progress"))
             this.#progress.innerHTML = input.value;
     };
@@ -28,9 +30,8 @@ class MCSlider extends MCComponent {
         input.value = this.getAttribute("value") || 50;
         this.refresh();
     };
-    static get observedAttributes() { return ["label", "echo", "prefix", "progress", "unit", "min", "step", "max", "value"]; };
+    static get observedAttributes() { return ["label", "echo", "prefix", "progress", "unit", "min", "step", "max", "value", "disabled"]; };
     onAttrChanged(name, oldVal, newVal) {
-        if (oldVal === newVal) return;
         if (name === "echo") {
             this.shadowRoot.getElementById("default-echo").style.display = newVal? "none": null;
             const se = this.shadowRoot.getElementById("specified-echo");
@@ -43,6 +44,8 @@ class MCSlider extends MCComponent {
             this.shadowRoot.querySelector("[name=unit]").innerHTML = newVal || "%";
         else if (name === "progress")
             this.#progress.innerHTML = newVal;
+        else if (name === "disabled")
+            this.#input.disabled = newVal !== null;
         else this.initVar();
     };
 };
@@ -54,7 +57,7 @@ MCSlider.setBorderAndWaitImg("slider-thumb", "input::-webkit-slider-thumb", {
 MCSlider.setBorderAndWaitImg("slider-thumb", "input::-moz-range-thumb", {
     keepCenter: false,
 });
-MCSlider.setBorderAndWaitImg("slider-thumb-hover", "input::-webkit-slider-thumb:hover", {
+MCSlider.setBorderAndWaitImg("slider-thumb-hover", "input:not(:disabled)::-webkit-slider-thumb:hover", {
     keepCenter: false,
 });
 

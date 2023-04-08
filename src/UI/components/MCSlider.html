@@ -11,9 +11,13 @@
         --mc-ui-track-border-width: calc(3px * var(--mc-ui-button-img-border-top));
         border-width: var(--mc-ui-track-border-width);
     }
-    :host(:hover) {
+    :host(:not([disabled]):hover) {
         color: #FFFFA0;
         text-shadow: 0.13rem 0.13rem 0 #3F3F28;
+    }
+    :host([disabled]) {
+        opacity: .75;
+        cursor: not-allowed;
     }
     label {
         user-select: none;
@@ -29,6 +33,10 @@
         top: calc(-1 * var(--mc-ui-track-border-width));
         width: calc(100% + 2 * var(--mc-ui-track-border-width));
         height: calc(100% + 2 * var(--mc-ui-track-border-width));
+        cursor: pointer;
+    }
+    input:disabled {
+        cursor: not-allowed;
     }
     input::-webkit-slider-runnable-track {
         height: 100%;
@@ -48,6 +56,7 @@
         width: 0;
         height: calc(100% - var(--top) - var(--bottom));
     }
+    input:disabled::-webkit-slider-thumb { cursor: not-allowed; }
     input::-moz-range-thumb {
         cursor: ew-resize;
         background: transparent;
@@ -62,6 +71,7 @@
         width: 0;
         height: calc(100% - var(--top) - var(--bottom));
     }
+    input:disabled::-moz-range-thumb { cursor: not-allowed; }
 </style>
 <!-- 滑块是按钮的头4像素尾4像素拼接 背景是按下的按钮 -->
 <input type="range" id="thumb" />

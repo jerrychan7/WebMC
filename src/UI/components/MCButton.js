@@ -17,6 +17,7 @@ class MCButton extends MCComponent {
     onAttrChanged(name, oldValue, newValue) {
         if (name == "value")
             this.shadowRoot.querySelector("slot").innerHTML = newValue;
+        else if (name === "disabled") this.disabled = newValue !== null;
     };
     get disabled() { return this.hasAttribute("disabled"); };
     set disabled(val) {

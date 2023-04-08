@@ -1,5 +1,6 @@
 
-import { Page, pm } from "./Page.js";
+import { Page } from "./Page.js";
+import { settings } from "../../settings.js";
 
 import { WelcomeRenderer } from "../../Renderer/WelcomePageRenderer.js";
 
@@ -13,10 +14,17 @@ class WelcomePage extends Page {
     onConnected() {
         this.renderer = new WelcomeRenderer(this.bgCanvas);
         this.renderer.play();
+        settings.addEventListener("changedValue", this.updateBlur);
+        this.updateBlur();
     };
     onDisconnected() {
         this.renderer.dispose();
         this.renderer = null;
+        settings.removeEventListener("changedValue", this.updateBlur);
+    };
+    updateBlur = (key = "homepageBlur", value = settings.homepageBlur) => {
+        if (key !== "homepageBlur") return;
+        this.bgCanvas.style.setProperty("--blur", value);
     };
     onTransitionedFromThis(to) {
         switch(to) {

@@ -6,6 +6,7 @@ import { PerlinNoise } from "./noise.js";
 import { FluidCalculator } from "./WorldFluidCal.js";
 import { ChunksLightCalculation } from "./WorldLight.js";
 import { EventDispatcher } from "../utils/EventDispatcher.js";
+import { settings } from "../settings.js";
 
 class WorldStorage {
     constructor(id) {
@@ -335,30 +336,36 @@ class World extends EventDispatcher {
 
         const {mainPlayer} = this;
 
-        const hit = mainPlayer.controller.getHitting?.() ?? null;
-        let block = hit? this.getBlock(...hit.blockPos): null;
-        let longID = hit? this.getTile(...hit.blockPos): null;
-        let chunk = this.getChunkByBlockXYZ(...[...mainPlayer.position].map(n => n < 0? n - 1: n));
-        if (!this.fpss) this.fpss = [];
-        this.fpss.push(dt);
-        if (this.fpss.length > 15) this.fpss.shift();
-        document.getElementsByTagName("mcpage-play")[0].debugOutput.innerHTML = Object.entries({
-            "FPS: ": (1000 / (this.fpss.reduce((n, i) => n + i, 0) / this.fpss.length)).toFixed(2),
-            "Player:": [
-                "XYZ: " + [...mainPlayer.position].map(n => n.toFixed(1)).join(", "),
-                `Pitch: ${radian2degree(mainPlayer.pitch).toFixed(2)}°, Yaw: ${Math.abs(radian2degree(mainPlayer.yaw) * 100 % 36000 / 100).toFixed(2)}°`,
-                `Chunk: ${chunk? Chunk.getRelativeBlockXYZ(...mainPlayer.position).map(n => ~~n).join(" ") + " in " + [chunk.x, chunk.y, chunk.z].join(" "): "null"}`,
-                `Light: ${this.getLight(...mainPlayer.position)} (${this.getSkylight(...mainPlayer.position)} sky, ${this.getTorchlight(...mainPlayer.position)} block)`,
-            ],
-            "Crosshairs:": [
-                "XYZ: " + (hit? hit.blockPos.join(", "): "null") + " (" + (hit? hit.axis? hit.axis: "in block": "null") + ")",
-                `Block: ${block? block.name: "null"} (${longID?.id ?? "null"}, ${longID?.bd ?? "null"}, ${longID? longID: "null"})`,
-            ],
-        }).map(([k, v]) => `<p>${k}${
-            Array.isArray(v)
-            ? v.map(str => `<p>\t${str}</p>`).join("")
-            : v
-        }</p>`).join("");
+        if (settings.showDebugOutput) {
+            const hit = mainPlayer.controller.getHitting?.() ?? null;
+            let block = hit? this.getBlock(...hit.blockPos): null;
+            let longID = hit? this.getTile(...hit.blockPos): null;
+            let chunk = this.getChunkByBlockXYZ(...[...mainPlayer.position].map(n => n < 0? n - 1: n));
+            if (!this.fpss) this.fpss = [];
+            this.fpss.push(dt);
+            if (this.fpss.length > 15) this.fpss.shift();
+            document.getElementsByTagName("mcpage-play")[0].debugOutput.style.display = null;
+            document.getElementsByTagName("mcpage-play")[0].debugOutput.innerHTML = Object.entries({
+                "FPS: ": (1000 / (this.fpss.reduce((n, i) => n + i, 0) / this.fpss.length)).toFixed(2),
+                "Player:": [
+                    "XYZ: " + [...mainPlayer.position].map(n => n.toFixed(1)).join(", "),
+                    `Pitch: ${radian2degree(mainPlayer.pitch).toFixed(2)}°, Yaw: ${Math.abs(radian2degree(mainPlayer.yaw) * 100 % 36000 / 100).toFixed(2)}°`,
+                    `Chunk: ${chunk? Chunk.getRelativeBlockXYZ(...mainPlayer.position).map(n => ~~n).join(" ") + " in " + [chunk.x, chunk.y, chunk.z].join(" "): "null"}`,
+                    `Light: ${this.getLight(...mainPlayer.position)} (${this.getSkylight(...mainPlayer.position)} sky, ${this.getTorchlight(...mainPlayer.position)} block)`,
+                ],
+                "Crosshairs:": [
+                    "XYZ: " + (hit? hit.blockPos.join(", "): "null") + " (" + (hit? hit.axis? hit.axis: "in block": "null") + ")",
+                    `Block: ${block? block.name: "null"} (${longID?.id ?? "null"}, ${longID?.bd ?? "null"}, ${longID? longID: "null"})`,
+                ],
+            }).map(([k, v]) => `<p>${k}${
+                Array.isArray(v)
+                ? v.map(str => `<p>\t${str}</p>`).join("")
+                : v
+            }</p>`).join("");
+        }
+        else {
+            document.getElementsByTagName("mcpage-play")[0].debugOutput.style.display = "none";
+        }
 
         let cxyz = Chunk.getChunkXYZByBlockXYZ(...mainPlayer.position),
             [cx, cy, cz] = cxyz;

@@ -3,34 +3,41 @@
     :host {
         text-align: center;
         z-index: 200;
-    }
-    div.mc-background {
-        height: 100vh;
-        background-image: var(--mc-ui-background-img);
+        background-image: var(--mc-ui-background-darken-img);
         background-repeat: repeat;
         background-size: auto;
     }
-    div.mc-background[darken] {
-        background-image: var(--mc-ui-background-darken-img);
+    .wrapper {
+        max-height: 100%;
+        overflow: hidden auto;
     }
     h1 {
-        margin: 0;
+        margin: 0 0 20px;
         padding: 20px 0 0;
     }
-    mc-slider,
-    mc-button {
-        padding: 1.2vh 0;
-        width: 49%;
+    mc-slider, mc-button {
+        padding: 1.2vh 1ch;
         box-sizing: border-box;
         max-width: 400px;
         margin-bottom: 10px;
         touch-action: pan-y;
     }
+    mc-slider, mc-button[gotoPage="*pop"] {
+        width: 49%;
+    }
 </style>
-<div class="mc-background" darken>
+<div class="wrapper">
     <h1>Options</h1>
-    <h2>Video Settings</h2>
-    <mc-slider id="homepage-blur" label="Homepage Blur: " unit=" px" min="0" step="0.5" max="10" value="3.5"></mc-slider>
+    <!-- <mc-slider id="render-distance" label="Render Distance: " unit=" chunks" step="1"></mc-slider> <mc-button>default</mc-button>
+    <br /> -->
+    <mc-slider id="fov" label="FOV: " unit=" °" step="1"></mc-slider> <mc-button>default</mc-button>
+    <br />
+    <mc-slider id="mouse-sensitivity" unit=" " label="Mouse Sensitivity: " step="1"></mc-slider> <mc-button>default</mc-button>
+    <br />
+    <div class="homepage-blur-group">
+        <mc-slider id="homepage-blur" label="Homepage Blur: " unit=" px" min="0" step="0.5" max="10" value="3.5"></mc-slider> <mc-button>default</mc-button>
+    </div>
+    <mc-button id="debug-output-btn">Debug output:&emsp;<span id="debug-output-echo">OFF</span></mc-button>
     <br />
     <mc-button gotoPage="*pop">Back</mc-button>
 </div>

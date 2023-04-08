@@ -91,7 +91,7 @@ class MCComponent extends HTMLElement {
     async connectedCallback(...args) { if (this.onConnected) { await sleep(0); this.onConnected(...args); } };
     async disconnectedCallback(...args) { if (this.onDisconnected) { await sleep(0); this.onDisconnected(...args); } };
     async adoptedCallback(...args) { if (this.onAdopted) { await sleep(0); this.onAdopted(...args); } };
-    async attributeChangedCallback(...args) { if (this.onAttrChanged) { await sleep(0); this.onAttrChanged(...args); } };
+    async attributeChangedCallback(...args) { if (args[1] !== args[2] && this.onAttrChanged) { await sleep(0); this.onAttrChanged(...args); } };
     dispatchEvent(type, {
         global = false,
         data = {}

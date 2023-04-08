@@ -3,6 +3,7 @@ import { Camera } from "./Camera.js";
 import { ChunksModule } from "./WorldChunkModule.js";
 import { HighlightSelectedBlock } from "./HighlightSelectedBlock.js";
 import { EntitiesPainter } from "./EntitiesPainter.js";
+import { settings } from "../settings.js";
 
 class WorldRenderer extends Render {
     constructor(canvas, world = null) {
@@ -20,7 +21,11 @@ class WorldRenderer extends Render {
         ctx.depthFunc(ctx.LEQUAL);
         ctx.enable(ctx.CULL_FACE);
         ctx.frontFace(ctx.CCW);
-        this.mainCamera = new Camera(this.aspectRatio, { fovy: 60, pitch: -90 * Math.PI / 180, position: [0, 20, 0] });
+        this.mainCamera = new Camera(this.aspectRatio, { fovy: settings.fov, pitch: -90 * Math.PI / 180, position: [0, 20, 0] });
+        this.settingsListenerID = settings.addEventListener("changedValue", (key, value) => {
+            if (key !== "fov") return;
+            this.mainCamera.setFovy(value);
+        });
         this.addCamera(this.mainCamera);
         if (world !== null) this.setWorld(world);
     };
@@ -49,6 +54,7 @@ class WorldRenderer extends Render {
         if (!this.world) return;
         this.chunksModule.dispose();
         this.blockHighlight.dispose();
+        settings.removeEventListenerByID(this.settingsListenerID);
     };
 };
 

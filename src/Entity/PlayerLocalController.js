@@ -4,6 +4,7 @@ import { Block } from "../World/Block.js";
 import { vec3 } from "../utils/math/index.js";
 import { pm } from "../UI/pages/Page.js";
 import { Item } from "./Item.js";
+import { settings } from "../settings.js";
 
 class PlayerLocalController extends EntityController {
     constructor(player = null, {
@@ -11,7 +12,7 @@ class PlayerLocalController extends EntityController {
         canvas = playPage? playPage.mainCanvas: null,
         moveButtons = playPage? playPage.moveButtons: null,
         hotbarUI = playPage? playPage.hotbar: null,
-        mousemoveSensitivity = 200,
+        mousemoveSensitivity = settings.mousemoveSensitivity,
     } = {}) {
         super(player);
         this.mousemoveSensitivity = mousemoveSensitivity;
@@ -27,6 +28,10 @@ class PlayerLocalController extends EntityController {
         this.hotbar = [];
         this.inventoryStore = Block.listBlocks();
         this.setPlayPage(playPage, { canvas, moveButtons, hotbarUI });
+        this.settingsListenerID = settings.addEventListener("changedValue", (key, value) => {
+            if (key !== "mousemoveSensitivity") return;
+            this.mousemoveSensitivity = value;
+        });
     };
     setPlayPage(playPage = null, {
         canvas = playPage? playPage.mainCanvas: null,
@@ -66,6 +71,7 @@ class PlayerLocalController extends EntityController {
     dispose() {
         super.dispose();
         this.setPlayPage();
+        settings.removeEventListenerByID(this.settingsListenerID);
     };
     get locked() { return window.isTouchDevice || this._locked; };
     setCanvas(canvas = null) {
