@@ -4,6 +4,7 @@ import { PlayerLocalController } from "../../Entity/PlayerLocalController.js";
 let worldRenderer = null, world = null;
 
 class PlayPage extends Page {
+    static get outdegree() { return ["load-terrain", "pause", ]; };
     constructor() {
         super();
         this.moveButtons = this.shadowRoot.querySelector("mc-move-buttons");
@@ -72,6 +73,9 @@ class PlayPage extends Page {
         this.inventory.style.display = "none";
         this.hotbar.activeInventoryBtn(false);
         this.dispatchEvent(new Event("closeInventory"));
+    };
+    onTransitioned(from, to, eventName, fromPage, toPage, ...data) {
+        if (to == "welcome") this.close();
     };
 };
 

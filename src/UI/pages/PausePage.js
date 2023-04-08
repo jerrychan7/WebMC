@@ -2,12 +2,10 @@
 import { Page } from "./Page.js";
 
 class PausePage extends Page {
+    static get outdegree() { return ["play", "welcome", "setting", ]; };
     onHistoryBack() { this.close(); };
     onTransitionedFromThis(to) {
-        if (to != "welcome") return;
-        let play = Page.pm.getPageByID("play");
-        play && play.close();
-        this.close();
+        if (to == "welcome") this.close();
     };
 };
 

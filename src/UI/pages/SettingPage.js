@@ -4,6 +4,7 @@ import { Page, pm } from "./Page.js";
 // TODO: 使用单个设置单例来同步设置以及持久化
 
 class SettingPage extends Page {
+    static get outdegree() { return ["welcome", "pause", ]; };
     constructor() {
         super();
         const welcome = pm.getPageByID("welcome");

@@ -26,26 +26,6 @@ class PageManager extends FSM {
         super({
             id: "pageManager",
             initial: "preload",
-            transitions: [
-                { from: "preload", to: "welcome", },
-                { from: "welcome", to: "select-world", },
-                { from: "welcome", to: "how-to-play", },
-                { from: "welcome", to: "setting", },
-                { from: "select-world", to: "welcome", },
-                { from: "select-world", to: "play", },
-                { from: "select-world", to: "create-new-world", },
-                { from: "create-new-world", to: "select-world", },
-                { from: "create-new-world", to: "play", },
-                { from: "play", to: "load-terrain", },
-                { from: "play", to: "pause", },
-                { from: "load-terrain", to: "play", },
-                { from: "pause", to: "play", },
-                { from: "pause", to: "welcome", },
-                { from: "pause", to: "setting", },
-                { from: "setting", to: "welcome", },
-                { from: "setting", to: "pause", },
-                { from: "how-to-play", to: "welcome", },
-            ],
         });
         edm.addEventDispatcher("mc.page", this);
     };
@@ -102,15 +82,21 @@ class Page extends MCComponent {
     static get pageID() { return "mcpage-" + this.shortPageID; };
     static get componentName() { return this.pageID; };
     static get templateUrlPrefix() { return "src/UI/pages/"; };
+    static get outdegree() { return []; };
     get shortPageID() { return this.constructor.shortPageID; };
     get pageID() { return this.constructor.pageID; };
+    get outdegree() { return this.constructor.outdegree; };
     constructor() {
         super();
         if (new.target.name === "Page")
             throw "Class 'Page' cannot be instantiated!";
+        pageManager.addTransitions(this.outdegree.map(to => ({
+            from: this.shortPageID, to,
+        })));
         this.onHistoryBack = this.onHistoryBack.bind(this);
         this._transitionedCallbackID =
         pageManager.addEventListener("transitioned", (from, to, eventName, fromPage, toPage, ...data) => {
+            this.onTransitioned(from, to, eventName, fromPage, toPage, ...data);
             if (fromPage === this) {
                 this.onTransitionedFromThis(to, eventName, toPage, ...data);
                 window.removeEventListener("back", this.onHistoryBack);
@@ -121,6 +107,7 @@ class Page extends MCComponent {
             }
         });
     };
+    onTransitioned(from, to, eventName, fromPage, toPage, ...data) {};
     onTransitionedFromThis(to, eventName, toPage, ...data) {};
     onTransitionedToThis(from, eventName, fromPage, ...data) {};
     onHistoryBack() {};

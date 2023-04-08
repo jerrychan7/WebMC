@@ -7,6 +7,7 @@ import { WorldRenderer } from "../../Renderer/WorldRenderer.js";
 const sleep = ms => new Promise(s => window.setTimeout(s, ms));
 
 class LoadTerrainPage extends Page {
+    static get outdegree() { return ["play", ]; };
     async onTransitionedToThis(from, eventName, fromPage, ...data) {
         let p = this.shadowRoot.getElementById("gen-out");
         p.innerHTML = "Generating terrain...";

@@ -59,6 +59,7 @@ edm.getOrNewEventDispatcher("mc.preload")
 const template = document.createElement("template");
 let firstTimeOpen = true;
 class PreloadPage extends Page {
+    static get outdegree() { return ["welcome", ]; };
     get template() { return firstTimeOpen? null: template; };
     onConnected() {
         if (!firstTimeOpen) return;
