@@ -221,14 +221,16 @@ class FluidCalculator {
         if (!b.isFluid) return;
         this.spreadQueue.push([blockX, blockY, blockZ]);
     };
-    update(dt) {
-        if (this.timeCount >= 250) {
+    onRender(timestamp, dt) {};
+    onTick() {
+        // 5 * 0.05s = 250ms
+        if (this.timeCount >= 5) {
             this.updatingTile = true;
             this.spreadFluid(1);
             this.updatingTile = false;
             this.timeCount = 0;
         }
-        this.timeCount += dt;
+        ++this.timeCount;
     };
 }
 

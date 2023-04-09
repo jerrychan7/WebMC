@@ -119,8 +119,10 @@ class Player extends Entity {
         vec3.add(this.position, ds, this.position);
         this.eyeInFluid = this.world.getBlock(...this.getEyePosition())?.isFluid ?? false;
     };
-    update(dt) {
+    onRender(timestamp, dt) {
+        super.onRender(timestamp, dt);
         if (!this.world) return;
+        // TODO: 当加载区块卡顿时 会一直保持运动 如果卡顿较久则会直接飞到更远的未加载的区块中 而未加载的区块又会加载区块导致死循环
         dt /= 1000;
         if (this.isFly) {
             this.vertVelocity = this.vertMoveDir * this.flyJumpSpeed;

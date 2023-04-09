@@ -15,8 +15,9 @@ class Render {
         this.frame = this.frame.bind(this);
         this.timer = null;
         this.lastFrameTime = window.performance.now();
-        this.dpr = window.devicePixelRatio;
     };
+    get dpr() { return this._dpr || window.devicePixelRatio; };
+    set dpr(val) { if (this.dpr !== val) this._dpr = val; };
     get aspectRatio() {
         return this.ctx.canvas.width / this.ctx.canvas.height;
     };
@@ -48,6 +49,7 @@ class Render {
         window.cancelAnimationFrame(this.timer);
         this.timer = null;
     };
+    isPlaying() { return this.timer !== null; };
 
     setSize(w, h, dpr = this.dpr) {
         const c = this.ctx.canvas;

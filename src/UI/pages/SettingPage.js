@@ -57,10 +57,27 @@ class SettingPage extends Page {
                 const x = this.homepageBlur.offsetLeft, y = this.homepageBlur.offsetTop;
                 const w = this.homepageBlur.offsetWidth, h = this.homepageBlur.offsetHeight;
                 this.style.clipPath = `polygon(${x}px ${y}px, ${x + w}px ${y}px, ${x + w}px ${y + h}px, ${x}px ${y + h}px)`;
+                welcome.renderer?.play();
             });
             for (let e of "pointerup,pointercancel,pointerout".split(","))
                 this.addEventListener(e, () => {
                     this.style.clipPath = null;
+                    welcome.renderer?.stop();
+                });
+        }
+
+        if (pm.getPageByID("play")) {
+            const pause = pm.getPageByID("pause");
+            this.fov.addEventListener("pointerdown", e => {
+                const x = this.fov.offsetLeft, y = this.fov.offsetTop;
+                const w = this.fov.offsetWidth, h = this.fov.offsetHeight;
+                this.style.clipPath = `polygon(${x}px ${y}px, ${x + w}px ${y}px, ${x + w}px ${y + h}px, ${x}px ${y + h}px)`;
+                if (pause) pause.style.display = "none";
+            });
+            for (let e of "pointerup,pointercancel,pointerout".split(","))
+                this.addEventListener(e, () => {
+                    this.style.clipPath = null;
+                    if (pause) pause.style.display = null;
                 });
         }
     };

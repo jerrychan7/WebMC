@@ -82,7 +82,7 @@ class EntityItemModel {
             col: renderer.createVbo([], renderer.ctx.DYNAMIC_DRAW),
         };
     };
-    update(timestamp, dt) {
+    onRender(timestamp, dt) {
         const l = this.entity.world.getLight(...this.entity.position);
         if (this.lastLight != l) {
             this.lastLight = l;
@@ -92,6 +92,7 @@ class EntityItemModel {
         }
         this.randomStart += dt;
     };
+    onTick() {};
     draw() {
         if (!this.renderer) return;
         const {renderer, bufferObj, mM, entity} = this, {ctx} = renderer;

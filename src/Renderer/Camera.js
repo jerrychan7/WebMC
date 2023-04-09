@@ -145,10 +145,12 @@ class Camera {
         return this.pvM;
     };
     bindEntity(entity = null) {
-        if (entity === this.entity) return;
-        if (this.entity) this.entity.setCamera(null);
+        if (entity === this.entity) return this;
+        const lastEntity = this.entity;
         this.entity = entity;
+        if (lastEntity) lastEntity.setCamera(null);
         if (entity) entity.setCamera(this);
+        return this;
     };
 };
 

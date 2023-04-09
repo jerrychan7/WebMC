@@ -1,7 +1,6 @@
 
 import { Page, pm } from "./Page.js";
 import { PlayerLocalController } from "../../Entity/PlayerLocalController.js";
-let worldRenderer = null, world = null;
 
 class PlayPage extends Page {
     static get outdegree() { return ["load-terrain", "pause", ]; };
@@ -12,6 +11,8 @@ class PlayPage extends Page {
         this.hotbar = this.shadowRoot.querySelector("mc-hotbar");
         this.mainCanvas = this.shadowRoot.getElementById("mainCanvas");
         this.debugOutput = this.shadowRoot.getElementById("mc-f3-out");
+
+        this.world = this.worldRenderer = null;
     };
     onConnected() {
         this.hotbar.addEventListener("inventoryBtnClick", e => {
@@ -34,14 +35,14 @@ class PlayPage extends Page {
         this.playerLocalController = new PlayerLocalController(null, { playPage: this, });
     };
     dispose() {
-        if (!worldRenderer) return;
-        worldRenderer.dispose();
+        if (!this.worldRenderer) return;
+        this.worldRenderer.dispose();
         this.playerLocalController.dispose();
-        worldRenderer = world = null;
+        this.world = this.worldRenderer = null;
     };
     onDisconnected() { this.dispose(); };
     onTransitionedFromThis(to, eventName, toPage, ...data) {
-        if (to == "pause") worldRenderer.stop();
+        if (to == "pause") this.worldRenderer.stop();
     };
     onTransitionedToThis(from, eventName, fromPage, ...data) {
         switch (from) {
@@ -52,14 +53,15 @@ class PlayPage extends Page {
         case "load-terrain": {
             this.dispose();
             const [{world: w, renderer}] = data;
-            world = w; worldRenderer = renderer;
+            this.world = w;
+            this.worldRenderer = renderer;
             this.playerLocalController.setPlayPage(this);
-            this.playerLocalController.setEntity(world.mainPlayer);
-            worldRenderer.play();
+            this.playerLocalController.setEntity(w.mainPlayer);
+            renderer.play();
             pm.openPageByID("pause");
             break; }
         case "pause": {
-            worldRenderer.play();
+            this.worldRenderer.play();
             break; }
         }
     };

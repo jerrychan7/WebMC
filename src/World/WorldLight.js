@@ -304,7 +304,8 @@ class ChunksLightCalculation {
         }
         this.spreadTorchlight(queue);
     };
-    update() {};
+    onRender(timestamp, dt) {};
+    onTick() {};
 }
 
 export {

@@ -46,11 +46,12 @@ class EntitiesPainter {
         for (let model of this.models)
             model.setRenderer(renderer);
     };
-    update(timestamp, dt) {
+    onRender(timestamp, dt) {
         for (let model of this.models) {
-            model.update(timestamp, dt);
+            model.onRender(timestamp, dt);
         }
     };
+    onTick() {};
     draw() {
         for (let model of this.models) {
             model.draw();

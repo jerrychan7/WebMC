@@ -510,7 +510,7 @@ class ChunksModule {
         }
         mesh.bo = bufferObj;
     };
-    update() {
+    onRender(timestamp, dt) {
         if (this.needUpdateTile.length)
             this.updateTiles(this.needUpdateTile);
         // rebuild light
@@ -589,6 +589,7 @@ class ChunksModule {
         });
         this.needUpdateMeshChunks.clear();
     };
+    onTick() {};
     draw() {
         const {renderer} = this, {ctx} = renderer;
         const prg = renderer.getProgram("showBlock");

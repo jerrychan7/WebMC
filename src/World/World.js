@@ -128,6 +128,10 @@ class World extends EventDispatcher {
         this.fluidCalculator = new FluidCalculator(this);
         this.lightingCalculator = new ChunksLightCalculation(this);
         this.setRenderer(renderer);
+
+        this.tickTimerId = null;
+        this.lastTickTimestamp = performance.now();
+        this.beforeTick();
     };
 
     saveEntities() {
@@ -247,11 +251,20 @@ class World extends EventDispatcher {
         }
     };
     setRenderer(renderer = null) {
-        if (!renderer) return;
+        if (renderer === this.renderer) return this;
+        const lastRenderer = this.renderer;
         this.renderer = renderer;
+        if (lastRenderer) {
+            lastRenderer.setWorld();
+            for (let ck in this.chunkMap) {
+                this.chunkMap[ck].setRenderer();
+            }
+        }
+        if (!renderer) return this;
         for (let ck in this.chunkMap) {
             this.chunkMap[ck].setRenderer(renderer);
         }
+        return this;
     };
     getChunkByChunkKey(chunkKey) {
         return this.chunkMap[chunkKey] || null;
@@ -326,13 +339,15 @@ class World extends EventDispatcher {
         if (c) return c.getTorchlight(...Chunk.getRelativeBlockXYZ(blockX, blockY, blockZ));
         return null;
     };
-    update(dt) {
+
+    // 每一帧触发 由renderer的requestAnimationFrame触发
+    onRender(timestamp, dt) {
         for (let ck in this.chunkMap) {
-            this.chunkMap[ck].update(dt);
+            this.chunkMap[ck].onRender(timestamp, dt);
         }
-        this.fluidCalculator.update(dt);
-        this.lightingCalculator.update(dt);
-        this.entities.forEach(e => e.update(dt));
+        this.fluidCalculator.onRender(timestamp, dt);
+        this.lightingCalculator.onRender(timestamp, dt);
+        this.entities.forEach(e => e.onRender(timestamp, dt));
 
         const {mainPlayer} = this;
 
@@ -375,6 +390,15 @@ class World extends EventDispatcher {
             for (let dy = 1; dy >= -1; --dy)
                 this.loadChunk(cx + dx, cy + dy, cz + dz);
         mainPlayer.lastChunk = cxyz;
+    };
+    // 游戏刻 每秒触发20次 目的是分离渲染事件和游戏事件 为未来的多线程做准备
+    onTick() {
+        for (let ck in this.chunkMap) {
+            this.chunkMap[ck].onTick();
+        }
+        this.fluidCalculator.onTick();
+        this.lightingCalculator.onTick();
+        this.entities.forEach(e => e.onTick());
 
         // 每 20s 存一次实体信息
         if (Date.now() - (this.lastEntitiesSaveTime || 0) > 20_000) {
@@ -382,6 +406,25 @@ class World extends EventDispatcher {
             this.saveEntities();
         }
     };
+    // 记录每一次的时间戳 调整下一次游戏刻的时间间隔 并执行回调
+    // 原始的mc实现中是通过渲染帧来调用游戏刻 但由于未来多线程中这两个回调是在不同线程中 而线程间通讯是有时间成本的
+    // 调用上和渲染帧无关，可以看作是乱序执行的，因此事件有可能会有一帧的延迟显示
+    beforeTick = () => {
+        let now = performance.now(), dt = now - this.lastTickTimestamp;
+        if (dt <= 50) {
+            this.lastTickTimestamp = now;
+            this.tickTimerId = setTimeout(this.beforeTick, 50);
+        }
+        else {
+            this.lastTickTimestamp += 50;
+            this.tickTimerId = setTimeout(this.beforeTick, 0);
+        }
+        if (this.renderer?.isPlaying()) {
+            this.onTick();
+            this.dispatchEvent("tick");
+        }
+    };
+
     // return null->uncollision    else -> { axis->("x+-y+-z+-": collision face, "": in block, b)lockPos}
     rayTraceBlock(start, end, chunkFn) {
         if (start.some(Number.isNaN) || end.some(Number.isNaN) || vec3.equals(start, end))
@@ -474,6 +517,8 @@ class World extends EventDispatcher {
         }
         return null;
     };
+
+    dispose() {};
 };
 
 export {

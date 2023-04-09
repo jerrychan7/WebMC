@@ -29,8 +29,8 @@ class Item extends Entity {
         this.count = count;
         this.longID = longID;
     };
-    update(dt) {
-        super.update(dt);
+    onTick() {
+        super.onTick();
         if (this.health == 0) this.dispose();
         if (this.age != FOREVER_EXIST) {
             if (this.age < 6000) ++this.age;
@@ -43,7 +43,7 @@ class Item extends Entity {
     };
     dispose() {
         if (!this.world) return;
-        // 从世界中移除该实体
+        // TODO: 从世界中移除该实体
     };
 };
 

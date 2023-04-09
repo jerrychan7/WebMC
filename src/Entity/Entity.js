@@ -47,15 +47,17 @@ class Entity {
     };
     setCamera(camera = null) {
         if (camera === this.camera) return this;
-        if (this.camera) this.camera.bindEntity(null);
+        const lastCamera = this.camera;
         this.camera = camera;
+        if (lastCamera) lastCamera.bindEntity(null);
         if (camera) camera.bindEntity(this);
         return this;
     };
     setController(controller = null) {
         if (controller === this.controller) return this;
-        if (this.controller) this.controller.setEntity(null);
+        const lastController = this.controller;
         this.controller = controller;
+        if (lastController) lastController.setEntity(null);
         if (controller) controller.setEntity(this);
         return this;
     };
@@ -63,7 +65,8 @@ class Entity {
         this.world = world;
         return this;
     };
-    update(dt) {};
+    onRender(timestamp, dt) {};
+    onTick() {};
     toObj() {
         const typedArr2arr = ta => Array.from(ta);
         return {

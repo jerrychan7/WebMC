@@ -43,8 +43,8 @@ class Chunk extends EventDispatcher {
         this.setRenderer(renderer);
     };
     setRenderer(renderer = null) {
-        if (!renderer) return;
         this.renderer = renderer;
+        return this;
     };
     getTile(blockRX, blockRY, blockRZ) {
         return new LongID(this.tileMap[Chunk.getLinearBlockIndex(blockRX, blockRY, blockRZ)]);
@@ -89,7 +89,8 @@ class Chunk extends EventDispatcher {
     blockRXYZ2BlockXYZ(blockRX, blockRY, blockRZ) {
         return [blockRX + this.x * X_SIZE, blockRY + this.y * Y_SIZE, blockRZ + this.z * Z_SIZE];
     };
-    update() {};
+    onTick() {};
+    onRender(timestamp, dt) {};
 };
 
 export {
