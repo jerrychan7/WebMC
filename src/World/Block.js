@@ -1,6 +1,12 @@
 import { asyncLoadResByUrl } from "../utils/loadResources.js";
 import { textureMipmapByTile, prepareTextureAarray, blockInventoryTexture } from "../processingPictures.js";
 
+
+// 用32位储存方块id和data。高16位存data，低16位存id。
+// 由于 data 中 0 出现的概率是最高的，因此放在高位。
+// 这样做的目的是在转换为字符串后更短，在网络传输中有一定优势。
+// TODO: 渲染和计算时需要频繁读取方块 此时进行位运算不如将id和bd分开两个普通数组存放快
+//      例如在i5-5300U上遍历区块计算光照并重新渲染就要在这里耗时20ms以上 是难以接受的
 class LongID extends Number {
     constructor(id = 0, bd = 0) {
         super(bd << 16 | id);
@@ -17,8 +23,15 @@ const BlockRenderType = {
     CACTUS: Symbol("block render type: cactus"),
     FLUID: Symbol("block render type: fluid"),
 };
+
 // BLOCKS: block name -> block      blockIDs: block id -> [db] -> block
-const BLOCKS = {}, blockIDs = new Map();
+const BLOCKS = {}, blockIDs = {};
+
+const findEmptyIdSlot = () => {
+    for (let i = 0; i <= 0xFFFF; ++i)
+        if (!(i in blockIDs)) return i;
+    return -1;
+};
 
 class Block {
     constructor(blockName, {
@@ -29,7 +42,7 @@ class Block {
         textureImg = defaultBlockTextureImg,
         texture: textureCoord = [[16, 32]],
         friction = 1,
-        id = blockIDs.size,
+        id = findEmptyIdSlot(),
         bd = 0,
         showName = blockName.toLowerCase().replace(/_/g, " ").replace(/^\w|\s\w/g, w => w.toUpperCase()),
         isLeaves = blockName.endsWith("leaves"),
@@ -58,11 +71,7 @@ class Block {
         this.id = id;
         this.bd = bd;
         this.longID = new LongID(id, bd);
-        if (blockIDs.has(id)) blockIDs.get(id)[bd] = this;
-        else {
-            let t = []; t[bd] = this;
-            blockIDs.set(id, t);
-        }
+        blockIDs[this.longID] = this;
         BLOCKS[blockName] = this;
         this.texture.inventory = blockInventoryTexture(this);
         this.showName = showName;
@@ -71,6 +80,8 @@ class Block {
     };
 
     get isOpaque() { return this.opacity === 15; };
+    get isTransparent() { return this.opacity === 0; };
+    get isTranslucent() { return this.opacity !== 0 && this.opacity !== 15; };
 
     static getTexUVByTexCoord({
         renderType, name = "Block",
@@ -84,6 +95,7 @@ class Block {
         const uv = {}, ans = { img: texImg, uv, coordinate, };
         let xsize = 1 / 32, ysize = 1 / 16,
             calculateOffset = i => texImg.mipmap? i / 4: 0,
+            // 有 texture4array 意味着是纹理数组 (webgl2)
             dx = texImg.texture4array? texImg.texture4array.tileCount[0]: calculateOffset(xsize),
             dy = texImg.texture4array? texImg.texture4array.tileCount[1]: calculateOffset(ysize),
             cr2uv = texImg.texture4array? ([x, y]) => [
@@ -160,14 +172,13 @@ class Block {
         return BLOCKS[blockName] || null;
     };
     static getBlockByBlockIDandData(id, bd = 0) {
-        let blocks = blockIDs.get(id);
-        return blocks
-            ? blocks[bd] || blocks[0]
-            : null;
+        return blockIDs[new LongID(id, bd)] || blockIDs[id] || null;
     };
     static getBlockByBlockLongID(longID) {
+        let t = blockIDs[longID];
+        if (t) return t;
         longID = longID instanceof LongID? longID: new LongID(longID);
-        return this.getBlockByBlockIDandData(longID.id, longID.bd);
+        return blockIDs[longID.id] || null;
     };
     static listBlocks() {
         return Object.values(BLOCKS);

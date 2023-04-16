@@ -48,8 +48,8 @@ class ChunksLightCalculation {
             for (let rz = 0; rz < Z_SIZE; ++rz) {
                 let cblock = chunk.getBlock(rx, Y_SIZE - 1, rz);
                 if (cblock.isOpaque) continue;
-                let abl = 15;
-                let cbl = cblock.opacity === 0 && abl === 15? 15: abl - cblock.opacity - 1;
+                // 这里假设了顶层chunk的天光是从15开始
+                let cbl = cblock.isTransparent? 15: 15 - cblock.opacity - 1;
                 chunk.lightMap.setSkylight(rx, Y_SIZE - 1, rz, cbl);
                 if (cbl > 1) queue.push([rx, Y_SIZE - 1, rz, chunk]);
             }
@@ -86,14 +86,14 @@ class ChunksLightCalculation {
             for (let [dx, dy, dz] of [[1,0,0], [-1,0,0], [0,1,0], [0,-1,0], [0,0,1], [0,0,-1]]) {
                 let arx = crx + dx, ary = cry + dy, arz = crz + dz, achunk = chunk;
                 if (chunk.inOtherChunk(arx, ary, arz)) {
-                    [arx, ary, arz] = Chunk.getRelativeBlockXYZ(crx + dx, cry + dy, crz + dz);
+                    [arx, ary, arz] = Chunk.getRelativeBlockXYZ(arx, ary, arz);
                     achunk = world.getChunkByChunkXYZ(chunk.x + dx, chunk.y + dy, chunk.z + dz);
                     if (achunk === null) continue;
                 }
                 let ablock = achunk.getBlock(arx, ary, arz);
                 if (ablock.isOpaque) continue;
                 // 向下无衰减传播
-                if (csl === 15 && dy === -1 && ablock.opacity === 0) {
+                if (csl === 15 && dy === -1 && ablock.isTransparent) {
                     achunk.lightMap.setSkylight(arx, ary, arz, 15);
                     queue.push([arx, ary, arz, achunk]);
                     continue;
@@ -112,6 +112,7 @@ class ChunksLightCalculation {
             }
         }
     };
+    // queue = [[rx, ry, rz, chunk]]
     spreadTorchlight(queue) {
         const world = this.world;
         while (queue.length) {
@@ -160,7 +161,7 @@ class ChunksLightCalculation {
                 }
                 let ablock = achunk.getBlock(arx, ary, arz),
                     asl = achunk.lightMap.getSkylight(arx, ary, arz);
-                if (asl === 15 && dy === -1 && ablock.opacity === 0) {
+                if (asl === 15 && dy === -1 && ablock.isTransparent) {
                     achunk.lightMap.setSkylight(arx, ary, arz, 0);
                     removalLightQueue.push([arx, ary, arz, asl, achunk]);
                     continue;
@@ -219,6 +220,7 @@ class ChunksLightCalculation {
         }
         this.spreadTorchlight(queue);
         // build sky light
+        // 处理与其他区块相邻的方块
         [   [0,X_SIZE-1, 0,0, 0,Z_SIZE-1], [0,X_SIZE-1, Y_SIZE-1,Y_SIZE-1, 0,Z_SIZE-1],
             [0,0, 0,Y_SIZE-1, 0,Z_SIZE-1], [X_SIZE-1,X_SIZE-1, 0,Y_SIZE-1, 0,Z_SIZE-1],
             [0,X_SIZE-1, 0,Y_SIZE-1, 0,0], [0,X_SIZE-1, 0,Y_SIZE-1, Z_SIZE-1,Z_SIZE-1],
@@ -234,7 +236,8 @@ class ChunksLightCalculation {
                 let asl = world.getSkylight(...chunk.blockRXYZ2BlockXYZ(rx + dx, ry + dy, rz + dz));
                 if (asl === null && dy !== 1) return;
                 let csl = chunk.lightMap.getSkylight(rx, ry, rz),
-                    l = Math.max(csl, dy == 1 && (asl === null || asl === 15)? 15: asl - b.opacity - 1);
+                    // 这里假设了上方未加载的区块是被阳光直射的 这导致了在地底时很多的天光错误
+                    l = Math.max(csl, dy == 1 && (asl === null || asl === 15)? 15: asl - b.opacity - 1)
                 if (l > 1) {
                     lightMap.setSkylight(rx, ry, rz, l);
                     queue.push([rx, ry, rz, chunk]);
@@ -257,9 +260,11 @@ class ChunksLightCalculation {
             c.lightMap.setSkylight(...rxyz, l);
             queue.push([...rxyz, c]);
         };
-        while (oblock = world.getBlock(blockX, ++obstructed, blockZ)) if (oblock.opacity === 0) break;
+        while (oblock = world.getBlock(blockX, ++obstructed, blockZ))
+            if (oblock.isTransparent) break;
         for (let y = obstructed - 1, b; true; --y) {
-            b = world.getBlock(blockX, y, blockZ); if (b === null || b.opacity === 0) break;
+            b = world.getBlock(blockX, y, blockZ);
+            if (b === null || b.isTransparent) break;
             if (oblock !== null)
                 setSkylight(blockX, y, blockZ, 0);
             // If there is no obstruction directly above
