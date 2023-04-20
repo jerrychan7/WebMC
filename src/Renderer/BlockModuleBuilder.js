@@ -1,6 +1,7 @@
 
 import { Block } from "../World/Block.js";
 import { Chunk } from "../World/Chunk.js";
+import { settings } from "../settings.js";
 
 const {
     X_SIZE, Y_SIZE, Z_SIZE,
@@ -10,9 +11,9 @@ const {
 
 const lightLevel_col = Array(16).fill(0).map((_, i) => Math.pow(0.9, 15 - i));
 const calCol = blockLight => lightLevel_col[blockLight];
-const genColArr = (verNum, blockLight, calcCol = calCol) => {
+const genColArr = (verNum, blockLight, scale = 1, calcCol = calCol) => {
     verNum *= 4;
-    let ans = new Array(verNum), l = calcCol(blockLight);
+    let ans = new Array(verNum), l = calcCol(blockLight) * scale;
     for (let i = 0; i < verNum; i += 4) {
         ans[i] = ans[i + 1] = ans[i + 2] = l;
         ans[i + 3] = 1;
@@ -33,7 +34,9 @@ class BlockModuleBuilder {
     constructor(world = null) { this.setWorld(world); };
     setWorld(world = null) {
         if (this.world === world) return;
+        if (this.world) this.blockFaceCache = {};
         this.world = world;
+        if (!world) return;
         /* render cache (help to quick update chunk module without recalculate)
          * blockFace: chunkKey => [linear block index]["x+|x-|y+|y-|z+|z-|face"]: {
          *   ver: vertex coordiate (length == 3n)
@@ -62,15 +65,20 @@ class BlockModuleBuilder {
     // return: chunkKey || ""，空字符串表示不需要更新mesh
     gen(cwx, cwy, cwz, {
         chunk = this.world?.getChunkByBlockXYZ(cwx, cwy, cwz),
-        crxyz = getRelativeBlockXYZ(cwx, cwy, cwz),
-        crx = crxyz[0], cry = crxyz[1], crz = crxyz[2],
+        chunkKey = chunk?.chunkKey,
+        crx, cry, crz,
+        cLongID, cblock,
+        shade = settings.shade,
         colorOnly = false,
         justUpdateFaces = faces,
     } = {}) {
         if (chunk === null) return "";
-        const chunkKey = chunk.chunkKey,
-            cLongID = chunk.getTile(crx, cry, crz),
+        if (crx === undefined)
+            [crx, cry, crz] = getRelativeBlockXYZ(cwx, cwy, cwz);
+        if (cLongID === undefined) {
+            cLongID = chunk.getTile(crx, cry, crz);
             cblock = Block.getBlockByBlockLongID(cLongID);
+        }
         const blockFaceCache = this.blockFaceCache[chunkKey] || [];
         this.blockFaceCache[chunkKey] = blockFaceCache;
         const cblockIndex = getLinearBlockIndex(crx, cry, crz);
@@ -142,13 +150,17 @@ class BlockModuleBuilder {
                     continue;
                 }
                 let verNum = cblock.vertices[face].length / 3,
-                    bfcf = bfc[face] || {},
-                    aLight = inOtherChunk
+                    bfcf = bfc[face] || {};
+                bfc[face] = bfcf;
+                let aLight = inOtherChunk
                         ? world.getLight(cwx + dx, cwy + dy, cwz + dz)
                         : chunk.getLight(arx, ary, arz);
                 // 如果区块没加载出来 则假设亮度是15
                 if (aLight === null) aLight = 15;
-                bfcf.col = genColArr(verNum, aLight);
+                let scale = shade
+                    ? dz? .8: dx? .6: dy == -1? .5: 1
+                    : 1;
+                bfcf.col = genColArr(verNum, aLight, scale);
                 if (!colorOnly) {
                     if (!cblock.isFluid) {
                         delete bfcf.fluidSurface;
@@ -185,7 +197,6 @@ class BlockModuleBuilder {
                             ];
                     }
                 }
-                bfc[face] = bfcf;
             }
             break; }
         case Block.renderType.FLOWER: {
@@ -259,6 +270,9 @@ class BlockModuleBuilder {
             }
         });
         return ans;
+    };
+    dispose() {
+        this.setWorld();
     };
 };
 

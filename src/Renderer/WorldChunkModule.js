@@ -6,12 +6,10 @@ import {
     CHUNK_Y_SIZE as Y_SIZE,
     CHUNK_Z_SIZE as Z_SIZE,
 } from "../World/Chunk.js";
+import { settings } from "../settings.js";
 import { manhattanDis } from "../utils/math/index.js";
 import { BlockModuleBuilder, calCol, genColArr } from "./BlockModuleBuilder.js";
 import * as glsl from "./glsl.js";
-
-// const rxyz2int = Chunk.getLinearBlockIndex;
-
 
 class ChunksModule {
     constructor(world, renderer) {
@@ -27,9 +25,15 @@ class ChunksModule {
         this.needUpdateTile = new Set();
         this.setRenderer(renderer);
         this.setWorld(world);
+        settings.addEventListener("changedValue", this.onSettingsChange);
     };
-    setWorld(world) {
+    setWorld(world = null) {
+        if (this.world === world) return;
+        if (this.world) {
+            this.blockModuleBuilder.dispose();
+        }
         this.world = world;
+        if (!world) return;
         this.blockModuleBuilder = new BlockModuleBuilder(world);
         for (let chunkKey in world.chunkMap)
             this.buildChunkModule(chunkKey);
@@ -40,6 +44,15 @@ class ChunksModule {
                 this.buildChunkModule(Chunk.chunkKeyByChunkXYZ(chunk.x + dx, chunk.y + dy, chunk.z + dz));
             }
         });
+    };
+    onSettingsChange = (key, value) => {
+        if (!this.world) return;
+        if (key === "shade") {
+            for (let chunkKey in this.world.chunkMap)
+                this.updateLight(chunkKey);
+        }
+        this.onRender();
+        this.renderer.draw();
     };
     setRenderer(renderer = null) {
         if (this.renderer === renderer) return;
@@ -106,7 +119,7 @@ class ChunksModule {
         for (let chunkKey in meshes)
             updateMesh(chunkKey, blockModuleBuilder.getMeshArrays(chunkKey));
     };
-    updateMesh(chunkKey, meshArrays) {
+    updateMesh(chunkKey, meshArrays = null) {
         if (meshArrays == null) return delete this.meshes[chunkKey];
         let mesh = this.meshes[chunkKey];
         if (!mesh) mesh = this.meshes[chunkKey] = {};
@@ -239,6 +252,8 @@ class ChunksModule {
     };
     dispose() {
         this.setRenderer();
+        this.blockModuleBuilder.dispose();
+        settings.removeEventListener("changedValue", this.onSettingsChange);
     };
 };
 

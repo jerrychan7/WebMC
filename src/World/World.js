@@ -369,8 +369,23 @@ class World extends EventDispatcher {
                     `Light: ${this.getLight(...mainPlayer.position)} (${this.getSkylight(...mainPlayer.position)} sky, ${this.getTorchlight(...mainPlayer.position)} block)`,
                 ],
                 "Crosshairs:": [
-                    "XYZ: " + (hit? hit.blockPos.join(", "): "null") + " (" + (hit? hit.axis? hit.axis: "in block": "null") + ")",
+                    `XYZ: ${hit? hit.blockPos.join(" "): "null"} (${
+                        hit? Chunk.getRelativeBlockXYZ(...hit.blockPos).join(" "): "null"
+                    }/${
+                        hit? Chunk.getLinearBlockIndex(...Chunk.getRelativeBlockXYZ(...hit.blockPos)): "null"
+                    } in ${
+                        hit? Chunk.getChunkXYZByBlockXYZ(...hit.blockPos).join(" "): "null"
+                    }, ${ hit? hit.axis? hit.axis: "in block": "null" })`,
                     `Block: ${block? block.name: "null"} (${longID?.id ?? "null"}, ${longID?.bd ?? "null"}, ${longID? longID: "null"})`,
+                    `Face: ${
+                        block?.renderType === Block.renderType.FLOWER? "flower face": hit?.axis ?? "null"
+                    }, light: ${
+                        hit? this.getLight(...vec3.add(hit.blockPos, {"x+": [1,0,0], "x-": [-1,0,0], "y+": [0,1,0], "y-": [0,-1,0], "z+": [0,0,1], "z-": [0,0,-1]}[hit.axis] || [0,0,0], [])): "null"
+                    } (${
+                        hit? this.getSkylight(...vec3.add(hit.blockPos, {"x+": [1,0,0], "x-": [-1,0,0], "y+": [0,1,0], "y-": [0,-1,0], "z+": [0,0,1], "z-": [0,0,-1]}[hit.axis] || [0,0,0], [])): "null"
+                    } sky, ${
+                        hit? this.getTorchlight(...vec3.add(hit.blockPos, {"x+": [1,0,0], "x-": [-1,0,0], "y+": [0,1,0], "y-": [0,-1,0], "z+": [0,0,1], "z-": [0,0,-1]}[hit.axis] || [0,0,0], [])): "null"
+                    } block)`,
                 ],
             }).map(([k, v]) => `<p>${k}${
                 Array.isArray(v)

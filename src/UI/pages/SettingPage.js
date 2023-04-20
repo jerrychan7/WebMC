@@ -8,6 +8,7 @@ class SettingPage extends Page {
     // renderDistance = this.shadowRoot.getElementById("render-distance");
     fov = this.shadowRoot.getElementById("fov");
     mousemoveSensitivity = this.shadowRoot.getElementById("mouse-sensitivity");
+    shadeBtn = this.shadowRoot.getElementById("shade-btn");
     debugOutputBtn = this.shadowRoot.getElementById("debug-output-btn");
     constructor() {
         super();
@@ -42,6 +43,13 @@ class SettingPage extends Page {
             if (key === "homepageBlur")
                 this[key].setAttribute("progress", settings[key].toFixed(1));
         }
+
+        let shadeEcho = this.shadowRoot.getElementById("shade-echo");
+        shadeEcho.innerHTML = settings.shade? "ON": "OFF";
+        this.shadeBtn.addEventListener("click", () => {
+            settings.shade = !settings.shade;
+            shadeEcho.innerHTML = settings.shade? "ON": "OFF";
+        });
 
         let debugOutputEcho = this.shadowRoot.getElementById("debug-output-echo");
         debugOutputEcho.innerHTML = settings.showDebugOutput? "ON": "OFF";

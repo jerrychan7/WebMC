@@ -17,6 +17,7 @@ class Settings extends EventDispatcher {
         this._addNumberProp("mousemoveSensitivity", 60, 800, 200, storage.mousemoveSensitivity);
         this._addNumberProp("renderDistance", 1, 32, 4, storage.renderDistance);
         this._addNumberProp("homepageBlur", 0, 10, 3.5, storage.homepageBlur);
+        this._addBoolProp("shade", true, storage.shade);
         this._addBoolProp("showDebugOutput", false, storage.showDebugOutput);
     };
     _addNumberProp(key, min, max, defaultVal, currentVal = defaultVal) {
